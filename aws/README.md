@@ -54,13 +54,13 @@ For AWS Network Load Balancer to work properly, user needs to add certificateARN
 
 `export TF_VAR_certificateARN=arn:aws:acm:<aws-region>:<aws-account-id>:certificate/<certificate-id>`
 
-For APISIX API Gateway to worl properly, user needs to add the environment variables for Admin- and Reader-API-keys and the IP-address whitelisting:
+For APISIX API Gateway to work properly, user needs to add the environment variables for Admin- and Reader-API-keys and the IP-address whitelisting:
 
 `export TF_VAR_apisixAdmin=<api-key-string>`
 
 `export TF_VAR_apisixReader=<api-key-string>`
 
-`export TF_VAR_={0.0.0.0/0}`
+`export TF_VAR_apisixIpList={0.0.0.0/0}`
 
 Run `terraform init`
 
