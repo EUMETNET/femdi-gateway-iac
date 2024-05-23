@@ -55,5 +55,4 @@ variable "dns_zone" {
 variable "email_cert_manager" {
   description = "email for Let's encrypt cert-manager"
   type    = string
-  default = "eumetnet-femdi.eumetsat.ewcloud.host"
 }
