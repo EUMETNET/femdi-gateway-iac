@@ -2,7 +2,7 @@ provider "helm" {
   kubernetes {
     config_path = var.kubeconfig_path
   }
-  
+
 }
 
 provider "rancher2" {
@@ -15,8 +15,8 @@ provider "rancher2" {
 # Get id of Rancher System project
 ################################################################################
 data "rancher2_project" "System" {
-    cluster_id = var.rancher_cluster_id
-    name = "System"
+  cluster_id = var.rancher_cluster_id
+  name       = "System"
 }
 
 ################################################################################
@@ -32,20 +32,20 @@ resource "kubernetes_namespace" "openstack-cinder-csi" {
   }
 }
 resource "helm_release" "csi-cinder" {
-  name = "openstack-cinder-csi"
-  repository = "https://kubernetes.github.io/cloud-provider-openstack"
-  chart = "openstack-cinder-csi"
-  version    = "2.30.0"
-  namespace = kubernetes_namespace.openstack-cinder-csi.metadata.0.name
+  name             = "openstack-cinder-csi"
+  repository       = "https://kubernetes.github.io/cloud-provider-openstack"
+  chart            = "openstack-cinder-csi"
+  version          = "2.30.0"
+  namespace        = kubernetes_namespace.openstack-cinder-csi.metadata.0.name
   create_namespace = false
-  
+
   set {
-    name = "storageClass.delete.isDefault"
+    name  = "storageClass.delete.isDefault"
     value = true
   }
-  
+
   set {
-    name = "secret.filename"
+    name  = "secret.filename"
     value = "cloud-config"
   }
 }
@@ -63,33 +63,33 @@ resource "kubernetes_namespace" "ingress-nginx" {
   }
 }
 resource "helm_release" "ingress_nginx" {
-  name = "ingress-nginx"
-  repository = "https://kubernetes.github.io/ingress-nginx"
-  chart = "ingress-nginx"
-  version    = "4.7.1"
-  namespace = kubernetes_namespace.ingress-nginx.metadata.0.name
+  name             = "ingress-nginx"
+  repository       = "https://kubernetes.github.io/ingress-nginx"
+  chart            = "ingress-nginx"
+  version          = "4.7.1"
+  namespace        = kubernetes_namespace.ingress-nginx.metadata.0.name
   create_namespace = false
-  
+
   set {
-    name = "controller.kind"
+    name  = "controller.kind"
     value = "DaemonSet"
   }
-  
+
   set {
-    name = "controller.ingressClassResource.default"
+    name  = "controller.ingressClassResource.default"
     value = true
   }
 
-# Needed for keycloak to work
+  # Needed for keycloak to work
   set {
-    name = "controller.config.proxy-buffer-size"
+    name  = "controller.config.proxy-buffer-size"
     value = "256k"
   }
 }
 
 data "kubernetes_service" "ingress-nginx-controller" {
   metadata {
-    name = "ingress-nginx-controller"
+    name      = "ingress-nginx-controller"
     namespace = kubernetes_namespace.ingress-nginx.metadata.0.name
   }
 
@@ -109,37 +109,37 @@ resource "kubernetes_namespace" "external-dns" {
   }
 }
 resource "helm_release" "external-dns" {
-  name = "external-dns"
-  repository = "https://charts.bitnami.com/bitnami"
-  chart = "external-dns"
-  version    = "6.23.6"
-  namespace = kubernetes_namespace.external-dns.metadata.0.name
+  name             = "external-dns"
+  repository       = "https://charts.bitnami.com/bitnami"
+  chart            = "external-dns"
+  version          = "6.23.6"
+  namespace        = kubernetes_namespace.external-dns.metadata.0.name
   create_namespace = false
-  
+
   set {
-    name = "policy"
+    name  = "policy"
     value = "sync"
   }
-  
+
   set {
-    name = "controller.ingressClassResource.default"
+    name  = "controller.ingressClassResource.default"
     value = true
   }
 
   set {
-    name = "aws.credentials.accessKey"
+    name  = "aws.credentials.accessKey"
     value = var.route53_access_key
 
   }
 
   set {
-    name = "aws.credentials.secretKey"
+    name  = "aws.credentials.secretKey"
     value = var.route53_secret_key
 
   }
 
   set_list {
-    name = "zoneIdFilters"
+    name  = "zoneIdFilters"
     value = [var.route53_zone_id_filter]
   }
 }
@@ -157,42 +157,42 @@ resource "kubernetes_namespace" "cert-manager" {
   }
 }
 resource "helm_release" "cert-manager" {
-  name = "cert-manager"
-  repository = "https://charts.jetstack.io/"
-  chart = "cert-manager"
-  version    = "1.11.5 "
-  namespace = kubernetes_namespace.cert-manager.metadata.0.name
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io/"
+  chart            = "cert-manager"
+  version          = "1.11.5 "
+  namespace        = kubernetes_namespace.cert-manager.metadata.0.name
   create_namespace = false
-  
+
   set {
-    name = "installCRDs"
+    name  = "installCRDs"
     value = true
   }
-  
+
   set {
-    name = "ingressShim.defaultACMEChallengeType"
+    name  = "ingressShim.defaultACMEChallengeType"
     value = "dns01"
   }
 
   set {
-    name = "ingressShim.defaultACMEDNS01ChallengeProvider"
+    name  = "ingressShim.defaultACMEDNS01ChallengeProvider"
     value = "route53"
   }
 
   set {
-    name = "ingressShim.defaultIssuerKind"
+    name  = "ingressShim.defaultIssuerKind"
     value = "ClusterIssuer"
   }
 
   set {
-    name = "ingressShim.letsencrypt-prod"
+    name  = "ingressShim.letsencrypt-prod"
     value = "route53"
   }
 }
 
 resource "kubernetes_secret" "acme-route53-secret" {
   metadata {
-    name = "acme-route53"
+    name      = "acme-route53"
     namespace = kubernetes_namespace.cert-manager.metadata.0.name
   }
 
@@ -206,7 +206,7 @@ resource "kubernetes_secret" "acme-route53-secret" {
 resource "kubernetes_manifest" "clusterissuer_letsencrypt_prod" {
   manifest = {
     "apiVersion" = "cert-manager.io/v1"
-    "kind" = "ClusterIssuer"
+    "kind"       = "ClusterIssuer"
     "metadata" = {
       "name" = "letsencrypt-prod"
     }
@@ -222,9 +222,9 @@ resource "kubernetes_manifest" "clusterissuer_letsencrypt_prod" {
             "dns01" = {
               "route53" = {
                 "accessKeyID" = var.rancher_access_key
-                "region" = "eu-central-1"
+                "region"      = "eu-central-1"
                 "secretAccessKeySecretRef" = {
-                  "key" = "secret-access-key"
+                  "key"  = "secret-access-key"
                   "name" = kubernetes_secret.acme-route53-secret.metadata.0.name
                 }
               }
@@ -237,5 +237,5 @@ resource "kubernetes_manifest" "clusterissuer_letsencrypt_prod" {
       }
     }
   }
-  depends_on = [ helm_release.cert-manager ]
+  depends_on = [helm_release.cert-manager]
 }
