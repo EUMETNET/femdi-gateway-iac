@@ -5,16 +5,29 @@ provider "helm" {
 
 }
 
-provider "rancher2" {
-  api_url    = "https://rancher.my-domain.com"
-  access_key = var.rancher_access_key
-  secret_key = var.rancher_secret_key
+provider "kubernetes" {
+  config_path = var.kubeconfig_path
+
 }
+
+#Workaround for https://github.com/hashicorp/terraform-provider-kubernetes/issues/1367
+provider "kubectl" {
+  config_path = var.kubeconfig_path
+}
+
+provider "rancher2" {
+  api_url   = var.rancher_api_url
+  token_key = var.rancher_token
+  insecure  = true
+}
+
+
 
 ################################################################################
 # Get id of Rancher System project
 ################################################################################
 data "rancher2_project" "System" {
+  provider   = rancher2
   cluster_id = var.rancher_cluster_id
   name       = "System"
 }
@@ -203,12 +216,13 @@ resource "kubernetes_secret" "acme-route53-secret" {
   type = "Opaque"
 }
 
-resource "kubernetes_manifest" "clusterissuer_letsencrypt_prod" {
-  manifest = {
+locals {
+  clusterissuer_letsencrypt_prod_manifest = {
     "apiVersion" = "cert-manager.io/v1"
     "kind"       = "ClusterIssuer"
     "metadata" = {
-      "name" = "letsencrypt-prod"
+      "name"      = "letsencrypt-prod"
+      "namespace" = kubernetes_namespace.cert-manager.metadata.0.name
     }
     "spec" = {
       "acme" = {
@@ -221,7 +235,7 @@ resource "kubernetes_manifest" "clusterissuer_letsencrypt_prod" {
           {
             "dns01" = {
               "route53" = {
-                "accessKeyID" = var.rancher_access_key
+                "accessKeyID" = var.route53_access_key
                 "region"      = "eu-central-1"
                 "secretAccessKeySecretRef" = {
                   "key"  = "secret-access-key"
@@ -237,5 +251,10 @@ resource "kubernetes_manifest" "clusterissuer_letsencrypt_prod" {
       }
     }
   }
+}
+
+resource "kubectl_manifest" "clusterissuer_letsencrypt_prod" {
+  yaml_body  = yamlencode(local.clusterissuer_letsencrypt_prod_manifest)
   depends_on = [helm_release.cert-manager]
+
 }

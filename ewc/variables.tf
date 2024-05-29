@@ -3,17 +3,12 @@ variable "rancher_api_url" {
   type        = string
 }
 
-variable "rancher_access_key" {
+variable "rancher_token" {
   description = "Rancher instance access key"
   type        = string
   sensitive   = true
 }
 
-variable "rancher_secret_key" {
-  description = "Rancher instance secret key"
-  type        = string
-  sensitive   = true
-}
 
 variable "rancher_cluster_id" {
   description = "Name of your Rancher cluster"
@@ -43,7 +38,6 @@ variable "route53_secret_key" {
 variable "route53_zone_id_filter" {
   description = "ZoneIdFilter for route53"
   type        = string
-  sensitive   = true
 }
 
 variable "dns_zone" {
