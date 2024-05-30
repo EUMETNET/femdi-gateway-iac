@@ -110,7 +110,7 @@ data "kubernetes_service" "ingress-nginx-controller" {
 }
 
 ################################################################################
-# Install extneral-dns under System project
+# Install external-dns under System project
 ################################################################################
 resource "kubernetes_namespace" "external-dns" {
   metadata {
@@ -131,7 +131,7 @@ resource "helm_release" "external-dns" {
 
   set {
     name  = "policy"
-    value = "sync"
+    value = "upsert-only"
   }
 
   set {
@@ -173,7 +173,7 @@ resource "helm_release" "cert-manager" {
   name             = "cert-manager"
   repository       = "https://charts.jetstack.io/"
   chart            = "cert-manager"
-  version          = "1.11.5 "
+  version          = "1.11.5"
   namespace        = kubernetes_namespace.cert-manager.metadata.0.name
   create_namespace = false
 
@@ -256,5 +256,101 @@ locals {
 resource "kubectl_manifest" "clusterissuer_letsencrypt_prod" {
   yaml_body  = yamlencode(local.clusterissuer_letsencrypt_prod_manifest)
   depends_on = [helm_release.cert-manager]
+
+}
+
+################################################################################
+# Install gateway apps
+################################################################################
+# Create project for gateway
+resource "rancher2_project" "gateway" {
+  name       = "gateway"
+  cluster_id = var.rancher_cluster_id
+}
+
+
+resource "kubernetes_namespace" "apisix" {
+  metadata {
+    annotations = {
+      "field.cattle.io/projectId" = rancher2_project.gateway.id
+    }
+
+    name = "apisix"
+  }
+}
+
+resource "helm_release" "apisix" {
+  name             = "apisix"
+  repository       = "https://charts.apiseven.com"
+  chart            = "apisix"
+  version          = "2.7.0"
+  namespace        = kubernetes_namespace.apisix.metadata.0.name
+  create_namespace = false
+
+  values = [
+    templatefile("./helm-values/apisix-values-template.yaml", {
+      cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      hostname       = "${var.apisix_subdomain}.${var.dns_zone}",
+      ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip
+    })
+  ]
+
+  set_sensitive {
+    name  = "apisix.admin.credentials.admin"
+    value = var.apisix_admin
+  }
+
+  set_sensitive {
+    name  = "apisix.admin.credentials.viewer"
+    value = var.apisix_reader
+  }
+
+  set_list {
+    name  = "apisix.admin.allow.ipList"
+    value = var.apisix_ip_list
+  }
+
+  depends_on = [helm_release.cert-manager, helm_release.external-dns,
+    helm_release.ingress_nginx, helm_release.csi-cinder]
+
+}
+
+
+################################################################################
+# Install vault
+################################################################################
+resource "kubernetes_namespace" "vault" {
+  metadata {
+    annotations = {
+      "field.cattle.io/projectId" = rancher2_project.gateway.id
+    }
+
+    name = "vault"
+  }
+}
+
+resource "helm_release" "vault" {
+  name             = "vault"
+  repository       = "https://helm.releases.hashicorp.com "
+  chart            = "vault"
+  version          = "0.28.0 "
+  namespace        = kubernetes_namespace.vault.metadata.0.name
+  create_namespace = false
+
+  values = [
+    templatefile("./helm-values/vault-values-template.yaml", {
+      cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      hostname       = "${var.vault_subdomain}.${var.dns_zone}",
+      ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
+      access_key      = var.vault_s3_access_key,
+      secret_key     = var.vault_s3_secret_key,
+      bucket         = var.vault_s3_bucket,
+      region         = var.vault_s3_region,
+    })
+  ]
+
+
+  depends_on = [helm_release.cert-manager, helm_release.external-dns,
+    helm_release.ingress_nginx, helm_release.csi-cinder]
 
 }

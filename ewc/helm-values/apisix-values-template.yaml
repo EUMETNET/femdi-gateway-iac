@@ -1,0 +1,32 @@
+apisix:
+  admin:
+    ingress:
+      annotations:
+        certmanager.k8s.io/cluster-issuer: ${cluster_issuer}
+        external-dns.alpha.kubernetes.io/hostname: ${hostname}
+        external-dns.alpha.kubernetes.io/target: ${ip}
+        kubernetes.io/tls-acme: "true"
+      enabled: true
+      hosts:
+      - host: admin-${hostname}
+        paths:
+        - /apisix
+      tls:
+      - hosts:
+        - admin-${hostname}
+        secretName: admin-${hostname}-certificate
+ingress:
+  annotations:
+    certmanager.k8s.io/cluster-issuer: ${cluster_issuer}
+    external-dns.alpha.kubernetes.io/hostname: ${hostname}
+    external-dns.alpha.kubernetes.io/target: ${ip}
+    kubernetes.io/tls-acme: "true"
+  enabled: true
+  hosts:
+  - host: ${hostname}
+    paths:
+    - /
+  tls:
+  - hosts:
+    - ${hostname}
+    secretName: ${hostname}-certificate
