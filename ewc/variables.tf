@@ -20,6 +20,10 @@ variable "kubeconfig_path" {
   description = "Path to your kubeconfig"
   type        = string
   default     = "~/.kube/config"
+  validation {
+    condition     = fileexists(var.kubeconfig_path)
+    error_message = "The specified kubeconfig file does not exist."
+  }
 }
 
 
@@ -82,33 +86,20 @@ variable "apisix_ip_list" {
   }
 }
 
+variable "keycloak_admin_password" {
+  description = "Password for keycloak admin"
+  sensitive   = true
+}
+
+variable "keycloak_subdomain" {
+  description = "subdomain where keycloak will be hosted"
+  type        = string
+  default     = "keycloak"
+}
+
 variable "vault_subdomain" {
-  description = "subdomain where apisix will be hosted"
+  description = "subdomain where vault will be hosted"
   type        = string
   default     = "vault"
-}
-
-variable "vault_s3_access_key" {
-  description = "subdomain where apisix will be hosted"
-  type        = string
-  sensitive   = true
-}
-
-variable "vault_s3_secret_key" {
-  description = "subdomain where apisix will be hosted"
-  type        = string
-  sensitive   = true
-}
-
-variable "vault_s3_bucket" {
-  description = "subdomain where apisix will be hosted"
-  type        = string
-  sensitive   = true
-}
-
-variable "vault_s3_region" {
-  description = "subdomain where apisix will be hosted"
-  type        = string
-  default = "eu-north-1"
 }
 

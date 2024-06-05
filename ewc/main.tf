@@ -268,7 +268,9 @@ resource "rancher2_project" "gateway" {
   cluster_id = var.rancher_cluster_id
 }
 
-
+################################################################################
+# Install Apisix
+################################################################################
 resource "kubernetes_namespace" "apisix" {
   metadata {
     annotations = {
@@ -317,6 +319,56 @@ resource "helm_release" "apisix" {
 
 
 ################################################################################
+# Install Keycloak 
+################################################################################
+resource "kubernetes_namespace" "keycloak" {
+  metadata {
+    annotations = {
+      "field.cattle.io/projectId" = rancher2_project.gateway.id
+    }
+
+    name = "keycloak"
+  }
+}
+
+resource "helm_release" "keycloak" {
+  name             = "keycloak"
+  repository       = "https://charts.bitnami.com/bitnami"
+  chart            = "keycloak"
+  version          = "21.1.2"
+  namespace        = kubernetes_namespace.keycloak.metadata.0.name
+  create_namespace = false
+
+  values = [
+    templatefile("./helm-values/keycloak-values-template.yaml", {
+      cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      hostname       = "${var.keycloak_subdomain}.${var.dns_zone}",
+      ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
+    })
+  ]
+
+  set {
+    name  = "proxy"
+    value = "edge"
+  }
+
+  set {
+    name  = "auth.adminUser"
+    value = "admin"
+  }
+
+  set_sensitive {
+    name  = "auth.adminPassword"
+    value = var.keycloak_admin_password
+  }
+
+  depends_on = [helm_release.cert-manager, helm_release.external-dns,
+    helm_release.ingress_nginx, helm_release.csi-cinder]
+
+}
+
+
+################################################################################
 # Install vault
 ################################################################################
 resource "kubernetes_namespace" "vault" {
@@ -331,9 +383,9 @@ resource "kubernetes_namespace" "vault" {
 
 resource "helm_release" "vault" {
   name             = "vault"
-  repository       = "https://helm.releases.hashicorp.com "
+  repository       = "https://helm.releases.hashicorp.com"
   chart            = "vault"
-  version          = "0.28.0 "
+  version          = "0.28.0"
   namespace        = kubernetes_namespace.vault.metadata.0.name
   create_namespace = false
 
@@ -342,10 +394,6 @@ resource "helm_release" "vault" {
       cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
       hostname       = "${var.vault_subdomain}.${var.dns_zone}",
       ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
-      access_key      = var.vault_s3_access_key,
-      secret_key     = var.vault_s3_secret_key,
-      bucket         = var.vault_s3_bucket,
-      region         = var.vault_s3_region,
     })
   ]
 
@@ -354,3 +402,4 @@ resource "helm_release" "vault" {
     helm_release.ingress_nginx, helm_release.csi-cinder]
 
 }
+

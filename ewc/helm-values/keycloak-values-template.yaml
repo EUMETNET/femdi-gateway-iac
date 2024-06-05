@@ -1,0 +1,10 @@
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: ${cluster_issuer}
+    external-dns.alpha.kubernetes.io/hostname: ${hostname}
+    external-dns.alpha.kubernetes.io/target: ${ip}
+    kubernetes.io/tls-acme: "true"
+  enabled: true
+  hostname: ${hostname}
+  ingressClassName: nginx
+  tls: true
