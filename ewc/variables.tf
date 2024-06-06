@@ -11,7 +11,7 @@ variable "rancher_token" {
 
 
 variable "rancher_cluster_id" {
-  description = "Name of your Rancher cluster"
+  description = "ID of your Rancher cluster"
   type        = string
 
 }
@@ -20,6 +20,10 @@ variable "kubeconfig_path" {
   description = "Path to your kubeconfig"
   type        = string
   default     = "~/.kube/config"
+  validation {
+    condition     = fileexists(var.kubeconfig_path)
+    error_message = "The specified kubeconfig file does not exist."
+  }
 }
 
 
@@ -50,3 +54,52 @@ variable "email_cert_manager" {
   description = "email for Let's encrypt cert-manager"
   type        = string
 }
+
+variable "apisix_admin" {
+  description = "Admin API key to control access to the APISIX Admin API endpoints"
+  type        = string
+  sensitive   = true
+}
+
+variable "apisix_reader" {
+  description = "Reader API key to control access to the APISIX Admin API endpoints"
+  type        = string
+  sensitive   = true
+}
+
+variable "apisix_subdomain" {
+  description = "subdomain where apisix will be hosted"
+  type        = string
+  default     = "gateway"
+}
+
+variable "apisix_ip_list" {
+  description = "Restrict Admin API Access by IP CIDR"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+  validation {
+    condition = alltrue([
+      for i in var.apisix_ip_list:
+      can(cidrnetmask(i))
+    ])
+    error_message = "Not a valid list of CIDR-blocks"
+  }
+}
+
+variable "keycloak_admin_password" {
+  description = "Password for keycloak admin"
+  sensitive   = true
+}
+
+variable "keycloak_subdomain" {
+  description = "subdomain where keycloak will be hosted"
+  type        = string
+  default     = "keycloak"
+}
+
+variable "vault_subdomain" {
+  description = "subdomain where vault will be hosted"
+  type        = string
+  default     = "vault"
+}
+
