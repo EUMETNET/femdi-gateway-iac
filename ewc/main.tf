@@ -21,7 +21,8 @@ provider "rancher2" {
   insecure  = true
 }
 
-
+provider "http" {
+}
 
 ################################################################################
 # Get id of Rancher System project
@@ -313,7 +314,7 @@ resource "helm_release" "apisix" {
   }
 
   depends_on = [helm_release.cert-manager, helm_release.external-dns,
-    helm_release.ingress_nginx, helm_release.csi-cinder]
+  helm_release.ingress_nginx, helm_release.csi-cinder]
 
 }
 
@@ -328,6 +329,22 @@ resource "kubernetes_namespace" "keycloak" {
     }
 
     name = "keycloak"
+  }
+}
+
+# Download realm json
+data "http" "realm-json" {
+  url = "https://raw.githubusercontent.com/EURODEO/Dev-portal/main/keycloak/config/realm_export/realm-export.json"
+}
+
+# Create configmap for realm json
+resource "kubernetes_config_map" "realm-json" {
+  metadata {
+    name      = "realm-json"
+    namespace = kubernetes_namespace.keycloak.metadata.0.name
+  }
+  data = {
+    "realm.json" = data.http.realm-json.response_body
   }
 }
 
@@ -347,6 +364,8 @@ resource "helm_release" "keycloak" {
     })
   ]
 
+  # Needed for tls termination at ingress
+  # See: https://github.com/bitnami/charts/tree/main/bitnami/keycloak#use-with-ingress-offloading-ssl
   set {
     name  = "proxy"
     value = "edge"
@@ -362,8 +381,58 @@ resource "helm_release" "keycloak" {
     value = var.keycloak_admin_password
   }
 
+  # Needed for configmap realm import
+  # See: https://github.com/bitnami/charts/issues/5178#issuecomment-765361901
+  set {
+    name  = "extraStartupArgs"
+    value = "--import-realm"
+
+  }
+
+  set {
+    name  = "extraVolumeMounts[0].name"
+    value = "config"
+
+  }
+
+  set {
+    name  = "extraVolumeMounts[0].mountPath"
+    value = "/opt/bitnami/keycloak/data/import"
+
+  }
+
+  set {
+    name  = "extraVolumeMounts[0].readOnly"
+    value = true
+
+  }
+
+  set {
+    name  = "extraVolumes[0].name"
+    value = "config"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.name"
+    value = kubernetes_config_map.realm-json.metadata[0].name
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[0].key"
+    value = "realm.json"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[0].path"
+    value = "realm.json"
+
+  }
+
   depends_on = [helm_release.cert-manager, helm_release.external-dns,
-    helm_release.ingress_nginx, helm_release.csi-cinder]
+  helm_release.ingress_nginx, helm_release.csi-cinder]
 
 }
 
@@ -399,7 +468,7 @@ resource "helm_release" "vault" {
 
 
   depends_on = [helm_release.cert-manager, helm_release.external-dns,
-    helm_release.ingress_nginx, helm_release.csi-cinder]
+  helm_release.ingress_nginx, helm_release.csi-cinder]
 
 }
 

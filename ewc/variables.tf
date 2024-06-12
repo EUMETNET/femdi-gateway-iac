@@ -79,7 +79,7 @@ variable "apisix_ip_list" {
   default     = ["0.0.0.0/0"]
   validation {
     condition = alltrue([
-      for i in var.apisix_ip_list:
+      for i in var.apisix_ip_list :
       can(cidrnetmask(i))
     ])
     error_message = "Not a valid list of CIDR-blocks"
