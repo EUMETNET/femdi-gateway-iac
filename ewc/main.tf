@@ -282,11 +282,27 @@ resource "kubernetes_namespace" "apisix" {
   }
 }
 
+# ConfigMap for custom error pages
+resource "kubernetes_config_map" "custom_error_pages" {
+  metadata {
+    name      = "custom-error-pages"
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  }
+  data = {
+    "apisix_error_429.html" = templatefile("../apisix/error_pages/apisix_error_429.html", {
+      devportal_address = "${var.devportal_subdomain}.${var.dns_zone}"
+    })
+    "apisix_error_403.html" = templatefile("../apisix/error_pages/apisix_error_403.html", {
+      devportal_address = "${var.devportal_subdomain}.${var.dns_zone}"
+    })
+  }
+}
+
 resource "helm_release" "apisix" {
   name             = "apisix"
   repository       = "https://charts.apiseven.com"
   chart            = "apisix"
-  version          = "2.7.0"
+  version          = "2.6.0"
   namespace        = kubernetes_namespace.apisix.metadata.0.name
   create_namespace = false
 
@@ -311,6 +327,72 @@ resource "helm_release" "apisix" {
   set_list {
     name  = "apisix.admin.allow.ipList"
     value = var.apisix_ip_list
+  }
+
+  # Custom error pages mount
+  set {
+    name  = "extraVolumeMounts[0].name"
+    value = "custom-error-pages"
+
+  }
+
+  set {
+    name  = "extraVolumeMounts[0].mountPath"
+    value = "/custom/error-pages"
+
+  }
+
+  set {
+    name  = "extraVolumeMounts[0].readOnly"
+    value = true
+
+  }
+
+  set {
+    name  = "extraVolumes[0].name"
+    value = "custom-error-pages"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.name"
+    value = kubernetes_config_map.custom_error_pages.metadata[0].name
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[0].key"
+    value = "apisix_error_403.html"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[0].path"
+    value = "apisix_error_403.html"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[1].key"
+    value = "apisix_error_429.html"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[1].path"
+    value = "apisix_error_429.html"
+
+  }
+
+  #Custom error page nginx.conf
+  set {
+    name  = "apisix.nginx.configurationSnippet.httpStart"
+    value = file("../apisix/error_values/httpStart")
+  }
+
+  set {
+    name  = "apisix.nginx.configurationSnippet.httpSrv"
+    value = file("../apisix/error_values/httpSrv")
   }
 
   depends_on = [helm_release.cert-manager, helm_release.external-dns,

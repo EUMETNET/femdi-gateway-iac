@@ -103,3 +103,11 @@ variable "vault_subdomain" {
   default     = "vault"
 }
 
+
+variable "devportal_subdomain" {
+  description = "subdomain where devportal will be hosted"
+  type        = string
+  default     = "devportal"
+}
+
+
