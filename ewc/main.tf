@@ -395,6 +395,13 @@ resource "helm_release" "apisix" {
     value = file("../apisix/error_values/httpSrv")
   }
 
+  # Trust container's CA for Vault and other outbound CA requests
+  set {
+    name  = "apisix.nginx.configurationSnippet.httpEnd"
+    value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
+
+  }
+
   depends_on = [helm_release.cert-manager, helm_release.external-dns,
   helm_release.ingress_nginx, helm_release.csi-cinder]
 
