@@ -39,3 +39,8 @@ variable "apisixIpList" {
   description = "Restrict Admin API Access by IP"
   type        = string
 }
+
+variable "devportal-domain" {
+  description = "Restrict Admin API Access by IP"
+  type        = string
+}

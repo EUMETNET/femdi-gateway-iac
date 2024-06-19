@@ -81,19 +81,19 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    
-    default = {      
-      name = "${var.cluster_name}-ng1"
+
+    default = {
+      name           = "${var.cluster_name}-ng1"
       instance_types = ["m5.large"]
       block_device_mappings = {
-        
+
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
             volume_size = 80
             volume_type = "gp3"
-            iops = 3000
-            throughput = 125
+            iops        = 3000
+            throughput  = 125
           }
         }
       }
@@ -105,7 +105,7 @@ module "eks" {
       # Policies needed for AWS Cloudwatch Observability add-on 
       iam_role_additional_policies = {
         CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
-        AWSXrayWriteOnlyAccess = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+        AWSXrayWriteOnlyAccess      = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
       }
     }
   }
@@ -177,7 +177,7 @@ resource "kubernetes_storage_class" "ebs_csi_aws_storage_class" {
   allow_volume_expansion = true
   volume_binding_mode    = "Immediate"
   parameters = {
-    type      = "gp3"
+    type = "gp3"
   }
 
   depends_on = [kubernetes_annotations.gp2_default]
@@ -267,13 +267,34 @@ resource "helm_release" "lb" {
 ################################################################################
 # Install Apisix With Helm
 ################################################################################
+resource "kubernetes_namespace" "apisix" {
+  metadata {
+    name = "apisix-tf"
+  }
+}
 
+# ConfigMap for custom error pages
+resource "kubernetes_config_map" "custom_error_pages" {
+  metadata {
+    name      = "custom-error-pages"
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  }
+  data = {
+    "apisix_error_429.html" = templatefile("../apisix/error_pages/apisix_error_429.html", {
+      devportal_address = var.devportal-domain
+    })
+    "apisix_error_403.html" = templatefile("../apisix/error_pages/apisix_error_403.html", {
+      devportal_address = var.devportal-domain
+    })
+  }
+}
 resource "helm_release" "apisix" {
-  name       = "apisix-tf"
-  repository = "https://charts.apiseven.com"
-  chart      = "apisix"
-  namespace  = "apisix-tf"
-  create_namespace = true
+  name             = "apisix-tf"
+  repository       = "https://charts.apiseven.com"
+  chart            = "apisix"
+  version          = "2.6.0"
+  namespace        = kubernetes_namespace.apisix.metadata.0.name
+  create_namespace = false
 
   set {
     name  = "etcd.persistence.storageClass"
@@ -295,6 +316,79 @@ resource "helm_release" "apisix" {
     value = var.apisixIpList
   }
 
+  # Custom error pages mount
+  set {
+    name  = "extraVolumeMounts[0].name"
+    value = "custom-error-pages"
+
+  }
+
+  set {
+    name  = "extraVolumeMounts[0].mountPath"
+    value = "/custom/error-pages"
+
+  }
+
+  set {
+    name  = "extraVolumeMounts[0].readOnly"
+    value = true
+
+  }
+
+  set {
+    name  = "extraVolumes[0].name"
+    value = "custom-error-pages"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.name"
+    value = kubernetes_config_map.custom_error_pages.metadata[0].name
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[0].key"
+    value = "apisix_error_403.html"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[0].path"
+    value = "apisix_error_403.html"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[1].key"
+    value = "apisix_error_429.html"
+
+  }
+
+  set {
+    name  = "extraVolumes[0].configMap.items[1].path"
+    value = "apisix_error_429.html"
+
+  }
+
+  #Custom error page nginx.conf
+  set {
+    name  = "apisix.nginx.configurationSnippet.httpStart"
+    value = file("../apisix/error_values/httpStart")
+  }
+
+  set {
+    name  = "apisix.nginx.configurationSnippet.httpSrv"
+    value = file("../apisix/error_values/httpSrv")
+  }
+
+  # Trust container's CA for Vault and other outbound CA requests
+  set {
+    name  = "apisix.nginx.configurationSnippet.httpEnd"
+    value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
+
+  }
+
   depends_on = [module.eks]
 
 }
@@ -305,21 +399,21 @@ resource "helm_release" "apisix" {
 
 resource "kubernetes_service" "aws-nlb" {
   metadata {
-    name = "nlb-apisix-tf-service"
+    name      = "nlb-apisix-tf-service"
     namespace = "apisix-tf"
     annotations = {
-      "service.beta.kubernetes.io/aws-load-balancer-type" = "external",
-      "service.beta.kubernetes.io/aws-load-balancer-scheme" = "internet-facing",
-      "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type" = "ip",
-      "service.beta.kubernetes.io/aws-load-balancer-ssl-cert" = var.certificateARN,
+      "service.beta.kubernetes.io/aws-load-balancer-type"                    = "external",
+      "service.beta.kubernetes.io/aws-load-balancer-scheme"                  = "internet-facing",
+      "service.beta.kubernetes.io/aws-load-balancer-nlb-target-type"         = "ip",
+      "service.beta.kubernetes.io/aws-load-balancer-ssl-cert"                = var.certificateARN,
       "service.beta.kubernetes.io/aws-load-balancer-target-group-attributes" = "preserve_client_ip.enabled=true"
-      }
+    }
   }
   spec {
     selector = {
       "app.kubernetes.io/name" = "apisix"
     }
-    
+
     port {
       name        = "gateway"
       port        = 443
