@@ -20,6 +20,11 @@ server:
     repository: "hashicorp/vault"
     tag: "1.17.2"
 
+  dataStorage:
+    enabled: true
+  auditStorage:
+    enabled: true
+
   ha:
     enabled: true
     replicas: 3
@@ -35,19 +40,20 @@ server:
           cluster_address = "[::]:8201"
         }
 
-        storage "raft" {
-          path = "/vault/data"
-        }
-
         service_registration "kubernetes" {}
 
-        retry_join {
-          leader_api_addr = "http://vault-0.$${SERVICE}:8200"
+        storage "raft" {
+          path = "/vault/data"
+
+          retry_join {
+            leader_api_addr = "http://vault-0.$${SERVICE}:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://vault-1.$${SERVICE}:8200"
+          }
+          retry_join {
+            leader_api_addr = "http://vault-2.$${SERVICE}:8200"
+          }
         }
-        retry_join {
-          leader_api_addr = "http://vault-1.$${SERVICE}:8200"
-        }
-        retry_join {
-          leader_api_addr = "http://vault-2.$${SERVICE}:8200"
-        }
+
 
