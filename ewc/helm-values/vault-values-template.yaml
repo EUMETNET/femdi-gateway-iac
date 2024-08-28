@@ -1,3 +1,6 @@
+global:
+  tlsDisable: false
+
 server:
   ingress:
     annotations:
@@ -25,6 +28,23 @@ server:
   auditStorage:
     enabled: true
 
+  service:
+    targetPort: 8202
+
+  volumes:
+    - name: userconfig-vault-server-tls
+      secret:
+        defaultMode: 420
+        secretName: ${vault_certificate_secret}
+
+  volumeMounts:
+    - mountPath: /vault/userconfig/vault-server-tls
+      name: userconfig-vault-server-tls
+      readOnly: true
+
+  extraEnvironmentVars:
+    VAULT_ADDR: 'http://127.0.0.1:8202'
+
   ha:
     enabled: true
     replicas: 3
@@ -34,10 +54,21 @@ server:
       config: |
         ui = true
 
+        
         listener "tcp" {
-          tls_disable = 1
+          address = "[::]:8202"
+          tls_disable = "true"
+        }
+
+        listener "tcp" {
           address = "[::]:8200"
           cluster_address = "[::]:8201"
+          tls_disable = "false"
+          tls_cert_file = "/vault/userconfig/vault-server-tls/tls.crt"
+          tls_key_file  = "/vault/userconfig/vault-server-tls/tls.key"
+          tls_client_ca_file = "/vault/userconfig/vault-server-tls/ca.crt"
+          tls_disable_client_certs = "true"
+          tls_require_and_verify_client_cert="false"
         }
 
         service_registration "kubernetes" {}
@@ -46,13 +77,22 @@ server:
           path = "/vault/data"
 
           retry_join {
-            leader_api_addr = "http://vault-0.$${SERVICE}:8200"
+            leader_api_addr = "https://vault-0.vault-internal:8200"
+            leader_client_cert_file  = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file   = "/vault/userconfig/vault-server-tls/tls.key"
+            leader_ca_cert_file    = "/vault/userconfig/vault-server-tls/ca.crt"
           }
           retry_join {
-            leader_api_addr = "http://vault-1.$${SERVICE}:8200"
+            leader_api_addr = "https://vault-1.vault-internal:8200"
+            leader_client_cert_file  = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file   = "/vault/userconfig/vault-server-tls/tls.key"
+            leader_ca_cert_file    = "/vault/userconfig/vault-server-tls/ca.crt"
           }
           retry_join {
-            leader_api_addr = "http://vault-2.$${SERVICE}:8200"
+            leader_api_addr = "https://vault-2.vault-internal:8200"
+            leader_client_cert_file  = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file   = "/vault/userconfig/vault-server-tls/tls.key"
+            leader_ca_cert_file   = "/vault/userconfig/vault-server-tls/ca.crt"
           }
         }
 

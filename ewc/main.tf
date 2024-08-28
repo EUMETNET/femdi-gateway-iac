@@ -526,6 +526,7 @@ resource "helm_release" "keycloak" {
 }
 
 
+
 ################################################################################
 # Install vault
 ################################################################################
@@ -539,6 +540,55 @@ resource "kubernetes_namespace" "vault" {
   }
 }
 
+locals {
+  vault_certificate_secret = "vault-certificates"
+}
+
+resource "kubernetes_manifest" "vault-issuer" {
+  manifest = {
+    "apiVersion" = "cert-manager.io/v1"
+    "kind"       = "Issuer"
+    "metadata" = {
+      "name"      = "vault-selfsigned-issuer"
+      "namespace" = kubernetes_namespace.vault.metadata.0.name
+    }
+    "spec" = {
+      "selfSigned" = {}
+    }
+  }
+}
+
+resource "kubernetes_manifest" "vault-certificates" {
+  manifest = {
+    "apiVersion" = "cert-manager.io/v1"
+    "kind"       = "Certificate"
+    "metadata" = {
+      "name"      = local.vault_certificate_secret
+      "namespace" = kubernetes_namespace.vault.metadata.0.name
+    }
+    "spec" = {
+      "isCA"       = true
+      "commonName" = "vault-ca"
+      "secretName" = local.vault_certificate_secret
+      "privateKey" = {
+        "algorithm" = "ECDSA"
+        "size"      = 256
+      }
+      "issuerRef" = {
+        "group" = "cert-manager.io"
+        "kind"  = "Issuer"
+        "name"  = kubernetes_manifest.vault-issuer.manifest.metadata.name
+      }
+      "dnsNames" = [
+        "*.vault-internal",
+        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}",
+        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}.svc",
+        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}.svc.cluster.local",
+      ]
+    }
+  }
+}
+
 resource "helm_release" "vault" {
   name             = "vault"
   repository       = "https://helm.releases.hashicorp.com"
@@ -549,9 +599,10 @@ resource "helm_release" "vault" {
 
   values = [
     templatefile("./helm-values/vault-values-template.yaml", {
-      cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
-      hostname       = "${var.vault_subdomain}.${var.dns_zone}",
-      ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
+      cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      hostname                 = "${var.vault_subdomain}.${var.dns_zone}",
+      ip                       = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
+      vault_certificate_secret = local.vault_certificate_secret
     })
   ]
 
