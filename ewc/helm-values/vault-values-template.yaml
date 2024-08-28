@@ -1,3 +1,6 @@
+global:
+  tlsDisable: false
+
 server:
   ingress:
     annotations:
@@ -16,41 +19,81 @@ server:
       - ${hostname}
       secretName: ${hostname}-certificate
 
+  image:
+    repository: "hashicorp/vault"
+    tag: "1.17.2"
+
   dataStorage:
     enabled: true
   auditStorage:
     enabled: true
 
-  ha: 
+  service:
+    targetPort: 8202
+
+  volumes:
+    - name: userconfig-vault-server-tls
+      secret:
+        defaultMode: 420
+        secretName: ${vault_certificate_secret}
+
+  volumeMounts:
+    - mountPath: /vault/userconfig/vault-server-tls
+      name: userconfig-vault-server-tls
+      readOnly: true
+
+  extraEnvironmentVars:
+    VAULT_ADDR: 'http://127.0.0.1:8202'
+
+  ha:
     enabled: true
     replicas: 3
     raft:
       enabled: true
       setNodeId: true
-    config: |
-      ui = true
+      config: |
+        ui = true
 
-      listener "tcp" {
-        tls_disable = 1
-        address = "[::]:8200"
-        cluster_address = "[::]:8201"
-      }
-      storage "raft" {
-          path    = "/vault/data"
-      }
+        
+        listener "tcp" {
+          address = "[::]:8202"
+          tls_disable = "true"
+        }
 
-      # Example configuration for using auto-unseal, using Google Cloud KMS. The
-      # GKMS keys must already exist, and the cluster must have a service account
-      # that is authorized to access GCP KMS.
-      #seal "gcpckms" {
-      #   project     = "vault-helm-dev"
-      #   region      = "global"
-      #   key_ring    = "vault-helm-unseal-kr"
-      #   crypto_key  = "vault-helm-unseal-key"
-      #}
+        listener "tcp" {
+          address = "[::]:8200"
+          cluster_address = "[::]:8201"
+          tls_disable = "false"
+          tls_cert_file = "/vault/userconfig/vault-server-tls/tls.crt"
+          tls_key_file  = "/vault/userconfig/vault-server-tls/tls.key"
+          tls_client_ca_file = "/vault/userconfig/vault-server-tls/ca.crt"
+          tls_disable_client_certs = "true"
+          tls_require_and_verify_client_cert="false"
+        }
 
-      # Example configuration for enabling Prometheus metrics in your config.
-      #telemetry {
-      #  prometheus_retention_time = "30s"
-      #  disable_hostname = true
-      #}
+        service_registration "kubernetes" {}
+
+        storage "raft" {
+          path = "/vault/data"
+
+          retry_join {
+            leader_api_addr = "https://vault-0.vault-internal:8200"
+            leader_client_cert_file  = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file   = "/vault/userconfig/vault-server-tls/tls.key"
+            leader_ca_cert_file    = "/vault/userconfig/vault-server-tls/ca.crt"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-1.vault-internal:8200"
+            leader_client_cert_file  = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file   = "/vault/userconfig/vault-server-tls/tls.key"
+            leader_ca_cert_file    = "/vault/userconfig/vault-server-tls/ca.crt"
+          }
+          retry_join {
+            leader_api_addr = "https://vault-2.vault-internal:8200"
+            leader_client_cert_file  = "/vault/userconfig/vault-server-tls/tls.crt"
+            leader_client_key_file   = "/vault/userconfig/vault-server-tls/tls.key"
+            leader_ca_cert_file   = "/vault/userconfig/vault-server-tls/ca.crt"
+          }
+        }
+
+
