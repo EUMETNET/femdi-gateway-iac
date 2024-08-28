@@ -28,6 +28,7 @@ server:
   auditStorage:
     enabled: true
 
+  # Change vault-active service to point to the public endpoint
   service:
     targetPort: 8202
 
@@ -42,6 +43,7 @@ server:
       name: userconfig-vault-server-tls
       readOnly: true
 
+  # Use public endpoint for Vault CLI
   extraEnvironmentVars:
     VAULT_ADDR: 'http://127.0.0.1:8202'
 
@@ -55,11 +57,13 @@ server:
         ui = true
 
         
+        # Public endpoint trough load balancer. Disable TLS so no need to set up LB with trusted CA
         listener "tcp" {
           address = "[::]:8202"
           tls_disable = "true"
         }
 
+        # Internal endpoint for clusters internal communication.
         listener "tcp" {
           address = "[::]:8200"
           cluster_address = "[::]:8201"

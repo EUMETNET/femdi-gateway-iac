@@ -18,7 +18,8 @@ provider "kubectl" {
 provider "rancher2" {
   api_url   = var.rancher_api_url
   token_key = var.rancher_token
-  insecure  = true
+  # Remove when EWC fixes their DNS
+  insecure = true
 }
 
 provider "http" {
@@ -542,10 +543,7 @@ resource "kubernetes_namespace" "vault" {
 
 locals {
   vault_certificate_secret = "vault-certificates"
-}
-
-resource "kubernetes_manifest" "vault-issuer" {
-  manifest = {
+  vault_issuer_manifest = {
     "apiVersion" = "cert-manager.io/v1"
     "kind"       = "Issuer"
     "metadata" = {
@@ -556,10 +554,7 @@ resource "kubernetes_manifest" "vault-issuer" {
       "selfSigned" = {}
     }
   }
-}
-
-resource "kubernetes_manifest" "vault-certificates" {
-  manifest = {
+  vault_certificate_manifest = {
     "apiVersion" = "cert-manager.io/v1"
     "kind"       = "Certificate"
     "metadata" = {
@@ -577,7 +572,7 @@ resource "kubernetes_manifest" "vault-certificates" {
       "issuerRef" = {
         "group" = "cert-manager.io"
         "kind"  = "Issuer"
-        "name"  = kubernetes_manifest.vault-issuer.manifest.metadata.name
+        "name"  = kubectl_manifest.vault-issuer.name
       }
       "dnsNames" = [
         "*.vault-internal",
@@ -587,6 +582,17 @@ resource "kubernetes_manifest" "vault-certificates" {
       ]
     }
   }
+}
+
+
+resource "kubectl_manifest" "vault-issuer" {
+  yaml_body  = yamlencode(local.vault_issuer_manifest)
+  depends_on = [helm_release.cert-manager]
+}
+
+resource "kubectl_manifest" "vault-certificates" {
+  yaml_body  = yamlencode(local.vault_certificate_manifest)
+  depends_on = [helm_release.cert-manager, kubectl_manifest.vault-issuer]
 }
 
 resource "helm_release" "vault" {
