@@ -438,6 +438,7 @@ resource "kubernetes_config_map" "realm-json" {
   }
 }
 
+#TODO: Add HPA
 resource "helm_release" "keycloak" {
   name             = "keycloak"
   repository       = "https://charts.bitnami.com/bitnami"
@@ -609,6 +610,8 @@ resource "helm_release" "vault" {
       hostname                 = "${var.vault_subdomain}.${var.dns_zone}",
       ip                       = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
       vault_certificate_secret = local.vault_certificate_secret
+      replicas                 = var.vault_replicas
+      replicas_iterator        = range(var.vault_replicas)
     })
   ]
 
@@ -616,5 +619,58 @@ resource "helm_release" "vault" {
   depends_on = [helm_release.cert-manager, helm_release.external-dns,
   helm_release.ingress_nginx, helm_release.csi-cinder]
 
+}
+
+# Wait for vault container to be availible
+resource "time_sleep" "wait_5_second" {
+  create_duration = "5s"
+  depends_on      = [helm_release.vault]
+}
+
+data "kubernetes_resource" "vault-pods-before" {
+  count = var.vault_replicas
+
+  api_version = "v1"
+  kind        = "Pod"
+
+  metadata {
+    name      = "vault-${count.index}"
+    namespace = kubernetes_namespace.vault.metadata.0.name
+  }
+
+  depends_on = [helm_release.vault, time_sleep.wait_5_second]
+}
+
+data "external" "vault-init" {
+  program = [
+    "bash",
+    "./vault-init/vault-init.sh",
+    var.kubeconfig_path,
+    kubernetes_namespace.vault.metadata.0.name,
+    join(" ", flatten([
+      for pod in data.kubernetes_resource.vault-pods-before : [
+        for condition in pod.object.status.conditions : condition.status
+        if condition.type == "Ready"
+      ]])
+    ),
+    var.vault_key_treshold
+  ]
+
+  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before]
+
+}
+
+data "kubernetes_resource" "vault-pods-after" {
+  count = var.vault_replicas
+
+  api_version = "v1"
+  kind        = "Pod"
+
+  metadata {
+    name      = "vault-${count.index}"
+    namespace = kubernetes_namespace.vault.metadata.0.name
+  }
+
+  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
 }
 
