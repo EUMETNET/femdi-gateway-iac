@@ -103,6 +103,18 @@ variable "vault_subdomain" {
   default     = "vault"
 }
 
+variable "vault_replicas" {
+  description = "Amount of vault replicas"
+  type        = number
+  default     = 3
+}
+
+variable "vault_key_treshold" {
+  description = "Treshold to unseal Vault"
+  type        = number
+  default     = 3
+}
+
 
 variable "devportal_subdomain" {
   description = "subdomain where devportal will be hosted"
