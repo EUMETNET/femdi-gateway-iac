@@ -25,6 +25,11 @@ provider "rancher2" {
 provider "http" {
 }
 
+provider "vault" {
+  token = coalesce(data.external.vault-init.result.root_token, var.vault_token )
+  
+}
+
 ################################################################################
 # Get id of Rancher System project
 ################################################################################
@@ -674,3 +679,82 @@ data "kubernetes_resource" "vault-pods-after" {
   depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
 }
 
+resource "vault_mount" "apisix" {
+  path        = "apisix"
+  type        = "kv"
+  options     = { version = "1" }
+  description = "Apisix secrets"
+
+  depends_on = [data.kubernetes_resource.vault-pods-after]
+}
+
+resource "vault_jwt_auth_backend" "github" {
+    description         = "JWT for github actions"
+    path                = "github"
+    oidc_discovery_url  = "https://token.actions.githubusercontent.com"
+    bound_issuer        = "https://token.actions.githubusercontent.com"
+
+    depends_on = [data.kubernetes_resource.vault-pods-after]
+}
+
+resource "vault_policy" "apisix-global" {
+  name = "apisix-global"
+
+  policy = <<EOT
+path "apisix/consumers/*" {
+  capabilities = ["read"]
+}
+
+EOT
+
+  depends_on = [data.kubernetes_resource.vault-pods-after]
+}
+
+resource "vault_policy" "dev-portal-global" {
+  name = "dev-portal-global"
+
+  policy = <<EOT
+path "apisix/consumers/*" {
+	capabilities = ["create", "read", "update", "patch", "delete", "list"]
+}
+EOT
+
+  depends_on = [data.kubernetes_resource.vault-pods-after]
+}
+
+resource "vault_policy" "api-management-tool-gha" {
+  name = "dev-portal-global"
+
+  policy = <<EOT
+path "apisix-dev/apikeys/*" { capabilities = ["read"] } 
+path "apisix-dev/urls/*" { capabilities = ["read"] } 
+path "apisix-dev/admin/*" { capabilities = ["read"] }
+EOT
+
+  depends_on = [data.kubernetes_resource.vault-pods-after]
+}
+
+resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
+  role_name       = "api-management-tool-gha"
+  backend         = vault_jwt_auth_backend.github.path
+  role_type       = "jwt"
+  user_claim      = "actor"
+  bound_claims = {
+    repository: "EURODEO/api-management-tool-poc"
+  }
+  bound_audiences = ["https://github.com/EURODEO/api-management-tool-poc"]
+  token_policies  = [vault_policy.api-management-tool-gha.name]
+  token_ttl = "5m"
+  depends_on = [data.kubernetes_resource.vault-pods-after]
+}
+
+resource "vault_token" "apisix-global" {
+  policies = [vault_policy.apisix-global]
+  period = "768h"
+  renewable = true
+}
+resource "vault_token" "dev-portal-global" {
+  policies = [vault_policy.dev-portal-global]
+  period = "768h"
+  renewable = true
+}

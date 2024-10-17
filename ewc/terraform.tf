@@ -34,6 +34,11 @@ terraform {
       source  = "hashicorp/time"
       version = "0.12.0"
     }
+
+    vault = {
+      source = "hashicorp/vault"
+      version = "4.4.0"
+    }
   }
 
   required_version = "~> 1.3"

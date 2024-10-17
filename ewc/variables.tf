@@ -115,6 +115,11 @@ variable "vault_key_treshold" {
   default     = 3
 }
 
+variable "vault_token" {
+  description = "Token for Vault if it is already initialized"
+  type        = string
+}
+
 
 variable "devportal_subdomain" {
   description = "subdomain where devportal will be hosted"
