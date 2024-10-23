@@ -30,6 +30,9 @@ provider "vault" {
   token   = coalesce(data.external.vault-init.result.root_token, var.vault_token)
 }
 
+provider "random" {
+}
+
 ################################################################################
 # Get id of Rancher System project
 ################################################################################
@@ -642,10 +645,10 @@ resource "kubernetes_config_map" "custom_error_pages" {
   }
   data = {
     "apisix_error_429.html" = templatefile("../apisix/error_pages/apisix_error_429.html", {
-      devportal_address = "${var.devportal_subdomain}.${var.dns_zone}"
+      devportal_address = "${var.dev-portal_subdomain}.${var.dns_zone}"
     })
     "apisix_error_403.html" = templatefile("../apisix/error_pages/apisix_error_403.html", {
-      devportal_address = "${var.devportal_subdomain}.${var.dns_zone}"
+      devportal_address = "${var.dev-portal_subdomain}.${var.dns_zone}"
     })
   }
 }
@@ -780,4 +783,121 @@ resource "helm_release" "apisix" {
 
 }
 
+################################################################################
 
+# Install Dev-portal
+################################################################################
+resource "kubernetes_namespace" "dev-portal" {
+  metadata {
+    annotations = {
+      "field.cattle.io/projectId" = rancher2_project.gateway.id
+    }
+
+    name = "dev-portal"
+  }
+}
+
+resource "random_string" "random" {
+  length = 32
+}
+
+# Create Secret for credentials
+resource "kubernetes_secret" "dev-portal-secret-for-backend" {
+  metadata {
+    name      = "dev-portal-secret-for-backend"
+    namespace = kubernetes_namespace.dev-portal.metadata.0.name
+  }
+
+  data = {
+    "secrets.yaml" = yamlencode({
+
+      "vault" = {
+        "url"          = "http://vault-active.vault.svc.cluster.local:8200"
+        "token"        = vault_token.dev-portal-global
+        "base_path"    = "apisix-dev/consumers"
+        "secret_phase" = random_string.random.result
+      }
+
+      "apisix" = {
+        "key_path" = "$secret:/vault/1"
+        "instances" = [
+          {
+            "name"          = "EWC"
+            "admin_url"     = "http://apisix-admin.apisix.svc.cluster.local:9180"
+            "gateway_url"   = "https://${var.apisix_subdomain}.${var.dns_zone}"
+            "admin_api_key" = var.apisix_admin
+          }
+        ]
+      }
+      "keycloak" = {
+        "url"           = "http://keycloak.keycloak.svc.cluster.local"
+        "realm"         = "test"
+        "client_id"     = "dev-portal-api"
+        "client_secret" = ""
+      }
+    })
+  }
+
+  type = "Opaque"
+}
+
+resource "helm_release" "dev-portal" {
+  name             = "dev-portal"
+  repository       = "https://rodeo-project.eu/Dev-portal/"
+  chart            = "dev-portal"
+  version          = "1.10.2"
+  namespace        = kubernetes_namespace.dev-portal.metadata.0.name
+  create_namespace = false
+
+  values = [
+    templatefile("./helm-values/dev-portal-values-template.yaml", {
+      cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      hostname       = "${var.dev-portal_subdomain}.${var.dns_zone}",
+      ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip
+    })
+  ]
+
+  set {
+    name  = "imageCredentials.username"
+    value = "USERNAME"
+  }
+
+  set_sensitive {
+    name  = "imageCredentials.password"
+    value = var.dev-portal_registry_password
+  }
+
+  set {
+    name  = "backend.image.tag"
+    value = "sha-e5fe5f5"
+  }
+
+  set {
+    name  = "backend.secrets.secretName"
+    value = kubernetes_secret.dev-portal-secret-for-backend.metadata.0.name
+  }
+
+  set {
+    name  = "backend.secrets.secretName"
+    value = kubernetes_secret.dev-portal-secret-for-backend.metadata.0.name
+  }
+
+  set {
+    name  = "frontend.image.tag"
+    value = "sha-5608cd2"
+  }
+
+  set {
+    name  = "frontend.keycloak_logout_url"
+    value = "https://${var.dev-portal_subdomain}.${var.dns_zone}"
+  }
+
+  set {
+    name  = "keycloak_url"
+    value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
+  }
+  depends_on = [helm_release.cert-manager, helm_release.external-dns,
+    helm_release.ingress_nginx, helm_release.csi-cinder, helm_release.apisix
+  , helm_release.keycloak]
+
+}
