@@ -22,12 +22,10 @@ provider "rancher2" {
   insecure = true
 }
 
-provider "http" {
-}
 
 provider "vault" {
   address = "https://${var.vault_subdomain}.${var.dns_zone}"
-  token   = coalesce(data.external.vault-init.result.root_token, var.vault_token)
+  token   = coalesce(try(data.external.vault-init.result.root_token, null), var.vault_token)
 }
 
 provider "random" {
@@ -291,9 +289,8 @@ resource "kubernetes_namespace" "keycloak" {
   }
 }
 
-# Download realm json
-data "http" "realm-json" {
-  url = "https://raw.githubusercontent.com/EURODEO/Dev-portal/main/keycloak/config/realm_export/realm-export.json"
+resource "random_password" "keycloak-dev-portal-secret" {
+  length = 32
 }
 
 # Create configmap for realm json
@@ -303,7 +300,12 @@ resource "kubernetes_config_map" "realm-json" {
     namespace = kubernetes_namespace.keycloak.metadata.0.name
   }
   data = {
-    "realm.json" = data.http.realm-json.response_body
+    "realm.json" = templatefile("./keycloak/realm-export.json", {
+      dev_portal_api_secret    = random_password.keycloak-dev-portal-secret.result
+      frontend_url             = "https://${var.dev-portal_subdomain}.${var.dns_zone}",
+      google_idp_client_secret = var.google_idp_client_secret
+      github_idp_client_secret = var.github_idp_client_secret
+    })
   }
 }
 
@@ -549,7 +551,8 @@ resource "vault_mount" "apisix" {
   options     = { version = "1" }
   description = "Apisix secrets"
 
-  depends_on = [data.kubernetes_resource.vault-pods-after]
+  depends_on = [data.external.vault-init,
+  data.kubernetes_resource.vault-pods-after]
 }
 
 resource "vault_jwt_auth_backend" "github" {
@@ -558,7 +561,7 @@ resource "vault_jwt_auth_backend" "github" {
   oidc_discovery_url = "https://token.actions.githubusercontent.com"
   bound_issuer       = "https://token.actions.githubusercontent.com"
 
-  depends_on = [data.kubernetes_resource.vault-pods-after]
+  depends_on = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
 }
 
 resource "vault_policy" "apisix-global" {
@@ -571,7 +574,7 @@ path "apisix/consumers/*" {
 
 EOT
 
-  depends_on = [data.kubernetes_resource.vault-pods-after]
+  depends_on = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
 }
 
 resource "vault_policy" "dev-portal-global" {
@@ -583,7 +586,7 @@ path "apisix/consumers/*" {
 }
 EOT
 
-  depends_on = [data.kubernetes_resource.vault-pods-after]
+  depends_on = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
 }
 
 resource "vault_policy" "api-management-tool-gha" {
@@ -595,7 +598,7 @@ path "apisix-dev/urls/*" { capabilities = ["read"] }
 path "apisix-dev/admin/*" { capabilities = ["read"] }
 EOT
 
-  depends_on = [data.kubernetes_resource.vault-pods-after]
+  depends_on = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
 }
 
 resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
@@ -609,16 +612,16 @@ resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
   bound_audiences = ["https://github.com/EURODEO/api-management-tool-poc"]
   token_policies  = [vault_policy.api-management-tool-gha.name]
   token_ttl       = 300
-  depends_on      = [data.kubernetes_resource.vault-pods-after]
+  depends_on      = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
 }
 
 resource "vault_token" "apisix-global" {
-  policies  = [vault_policy.apisix-global]
+  policies  = [vault_policy.apisix-global.name]
   period    = "768h"
   renewable = true
 }
 resource "vault_token" "dev-portal-global" {
-  policies  = [vault_policy.dev-portal-global]
+  policies  = [vault_policy.dev-portal-global.name]
   period    = "768h"
   renewable = true
 }
@@ -797,7 +800,7 @@ resource "kubernetes_namespace" "dev-portal" {
   }
 }
 
-resource "random_string" "random" {
+resource "random_password" "dev-portal-password" {
   length = 32
 }
 
@@ -815,7 +818,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         "url"          = "http://vault-active.vault.svc.cluster.local:8200"
         "token"        = vault_token.dev-portal-global
         "base_path"    = "apisix-dev/consumers"
-        "secret_phase" = random_string.random.result
+        "secret_phase" = random_password.dev-portal-password.result
       }
 
       "apisix" = {
@@ -833,7 +836,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         "url"           = "http://keycloak.keycloak.svc.cluster.local"
         "realm"         = "test"
         "client_id"     = "dev-portal-api"
-        "client_secret" = ""
+        "client_secret" = random_password.keycloak-dev-portal-secret.result
       }
     })
   }

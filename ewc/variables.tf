@@ -129,8 +129,19 @@ variable "dev-portal_subdomain" {
 }
 
 variable "dev-portal_registry_password" {
-  description = "subdomain where devportal will be hosted"
+  description = "Container registry password for dev-portal"
   type        = string
-  default     = "devportal"
+  sensitive   = true
+}
+
+variable "google_idp_client_secret" {
+  description = "Secret to use Google idp"
+  type        = string
+  sensitive   = true
+}
+
+variable "github_idp_client_secret" {
+  description = "Secret to use Github idp"
+  type        = string
   sensitive   = true
 }

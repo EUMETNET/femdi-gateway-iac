@@ -16,13 +16,14 @@ output "vault_pod_ready_statuses_before_init" {
 output "vault_unseal_keys" {
   description = "Keys for vault unsealing. Store somewhere safe. If empty Vault already initialized."
   value       = try([for s in split(",", data.external.vault-init.result.flattened_unseal_keys_b64) : s], "")
+  sensitive   = true
 }
 
 output "vault_root_token" {
   description = "Root token for vault. Store somewhere safe. If empty Vault already initialized."
   value       = try(data.external.vault-init.result.root_token, "")
+  sensitive   = true
 }
-
 
 output "vault_pod_ready_statuses_after_init" {
   description = "Vault cluster status ater running init. Should be true."
@@ -33,3 +34,10 @@ output "vault_pod_ready_statuses_after_init" {
     ]
   ])
 }
+
+output "dev-portal_keycloak_secret" {
+  description = "Dev-portal's secret to authenticate with Keycloak"
+  value       = random_password.keycloak-dev-portal-secret
+  sensitive   = true
+}
+
