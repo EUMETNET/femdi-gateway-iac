@@ -25,245 +25,33 @@ provider "rancher2" {
 
 provider "vault" {
   address = "https://${var.vault_subdomain}.${var.dns_zone}"
-  token   = coalesce(try(data.external.vault-init.result.root_token, null), var.vault_token)
+  token   = coalesce(try(module.ewc-vault-init.vault_root_token, null), var.vault_token)
 }
 
 provider "random" {
 }
 
-################################################################################
-# Get id of Rancher System project
-################################################################################
-data "rancher2_project" "System" {
-  provider   = rancher2
-  cluster_id = var.rancher_cluster_id
-  name       = "System"
-}
 
-################################################################################
-# Install openstack-cinder-csi Plugin under System project
-################################################################################
-resource "kubernetes_namespace" "openstack-cinder-csi" {
-  metadata {
-    annotations = {
-      "field.cattle.io/projectId" = data.rancher2_project.System.id
-    }
+module "ewc-vault-init" {
+  source = "./ewc-vault-init/"
 
-    name = "openstack-cinder-csi"
-  }
-}
-resource "helm_release" "csi-cinder" {
-  name             = "openstack-cinder-csi"
-  repository       = "https://kubernetes.github.io/cloud-provider-openstack"
-  chart            = "openstack-cinder-csi"
-  version          = "2.30.0"
-  namespace        = kubernetes_namespace.openstack-cinder-csi.metadata.0.name
-  create_namespace = false
+  rancher_api_url    = var.rancher_api_url
+  rancher_token      = var.rancher_token
+  rancher_cluster_id = var.rancher_cluster_id
+  kubeconfig_path    = var.kubeconfig_path
 
-  set {
-    name  = "storageClass.delete.isDefault"
-    value = true
-  }
+  route53_access_key     = var.route53_access_key
+  route53_secret_key     = var.route53_secret_key
+  route53_zone_id_filter = var.route53_zone_id_filter
+  dns_zone               = var.dns_zone
 
-  set {
-    name  = "secret.filename"
-    value = "cloud-config"
-  }
-}
+  email_cert_manager = var.email_cert_manager
 
-################################################################################
-# Install ingress-nginx under System project
-################################################################################
-resource "kubernetes_namespace" "ingress-nginx" {
-  metadata {
-    annotations = {
-      "field.cattle.io/projectId" = data.rancher2_project.System.id
-    }
+  vault_project_id = rancher2_project.gateway.id
+  vault_subdomain    = var.vault_subdomain
+  vault_replicas     = var.vault_replicas
+  vault_key_treshold = var.vault_key_treshold
 
-    name = "ingress-nginx"
-  }
-}
-resource "helm_release" "ingress_nginx" {
-  name             = "ingress-nginx"
-  repository       = "https://kubernetes.github.io/ingress-nginx"
-  chart            = "ingress-nginx"
-  version          = "4.7.1"
-  namespace        = kubernetes_namespace.ingress-nginx.metadata.0.name
-  create_namespace = false
-
-  set {
-    name  = "controller.kind"
-    value = "DaemonSet"
-  }
-
-  set {
-    name  = "controller.ingressClassResource.default"
-    value = true
-  }
-
-  # Needed for keycloak to work
-  set {
-    name  = "controller.config.proxy-buffer-size"
-    value = "256k"
-  }
-}
-
-data "kubernetes_service" "ingress-nginx-controller" {
-  metadata {
-    name      = "ingress-nginx-controller"
-    namespace = kubernetes_namespace.ingress-nginx.metadata.0.name
-  }
-
-  depends_on = [helm_release.ingress_nginx]
-}
-
-################################################################################
-# Install external-dns under System project
-################################################################################
-resource "kubernetes_namespace" "external-dns" {
-  metadata {
-    annotations = {
-      "field.cattle.io/projectId" = data.rancher2_project.System.id
-    }
-
-    name = "external-dns"
-  }
-}
-resource "helm_release" "external-dns" {
-  name             = "external-dns"
-  repository       = "https://charts.bitnami.com/bitnami"
-  chart            = "external-dns"
-  version          = "6.23.6"
-  namespace        = kubernetes_namespace.external-dns.metadata.0.name
-  create_namespace = false
-
-  set {
-    name  = "policy"
-    value = "upsert-only"
-  }
-
-  set {
-    name  = "controller.ingressClassResource.default"
-    value = true
-  }
-
-  set {
-    name  = "aws.credentials.accessKey"
-    value = var.route53_access_key
-
-  }
-
-  set {
-    name  = "aws.credentials.secretKey"
-    value = var.route53_secret_key
-
-  }
-
-  set_list {
-    name  = "zoneIdFilters"
-    value = [var.route53_zone_id_filter]
-  }
-}
-
-################################################################################
-# Install cert-manager under System project
-################################################################################
-resource "kubernetes_namespace" "cert-manager" {
-  metadata {
-    annotations = {
-      "field.cattle.io/projectId" = data.rancher2_project.System.id
-    }
-
-    name = "cert-manager"
-  }
-}
-resource "helm_release" "cert-manager" {
-  name             = "cert-manager"
-  repository       = "https://charts.jetstack.io/"
-  chart            = "cert-manager"
-  version          = "1.11.5"
-  namespace        = kubernetes_namespace.cert-manager.metadata.0.name
-  create_namespace = false
-
-  set {
-    name  = "installCRDs"
-    value = true
-  }
-
-  set {
-    name  = "ingressShim.defaultACMEChallengeType"
-    value = "dns01"
-  }
-
-  set {
-    name  = "ingressShim.defaultACMEDNS01ChallengeProvider"
-    value = "route53"
-  }
-
-  set {
-    name  = "ingressShim.defaultIssuerKind"
-    value = "ClusterIssuer"
-  }
-
-  set {
-    name  = "ingressShim.letsencrypt-prod"
-    value = "route53"
-  }
-}
-
-resource "kubernetes_secret" "acme-route53-secret" {
-  metadata {
-    name      = "acme-route53"
-    namespace = kubernetes_namespace.cert-manager.metadata.0.name
-  }
-
-  data = {
-    secret-access-key = var.route53_secret_key
-  }
-
-  type = "Opaque"
-}
-
-locals {
-  clusterissuer_letsencrypt_prod_manifest = {
-    "apiVersion" = "cert-manager.io/v1"
-    "kind"       = "ClusterIssuer"
-    "metadata" = {
-      "name"      = "letsencrypt-prod"
-      "namespace" = kubernetes_namespace.cert-manager.metadata.0.name
-    }
-    "spec" = {
-      "acme" = {
-        "email" = var.email_cert_manager
-        "privateKeySecretRef" = {
-          "name" = "letsencrypt-prod"
-        }
-        "server" = "https://acme-v02.api.letsencrypt.org/directory"
-        "solvers" = [
-          {
-            "dns01" = {
-              "route53" = {
-                "accessKeyID" = var.route53_access_key
-                "region"      = "eu-central-1"
-                "secretAccessKeySecretRef" = {
-                  "key"  = "secret-access-key"
-                  "name" = kubernetes_secret.acme-route53-secret.metadata.0.name
-                }
-              }
-            }
-            "selector" = {
-              "dnsZones" = [var.dns_zone]
-            }
-          },
-        ]
-      }
-    }
-  }
-}
-
-resource "kubectl_manifest" "clusterissuer_letsencrypt_prod" {
-  yaml_body  = yamlencode(local.clusterissuer_letsencrypt_prod_manifest)
-  depends_on = [helm_release.cert-manager]
 
 }
 
@@ -320,9 +108,9 @@ resource "helm_release" "keycloak" {
 
   values = [
     templatefile("./helm-values/keycloak-values-template.yaml", {
-      cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      cluster_issuer = module.ewc-vault-init.cluster_issuer
       hostname       = "${var.keycloak_subdomain}.${var.dns_zone}",
-      ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
+      ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
 
@@ -393,156 +181,8 @@ resource "helm_release" "keycloak" {
 
   }
 
-  depends_on = [helm_release.cert-manager, helm_release.external-dns,
-  helm_release.ingress_nginx, helm_release.csi-cinder]
 
-}
-
-
-
-################################################################################
-# Install vault
-################################################################################
-resource "kubernetes_namespace" "vault" {
-  metadata {
-    annotations = {
-      "field.cattle.io/projectId" = rancher2_project.gateway.id
-    }
-
-    name = "vault"
-  }
-}
-
-locals {
-  vault_certificate_secret = "vault-certificates"
-  vault_issuer_manifest = {
-    "apiVersion" = "cert-manager.io/v1"
-    "kind"       = "Issuer"
-    "metadata" = {
-      "name"      = "vault-selfsigned-issuer"
-      "namespace" = kubernetes_namespace.vault.metadata.0.name
-    }
-    "spec" = {
-      "selfSigned" = {}
-    }
-  }
-  vault_certificate_manifest = {
-    "apiVersion" = "cert-manager.io/v1"
-    "kind"       = "Certificate"
-    "metadata" = {
-      "name"      = local.vault_certificate_secret
-      "namespace" = kubernetes_namespace.vault.metadata.0.name
-    }
-    "spec" = {
-      "isCA"       = true
-      "commonName" = "vault-ca"
-      "secretName" = local.vault_certificate_secret
-      "privateKey" = {
-        "algorithm" = "ECDSA"
-        "size"      = 256
-      }
-      "issuerRef" = {
-        "group" = "cert-manager.io"
-        "kind"  = "Issuer"
-        "name"  = kubectl_manifest.vault-issuer.name
-      }
-      "dnsNames" = [
-        "*.vault-internal",
-        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}",
-        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}.svc",
-        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}.svc.cluster.local",
-      ]
-    }
-  }
-}
-
-
-resource "kubectl_manifest" "vault-issuer" {
-  yaml_body  = yamlencode(local.vault_issuer_manifest)
-  depends_on = [helm_release.cert-manager]
-}
-
-resource "kubectl_manifest" "vault-certificates" {
-  yaml_body  = yamlencode(local.vault_certificate_manifest)
-  depends_on = [helm_release.cert-manager, kubectl_manifest.vault-issuer]
-}
-
-resource "helm_release" "vault" {
-  name             = "vault"
-  repository       = "https://helm.releases.hashicorp.com"
-  chart            = "vault"
-  version          = "0.28.0"
-  namespace        = kubernetes_namespace.vault.metadata.0.name
-  create_namespace = false
-
-  values = [
-    templatefile("./helm-values/vault-values-template.yaml", {
-      cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
-      hostname                 = "${var.vault_subdomain}.${var.dns_zone}",
-      ip                       = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
-      vault_certificate_secret = local.vault_certificate_secret
-      replicas                 = var.vault_replicas
-      replicas_iterator        = range(var.vault_replicas)
-    })
-  ]
-
-
-  depends_on = [helm_release.cert-manager, helm_release.external-dns,
-  helm_release.ingress_nginx, helm_release.csi-cinder]
-
-}
-
-# Wait for vault container to be availible
-resource "time_sleep" "wait_5_second" {
-  create_duration = "5s"
-  depends_on      = [helm_release.vault]
-}
-
-data "kubernetes_resource" "vault-pods-before" {
-  count = var.vault_replicas
-
-  api_version = "v1"
-  kind        = "Pod"
-
-  metadata {
-    name      = "vault-${count.index}"
-    namespace = kubernetes_namespace.vault.metadata.0.name
-  }
-
-  depends_on = [helm_release.vault, time_sleep.wait_5_second]
-}
-
-data "external" "vault-init" {
-  program = [
-    "bash",
-    "./vault-init/vault-init.sh",
-    var.kubeconfig_path,
-    kubernetes_namespace.vault.metadata.0.name,
-    join(" ", flatten([
-      for pod in data.kubernetes_resource.vault-pods-before : [
-        for condition in pod.object.status.conditions : condition.status
-        if condition.type == "Ready"
-      ]])
-    ),
-    var.vault_key_treshold
-  ]
-
-  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before]
-
-}
-
-data "kubernetes_resource" "vault-pods-after" {
-  count = var.vault_replicas
-
-  api_version = "v1"
-  kind        = "Pod"
-
-  metadata {
-    name      = "vault-${count.index}"
-    namespace = kubernetes_namespace.vault.metadata.0.name
-  }
-
-  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
+  depends_on = [module.ewc-vault-init]
 }
 
 resource "vault_mount" "apisix" {
@@ -551,8 +191,7 @@ resource "vault_mount" "apisix" {
   options     = { version = "1" }
   description = "Apisix secrets"
 
-  depends_on = [data.external.vault-init,
-  data.kubernetes_resource.vault-pods-after]
+  depends_on = [module.ewc-vault-init]
 }
 
 resource "vault_jwt_auth_backend" "github" {
@@ -561,7 +200,7 @@ resource "vault_jwt_auth_backend" "github" {
   oidc_discovery_url = "https://token.actions.githubusercontent.com"
   bound_issuer       = "https://token.actions.githubusercontent.com"
 
-  depends_on = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
+  depends_on = [module.ewc-vault-init]
 }
 
 resource "vault_policy" "apisix-global" {
@@ -574,7 +213,7 @@ path "apisix/consumers/*" {
 
 EOT
 
-  depends_on = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
+  depends_on = [module.ewc-vault-init]
 }
 
 resource "vault_policy" "dev-portal-global" {
@@ -586,7 +225,7 @@ path "apisix/consumers/*" {
 }
 EOT
 
-  depends_on = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
+  depends_on = [module.ewc-vault-init]
 }
 
 resource "vault_policy" "api-management-tool-gha" {
@@ -598,7 +237,7 @@ path "apisix-dev/urls/*" { capabilities = ["read"] }
 path "apisix-dev/admin/*" { capabilities = ["read"] }
 EOT
 
-  depends_on = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
+  depends_on = [module.ewc-vault-init]
 }
 
 resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
@@ -612,18 +251,23 @@ resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
   bound_audiences = ["https://github.com/EURODEO/api-management-tool-poc"]
   token_policies  = [vault_policy.api-management-tool-gha.name]
   token_ttl       = 300
-  depends_on      = [data.external.vault-init, data.kubernetes_resource.vault-pods-after]
+
+  depends_on = [module.ewc-vault-init]
 }
 
 resource "vault_token" "apisix-global" {
   policies  = [vault_policy.apisix-global.name]
   period    = "768h"
   renewable = true
+
+  depends_on = [module.ewc-vault-init]
 }
 resource "vault_token" "dev-portal-global" {
   policies  = [vault_policy.dev-portal-global.name]
   period    = "768h"
   renewable = true
+
+  depends_on = [module.ewc-vault-init]
 }
 
 ################################################################################
@@ -666,9 +310,9 @@ resource "helm_release" "apisix" {
 
   values = [
     templatefile("./helm-values/apisix-values-template.yaml", {
-      cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      cluster_issuer = module.ewc-vault-init.cluster_issuer,
       hostname       = "${var.apisix_subdomain}.${var.dns_zone}",
-      ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip
+      ip             = module.ewc-vault-init.load_balancer_ip 
     })
   ]
 
@@ -781,8 +425,7 @@ resource "helm_release" "apisix" {
 
   }
 
-  depends_on = [helm_release.cert-manager, helm_release.external-dns,
-  helm_release.ingress_nginx, helm_release.csi-cinder]
+  depends_on = [module.ewc-vault-init]
 
 }
 
@@ -854,9 +497,9 @@ resource "helm_release" "dev-portal" {
 
   values = [
     templatefile("./helm-values/dev-portal-values-template.yaml", {
-      cluster_issuer = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      cluster_issuer = module.ewc-vault-init.cluster_issuer,
       hostname       = "${var.dev-portal_subdomain}.${var.dns_zone}",
-      ip             = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip
+      ip             = module.ewc-vault-init.load_balancer_ip 
     })
   ]
 
@@ -899,8 +542,7 @@ resource "helm_release" "dev-portal" {
     name  = "keycloak_url"
     value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
   }
-  depends_on = [helm_release.cert-manager, helm_release.external-dns,
-    helm_release.ingress_nginx, helm_release.csi-cinder, helm_release.apisix
-  , helm_release.keycloak]
+
+  depends_on = [module.ewc-vault-init]
 
 }
