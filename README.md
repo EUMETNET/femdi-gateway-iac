@@ -7,7 +7,8 @@ terraform init
 ```
 
 
-The EWC part of Terraform code has to be run in two separate part for bootstrapping the Vault instances
+> [!IMPORTANT] 
+> The EWC part of Terraform code has to be run in two separate part for bootstrapping the Vault instances
 
 
 ## First
@@ -38,7 +39,9 @@ vault_pod_ready_statuses_before_init = [
 vault_root_token = <sensitive>
 vault_unseal_keys = <sensitive>
 ```
-Make sure to store `vault_root_token` `vault_unseal_keys` and `dev-portal_keycloak_secret` somewhere safe.
+
+> [!IMPORTANT] 
+> Make sure to store `vault_root_token` `vault_unseal_keys` and `dev-portal_keycloak_secret` somewhere safe.
 
 You can access sensitive values using commands:
 ```bash
@@ -69,7 +72,8 @@ vault_pod_ready_statuses_before_init = [
 ]
 ```
 
-This time make sure to store `dev-portal_keycloak_secret` somewhere safe:
+> [!IMPORTANT] 
+> This time make sure to store `dev-portal_keycloak_secret` somewhere safe:
 ```bash
 terraform output dev-portal_keycloak_secret
 ```
