@@ -5,7 +5,7 @@ output "load_balancer_ip" {
 
 output "cluster_issuer" {
   description = "Let's Encrypt cluster issuer's name"
-  value = kubectl_manifest.clusterissuer_letsencrypt_prod.name
+  value       = kubectl_manifest.clusterissuer_letsencrypt_prod.name
 }
 
 output "vault_pod_ready_statuses_before_init" {
@@ -20,13 +20,13 @@ output "vault_pod_ready_statuses_before_init" {
 
 output "vault_unseal_keys" {
   description = "Keys for vault unsealing. Store somewhere safe. If empty Vault already initialized."
-  value       = try([for s in split(",", data.external.vault-init.result.flattened_unseal_keys_b64) : s], "")
+  value       = try([for s in split(",", data.external.vault-init.result.flattened_unseal_keys_b64) : s], null)
   sensitive   = true
 }
 
 output "vault_root_token" {
   description = "Root token for vault. Store somewhere safe. If empty Vault already initialized."
-  value       = try(data.external.vault-init.result.root_token, "")
+  value       = try(data.external.vault-init.result.root_token, null)
   sensitive   = true
 }
 

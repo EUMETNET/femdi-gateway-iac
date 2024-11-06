@@ -25,7 +25,7 @@ provider "rancher2" {
 
 provider "vault" {
   address = "https://${var.vault_subdomain}.${var.dns_zone}"
-  token   = coalesce(try(module.ewc-vault-init.vault_root_token, null), var.vault_token)
+  token   = var.vault_token
 }
 
 provider "random" {
@@ -47,7 +47,7 @@ module "ewc-vault-init" {
 
   email_cert_manager = var.email_cert_manager
 
-  vault_project_id = rancher2_project.gateway.id
+  vault_project_id   = rancher2_project.gateway.id
   vault_subdomain    = var.vault_subdomain
   vault_replicas     = var.vault_replicas
   vault_key_treshold = var.vault_key_treshold
@@ -88,7 +88,7 @@ resource "kubernetes_config_map" "realm-json" {
     namespace = kubernetes_namespace.keycloak.metadata.0.name
   }
   data = {
-    "realm.json" = templatefile("./keycloak/realm-export.json", {
+    "realm.json" = templatefile("./keycloak-realm/realm-export.json", {
       dev_portal_api_secret    = random_password.keycloak-dev-portal-secret.result
       frontend_url             = "https://${var.dev-portal_subdomain}.${var.dns_zone}",
       google_idp_client_secret = var.google_idp_client_secret
@@ -312,7 +312,7 @@ resource "helm_release" "apisix" {
     templatefile("./helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
       hostname       = "${var.apisix_subdomain}.${var.dns_zone}",
-      ip             = module.ewc-vault-init.load_balancer_ip 
+      ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
 
@@ -459,7 +459,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
 
       "vault" = {
         "url"          = "http://vault-active.vault.svc.cluster.local:8200"
-        "token"        = vault_token.dev-portal-global
+        "token"        = vault_token.dev-portal-global.client_token
         "base_path"    = "apisix-dev/consumers"
         "secret_phase" = random_password.dev-portal-password.result
       }
@@ -499,7 +499,7 @@ resource "helm_release" "dev-portal" {
     templatefile("./helm-values/dev-portal-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
       hostname       = "${var.dev-portal_subdomain}.${var.dns_zone}",
-      ip             = module.ewc-vault-init.load_balancer_ip 
+      ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
 
@@ -539,7 +539,7 @@ resource "helm_release" "dev-portal" {
   }
 
   set {
-    name  = "keycloak_url"
+    name  = "frontend.keycloak_url"
     value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
   }
 

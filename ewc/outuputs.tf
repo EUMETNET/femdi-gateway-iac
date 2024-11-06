@@ -5,7 +5,7 @@ output "load_balancer_ip" {
 
 output "vault_pod_ready_statuses_before_init" {
   description = "Vault cluster status before running init. If this array is true you should have unseal and root token in a previus run"
-  value = module.ewc-vault-init.vault_pod_ready_statuses_before_init
+  value       = module.ewc-vault-init.vault_pod_ready_statuses_before_init
 
 }
 
@@ -18,18 +18,17 @@ output "vault_unseal_keys" {
 output "vault_root_token" {
   description = "Root token for vault. Store somewhere safe. If empty Vault already initialized."
   value       = module.ewc-vault-init.vault_root_token
-
   sensitive   = true
 }
 
 output "vault_pod_ready_statuses_after_init" {
   description = "Vault cluster status ater running init. Should be true."
-  value = module.ewc-vault-init.vault_pod_ready_statuses_after_init
+  value       = module.ewc-vault-init.vault_pod_ready_statuses_after_init
 }
 
 output "dev-portal_keycloak_secret" {
   description = "Dev-portal's secret to authenticate with Keycloak"
-  value       = random_password.keycloak-dev-portal-secret
+  value       = random_password.keycloak-dev-portal-secret.result
   sensitive   = true
 }
 

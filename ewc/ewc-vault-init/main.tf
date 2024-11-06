@@ -375,7 +375,7 @@ data "kubernetes_resource" "vault-pods-before" {
 data "external" "vault-init" {
   program = [
     "bash",
-    "./vault-init/vault-init.sh",
+    "./ewc-vault-init/vault-init/vault-init.sh",
     var.kubeconfig_path,
     kubernetes_namespace.vault.metadata.0.name,
     join(" ", flatten([
@@ -391,6 +391,12 @@ data "external" "vault-init" {
 
 }
 
+# Wait for vault container to be ready
+resource "time_sleep" "wait_another_5_second" {
+  create_duration = "5s"
+  depends_on      = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
+}
+
 data "kubernetes_resource" "vault-pods-after" {
   count = var.vault_replicas
 
@@ -402,5 +408,5 @@ data "kubernetes_resource" "vault-pods-after" {
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 
-  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
+  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init, time_sleep.wait_another_5_second]
 }
