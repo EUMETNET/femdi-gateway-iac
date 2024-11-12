@@ -3,7 +3,7 @@ apisix:
     ingress:
       annotations:
         cert-manager.io/cluster-issuer: ${cluster_issuer}
-        external-dns.alpha.kubernetes.io/hostname: ${hostname}
+        external-dns.alpha.kubernetes.io/hostname: admin-${hostname}
         external-dns.alpha.kubernetes.io/target: ${ip}
         kubernetes.io/tls-acme: "true"
       enabled: true
@@ -17,7 +17,7 @@ apisix:
         secretName: admin-${hostname}-certificate
 ingress:
   annotations:
-    certmanager.k8s.io/cluster-issuer: ${cluster_issuer}
+    cert-manager.io/cluster-issuer: ${cluster_issuer}
     external-dns.alpha.kubernetes.io/hostname: ${hostname}
     external-dns.alpha.kubernetes.io/target: ${ip}
     kubernetes.io/tls-acme: "true"
