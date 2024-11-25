@@ -55,6 +55,10 @@ module "ewc-vault-init" {
 
 }
 
+locals {
+  vault_host = "http://vault-active.vault.svc.cluster.local:8200"
+}
+
 ################################################################################
 # Install gateway apps
 ################################################################################
@@ -381,7 +385,7 @@ resource "helm_release" "apisix" {
 
   set {
     name  = "apisix.vault.host"
-    value = "http://vault-active.vault.svc.cluster.local:8200"
+    value = local.vault_host
   }
 
   set {
@@ -500,7 +504,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
     "secrets.yaml" = yamlencode({
 
       "vault" = {
-        "url"          = "http://vault-active.vault.svc.cluster.local:8200"
+        "url"          = local.vault_host
         "token"        = vault_token.dev-portal-global.client_token
         "base_path"    = "apisix-dev/consumers"
         "secret_phase" = random_password.dev-portal-password.result
