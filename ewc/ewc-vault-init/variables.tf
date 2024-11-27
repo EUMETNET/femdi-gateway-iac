@@ -9,6 +9,11 @@ variable "rancher_token" {
   sensitive   = true
 }
 
+variable "rancher_insecure" {
+  description = "Is Rancher instance insecure"
+  type        = bool
+  default     = false
+}
 
 variable "rancher_cluster_id" {
   description = "ID of your Rancher cluster"
@@ -73,6 +78,11 @@ variable "vault_replicas" {
   default     = 3
 }
 
+variable "vault_anti-affinity" {
+  description = "Do you want to use Vault anti-affinity"
+  type        = bool
+  default     = true
+}
 variable "vault_key_treshold" {
   description = "Treshold to unseal Vault"
   type        = number

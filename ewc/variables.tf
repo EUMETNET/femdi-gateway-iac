@@ -9,6 +9,11 @@ variable "rancher_token" {
   sensitive   = true
 }
 
+variable "rancher_insecure" {
+  description = "Is Rancher instance insecure"
+  type        = bool
+  default     = false
+}
 
 variable "rancher_cluster_id" {
   description = "ID of your Rancher cluster"
@@ -88,6 +93,7 @@ variable "apisix_ip_list" {
 
 variable "keycloak_admin_password" {
   description = "Password for keycloak admin"
+  type        = string
   sensitive   = true
 }
 
@@ -107,6 +113,12 @@ variable "vault_replicas" {
   description = "Amount of vault replicas"
   type        = number
   default     = 3
+}
+
+variable "vault_anti-affinity" {
+  description = "Do you want to use Vault anti-affinity"
+  type        = bool
+  default     = true
 }
 
 variable "vault_key_treshold" {

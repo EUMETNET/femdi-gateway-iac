@@ -18,8 +18,7 @@ provider "kubectl" {
 provider "rancher2" {
   api_url   = var.rancher_api_url
   token_key = var.rancher_token
-  # Remove when EWC fixes their DNS
-  insecure = true
+  insecure  = var.rancher_insecure
 }
 
 
@@ -47,10 +46,11 @@ module "ewc-vault-init" {
 
   email_cert_manager = var.email_cert_manager
 
-  vault_project_id   = rancher2_project.gateway.id
-  vault_subdomain    = var.vault_subdomain
-  vault_replicas     = var.vault_replicas
-  vault_key_treshold = var.vault_key_treshold
+  vault_project_id    = rancher2_project.gateway.id
+  vault_subdomain     = var.vault_subdomain
+  vault_replicas      = var.vault_replicas
+  vault_anti-affinity = var.vault_anti-affinity
+  vault_key_treshold  = var.vault_key_treshold
 
 
 }

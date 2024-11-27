@@ -1,6 +1,13 @@
 global:
   tlsDisable: false
 
+
+# Disable anti-affinity if needed
+%{ if anti-affinity == false }
+injector:
+  affinity: null
+%{ endif }
+
 server:
   ingress:
     annotations:
@@ -47,6 +54,10 @@ server:
   extraEnvironmentVars:
     VAULT_ADDR: 'http://127.0.0.1:8202'
 
+# Disable anti-affinity if needed
+%{ if anti-affinity == false }
+  affinity: null
+%{ endif }
   ha:
     enabled: true
     replicas: ${replicas}
@@ -56,7 +67,7 @@ server:
       config: |
         ui = true
 
-        
+
         # Public endpoint trough load balancer. Disable TLS so no need to set up LB with trusted CA
         listener "tcp" {
           address = "[::]:8202"

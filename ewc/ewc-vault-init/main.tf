@@ -18,8 +18,7 @@ provider "kubectl" {
 provider "rancher2" {
   api_url   = var.rancher_api_url
   token_key = var.rancher_token
-  # Remove when EWC fixes their DNS
-  insecure = true
+  insecure  = var.rancher_insecure
 }
 
 ################################################################################
@@ -31,81 +30,17 @@ data "rancher2_project" "System" {
   name       = "System"
 }
 
-################################################################################
-# Install openstack-cinder-csi Plugin under System project
-################################################################################
-resource "kubernetes_namespace" "openstack-cinder-csi" {
-  metadata {
-    annotations = {
-      "field.cattle.io/projectId" = data.rancher2_project.System.id
-    }
 
-    name = "openstack-cinder-csi"
-  }
-}
-resource "helm_release" "csi-cinder" {
-  name             = "openstack-cinder-csi"
-  repository       = "https://kubernetes.github.io/cloud-provider-openstack"
-  chart            = "openstack-cinder-csi"
-  version          = "2.30.0"
-  namespace        = kubernetes_namespace.openstack-cinder-csi.metadata.0.name
-  create_namespace = false
-
-  set {
-    name  = "storageClass.delete.isDefault"
-    value = true
-  }
-
-  set {
-    name  = "secret.filename"
-    value = "cloud-config"
-  }
-}
 
 ################################################################################
-# Install ingress-nginx under System project
+# Query ingress-nginx load balancer's IP
 ################################################################################
-resource "kubernetes_namespace" "ingress-nginx" {
-  metadata {
-    annotations = {
-      "field.cattle.io/projectId" = data.rancher2_project.System.id
-    }
-
-    name = "ingress-nginx"
-  }
-}
-resource "helm_release" "ingress_nginx" {
-  name             = "ingress-nginx"
-  repository       = "https://kubernetes.github.io/ingress-nginx"
-  chart            = "ingress-nginx"
-  version          = "4.7.1"
-  namespace        = kubernetes_namespace.ingress-nginx.metadata.0.name
-  create_namespace = false
-
-  set {
-    name  = "controller.kind"
-    value = "DaemonSet"
-  }
-
-  set {
-    name  = "controller.ingressClassResource.default"
-    value = true
-  }
-
-  # Needed for keycloak to work
-  set {
-    name  = "controller.config.proxy-buffer-size"
-    value = "256k"
-  }
-}
-
 data "kubernetes_service" "ingress-nginx-controller" {
   metadata {
     name      = "ingress-nginx-controller"
-    namespace = kubernetes_namespace.ingress-nginx.metadata.0.name
+    namespace = "kube-system"
   }
 
-  depends_on = [helm_release.ingress_nginx]
 }
 
 ################################################################################
@@ -339,22 +274,22 @@ resource "helm_release" "vault" {
     templatefile("./helm-values/vault-values-template.yaml", {
       cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
       hostname                 = "${var.vault_subdomain}.${var.dns_zone}",
-      ip                       = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
+      ip                       = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
       vault_certificate_secret = local.vault_certificate_secret
       replicas                 = var.vault_replicas
       replicas_iterator        = range(var.vault_replicas)
+      anti-affinity            = var.vault_anti-affinity
     })
   ]
 
 
-  depends_on = [helm_release.cert-manager, helm_release.external-dns,
-  helm_release.ingress_nginx, helm_release.csi-cinder]
+  depends_on = [helm_release.cert-manager, helm_release.external-dns]
 
 }
 
 # Wait for vault container to be availible
-resource "time_sleep" "wait_5_second" {
-  create_duration = "5s"
+resource "time_sleep" "wait_before" {
+  create_duration = "10s"
   depends_on      = [helm_release.vault]
 }
 
@@ -369,7 +304,7 @@ data "kubernetes_resource" "vault-pods-before" {
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 
-  depends_on = [helm_release.vault, time_sleep.wait_5_second]
+  depends_on = [helm_release.vault, time_sleep.wait_before]
 }
 
 data "external" "vault-init" {
@@ -387,14 +322,14 @@ data "external" "vault-init" {
     var.vault_key_treshold
   ]
 
-  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before]
+  depends_on = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before]
 
 }
 
 # Wait for vault container to be ready
-resource "time_sleep" "wait_another_5_second" {
-  create_duration = "5s"
-  depends_on      = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
+resource "time_sleep" "wait_after" {
+  create_duration = "10s"
+  depends_on      = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
 }
 
 data "kubernetes_resource" "vault-pods-after" {
@@ -408,5 +343,5 @@ data "kubernetes_resource" "vault-pods-after" {
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 
-  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init, time_sleep.wait_another_5_second]
+  depends_on = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init, time_sleep.wait_after]
 }
