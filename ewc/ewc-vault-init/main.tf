@@ -18,8 +18,7 @@ provider "kubectl" {
 provider "rancher2" {
   api_url   = var.rancher_api_url
   token_key = var.rancher_token
-  # Remove when EWC fixes their DNS
-  insecure = true
+  insecure  = var.rancher_insecure
 }
 
 ################################################################################
@@ -275,22 +274,22 @@ resource "helm_release" "vault" {
     templatefile("./helm-values/vault-values-template.yaml", {
       cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
       hostname                 = "${var.vault_subdomain}.${var.dns_zone}",
-      ip                       = data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].ip,
+      ip                       = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
       vault_certificate_secret = local.vault_certificate_secret
       replicas                 = var.vault_replicas
       replicas_iterator        = range(var.vault_replicas)
+      anti-affinity            = var.vault_anti-affinity
     })
   ]
 
 
-  depends_on = [helm_release.cert-manager, helm_release.external-dns,
-  helm_release.ingress_nginx, helm_release.csi-cinder]
+  depends_on = [helm_release.cert-manager, helm_release.external-dns]
 
 }
 
 # Wait for vault container to be availible
-resource "time_sleep" "wait_5_second" {
-  create_duration = "5s"
+resource "time_sleep" "wait_before" {
+  create_duration = "10s"
   depends_on      = [helm_release.vault]
 }
 
@@ -305,7 +304,7 @@ data "kubernetes_resource" "vault-pods-before" {
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 
-  depends_on = [helm_release.vault, time_sleep.wait_5_second]
+  depends_on = [helm_release.vault, time_sleep.wait_before]
 }
 
 data "external" "vault-init" {
@@ -323,14 +322,14 @@ data "external" "vault-init" {
     var.vault_key_treshold
   ]
 
-  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before]
+  depends_on = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before]
 
 }
 
 # Wait for vault container to be ready
-resource "time_sleep" "wait_another_5_second" {
-  create_duration = "5s"
-  depends_on      = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
+resource "time_sleep" "wait_after" {
+  create_duration = "10s"
+  depends_on      = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
 }
 
 data "kubernetes_resource" "vault-pods-after" {
@@ -344,5 +343,5 @@ data "kubernetes_resource" "vault-pods-after" {
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 
-  depends_on = [helm_release.vault, time_sleep.wait_5_second, data.kubernetes_resource.vault-pods-before, data.external.vault-init, time_sleep.wait_another_5_second]
+  depends_on = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init, time_sleep.wait_after]
 }
