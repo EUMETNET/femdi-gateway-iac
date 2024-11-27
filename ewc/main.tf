@@ -31,6 +31,10 @@ provider "random" {
 }
 
 
+################################################################################
+# Install Vault and it's policies and tokens
+################################################################################
+
 module "ewc-vault-init" {
   source = "./ewc-vault-init/"
 
@@ -55,16 +59,7 @@ module "ewc-vault-init" {
 
 }
 
-################################################################################
-# Install gateway apps
-################################################################################
-# Create project for gateway
-resource "rancher2_project" "gateway" {
-  name       = "gateway"
-  cluster_id = var.rancher_cluster_id
-}
-
-
+# Vault configurations after initialization and bootsrap
 resource "vault_mount" "apisix" {
   path        = "apisix"
   type        = "kv"
@@ -150,12 +145,24 @@ resource "vault_token" "dev-portal-global" {
   depends_on = [module.ewc-vault-init]
 }
 
+
+################################################################################
+# Install gateway apps
+################################################################################
+# Create project for gateway
+resource "rancher2_project" "gateway" {
+  name       = "gateway"
+  cluster_id = var.rancher_cluster_id
+}
+
 ################################################################################
 
 # Install Dev-portal and keycloak
 ################################################################################
 
 module "dev-portal-init" {
+  count = var.install_dev-portal ? 1 : 0
+
   source = "./dev-portal-init/"
 
   kubeconfig_path = var.kubeconfig_path
