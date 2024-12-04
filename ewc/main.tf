@@ -224,7 +224,7 @@ resource "helm_release" "apisix" {
   name             = "apisix"
   repository       = "https://charts.apiseven.com"
   chart            = "apisix"
-  version          = "2.6.0"
+  version          = "2.10.0"
   namespace        = kubernetes_namespace.apisix.metadata.0.name
   create_namespace = false
 
@@ -249,6 +249,12 @@ resource "helm_release" "apisix" {
   set_list {
     name  = "apisix.admin.allow.ipList"
     value = var.apisix_ip_list
+  }
+
+  # Enable Prometheus
+  set {
+    name  = "apisix.prometheus.enabled"
+    value = true
   }
 
   # Apisix vault integration
@@ -347,5 +353,29 @@ resource "helm_release" "apisix" {
 
   depends_on = [module.ewc-vault-init]
 
+}
+
+################################################################################
+
+# Install Monitoring for Rancher
+################################################################################
+data "rancher2_project" "System" {
+  provider   = rancher2
+  cluster_id = var.rancher_cluster_id
+  name       = "System"
+}
+
+resource "rancher2_app_v2" "rancher-monitoring" {
+  cluster_id = var.rancher_cluster_id
+  name = "rancher-monitoring"
+  namespace = "cattle-monitoring-system"
+  project_id = data.rancher2_project.System.id
+  repo_name = "rancher-charts"
+  chart_name = "rancher-monitoring"
+  values = <<EOF
+extraEnv:
+  - name: "CATTLE_PROMETHEUS_METRICS"
+    value: "true"
+EOF
 }
 
