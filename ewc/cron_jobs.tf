@@ -108,7 +108,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
             service_account_name = kubernetes_service_account.vault_backup_cron_job_service_account.metadata.0.name
             container {
               name              = "vault-backup"
-              image             = "ghcr.io/eurodeo/femdi-gateway-iac/vault-snapshot:latest"
+              image             = "ghcr.io/eurodeo/femdi-gateway-iac/cron-jobs:latest"
               image_pull_policy = "Always" # TODO change to IfNotPresent once tested out to be working
               command           = ["/bin/sh", "-c", "/usr/local/bin/vault-snapshot.sh"]
 
@@ -208,7 +208,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
             service_account_name = kubernetes_service_account.apisix_backup_cron_job_service_account.metadata.0.name
             container {
               name              = "apisix-backup"
-              image             = "ghcr.io/eurodeo/femdi-gateway-iac/vault-snapshot:latest"
+              image             = "ghcr.io/eurodeo/femdi-gateway-iac/cron-jobs:latest"
               image_pull_policy = "Always" # TODO change to IfNotPresent once tested out to be working
               command           = ["/bin/sh", "-c", "/usr/local/bin/apisix-snapshot.sh"]
 
