@@ -28,7 +28,7 @@ output "vault_pod_ready_statuses_after_init" {
 
 output "dev-portal_keycloak_secret" {
   description = "Dev-portal's secret to authenticate with Keycloak"
-  value       = random_password.keycloak-dev-portal-secret.result
+  value       = try(module.dev-portal-init.0.dev-portal_keycloak_secret, null)
   sensitive   = true
 }
 

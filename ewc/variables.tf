@@ -145,6 +145,12 @@ variable "vault_backup_bucket_base_path" {
   default     = "dev-rodeo-ewc-vault/vault/"
 }
 
+variable "install_dev-portal" {
+  description = "Should Dev-portal be installed"
+  type        = bool
+  default     = true
+}
+
 variable "dev-portal_subdomain" {
   description = "subdomain where devportal will be hosted"
   type        = string
