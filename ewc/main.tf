@@ -257,6 +257,11 @@ resource "helm_release" "apisix" {
     value = true
   }
 
+  set {
+    name  = "metrics.serviceMonitor.enabled"
+    value = true
+  }
+
   # Apisix vault integration
   set {
     name  = "apisix.vault.enabled"
@@ -359,6 +364,40 @@ resource "helm_release" "apisix" {
 
 # Install Monitoring for Rancher
 ################################################################################
+
+locals {
+  ingress-nginx-service-monitor-manifest = {
+    "apiVersion" = "monitoring.coreos.com/v1"
+    "kind"       = "ServiceMonitor"
+    "metadata" = {
+
+      "name"      = "ingress-nginx-controller"
+      "namespace" = "kube-system"
+    }
+    "spec" = {
+      "endpoints" = [
+        {
+          "interval" = "30s"
+          "port"     = "metrics"
+        },
+      ]
+      "namespaceSelector" = {
+        "matchNames" = [
+          "kube-system",
+        ]
+      }
+      "selector" = {
+        "matchLabels" = {
+          "app.kubernetes.io/component" = "controller"
+          "app.kubernetes.io/instance"  = "ingress-nginx"
+          "app.kubernetes.io/name"      = "ingress-nginx"
+        }
+      }
+    }
+  }
+
+
+}
 data "rancher2_project" "System" {
   provider   = rancher2
   cluster_id = var.rancher_cluster_id
@@ -367,15 +406,67 @@ data "rancher2_project" "System" {
 
 resource "rancher2_app_v2" "rancher-monitoring" {
   cluster_id = var.rancher_cluster_id
-  name = "rancher-monitoring"
-  namespace = "cattle-monitoring-system"
+  name       = "rancher-monitoring"
+  namespace  = "cattle-monitoring-system"
   project_id = data.rancher2_project.System.id
-  repo_name = "rancher-charts"
+  repo_name  = "rancher-charts"
   chart_name = "rancher-monitoring"
-  values = <<EOF
+  values     = <<EOF
 extraEnv:
   - name: "CATTLE_PROMETHEUS_METRICS"
     value: "true"
+grafana:
+  grafana.ini:
+    security:
+      angular_support_enabled: true
 EOF
 }
 
+# Create ingress-nginx serviceMonitor manually because we don't want to upgrade the chart.
+# This should work as the EWC RKE2 default install for ingress-nginx has monitoring enable but not the serviceMonitor.
+# See: https://kubernetes.github.io/ingress-nginx/user-guide/monitoring/#re-configure-ingress-nginx-controller
+resource "kubernetes_manifest" "ingress_nginx_controller-servicemonitor" {
+  manifest = local.ingress-nginx-service-monitor-manifest
+}
+
+# Create configmap for Apisix grafana dashboard
+resource "kubernetes_config_map" "dashboard-apisix" {
+  metadata {
+    name      = "dashboard-apisix"
+    namespace = "cattle-dashboards"
+    labels = {
+      grafana_dashboard = "1"
+    }
+  }
+  data = {
+    "dashboard-apisix.json" = file("./grafana-dashboards/apisix-dashboard.json")
+  }
+}
+
+# Create configmap for NGINX Ingress controller grafana dashboard
+resource "kubernetes_config_map" "dashboard-nginx-ingress-controller" {
+  metadata {
+    name      = "dashboard-nginx-ingress-controller"
+    namespace = "cattle-dashboards"
+    labels = {
+      grafana_dashboard = "1"
+    }
+  }
+  data = {
+    "dashboard-nginx-ingress-controller.json" = file("./grafana-dashboards/ingress-nginx-dashboard.json")
+  }
+}
+
+# Create configmap for NGINX request-handling-performance grafana dashboard
+resource "kubernetes_config_map" "dashboard-request-handling-performance" {
+  metadata {
+    name      = "dashboard-request-handling-performance"
+    namespace = "cattle-dashboards"
+    labels = {
+      grafana_dashboard = "1"
+    }
+  }
+  data = {
+    "dashboard-request-handling-performance.json" = file("./grafana-dashboards/reguest-handling-performance-dashboard.json")
+  }
+}
