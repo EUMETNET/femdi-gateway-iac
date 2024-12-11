@@ -94,7 +94,7 @@ variable "apisix_ip_list" {
 variable "apisix_backup_bucket_base_path" {
   description = "AWS S3 bucket base path for APISIX backup files"
   type        = string
-  default     = "dev-rodeo-ewc-vault/apisix/"
+  default     = "dev-rodeo-backups/ewc/apisix/"
 }
 
 variable "keycloak_admin_password" {
@@ -142,7 +142,7 @@ variable "vault_token" {
 variable "vault_backup_bucket_base_path" {
   description = "AWS S3 bucket base path for vault backup files"
   type        = string
-  default     = "dev-rodeo-ewc-vault/vault/"
+  default     = "dev-rodeo-backups/ewc/vault/"
 }
 
 variable "install_dev-portal" {
