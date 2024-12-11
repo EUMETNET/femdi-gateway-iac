@@ -95,7 +95,11 @@ resource "vault_kubernetes_auth_backend_config" "k8s_auth_config" {
 
   # Use the internal Kubernetes API server URL for communication within the cluster.
   # This URL is automatically resolved by the Kubernetes DNS service to the internal IP address of the Kubernetes API server.
-  kubernetes_host = "https://kubernetes.default.svc.cluster.local"
+  # If the provided host doesn't work (403 response) in future you can check correct DNS search paths using:
+  # kubectl run -it --rm --restart=Never busybox --image=busybox -- sh
+  # cat /etc/resolv.conf
+
+  kubernetes_host = "https://kubernetes.default.svc.kubernetes.local"
 
   # We can omit rest of params, e.g. CA certificate and token reviewer JWT as long as 
   # Vault and calling service are run in same k8s cluster
