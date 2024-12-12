@@ -38,7 +38,10 @@ RUN etcdctl version && vault version && aws --version && pg_dump --version
 COPY common-functions.sh /usr/local/bin/common-functions.sh
 COPY vault-snapshot.sh /usr/local/bin/vault-snapshot.sh
 COPY apisix-snapshot.sh /usr/local/bin/apisix-snapshot.sh
-RUN chmod +x /usr/local/bin/common-functions.sh /usr/local/bin/vault-snapshot.sh /usr/local/bin/apisix-snapshot.sh
-
+COPY keycloak-snapshot.sh /usr/local/bin/keycloak-snapshot.sh
+RUN chmod +x /usr/local/bin/common-functions.sh \
+             /usr/local/bin/vault-snapshot.sh \
+             /usr/local/bin/apisix-snapshot.sh \
+             /usr/local/bin/keycloak-snapshot.sh
 
 CMD ["/usr/local/bin/vault-snapshot.sh"]
