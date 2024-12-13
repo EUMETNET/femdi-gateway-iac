@@ -109,6 +109,12 @@ variable "keycloak_subdomain" {
   default     = "keycloak"
 }
 
+variable "keycloak_backup_bucket_base_path" {
+  description = "AWS S3 bucket base path for Keycloak backup files"
+  type        = string
+  default     = "dev-rodeo-backups/ewc/keycloak/"
+}
+
 variable "vault_subdomain" {
   description = "subdomain where vault will be hosted"
   type        = string
