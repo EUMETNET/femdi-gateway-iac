@@ -225,8 +225,9 @@ module "dev-portal-init" {
 
   rancher_project_id = rancher2_project.gateway.id
 
-  keycloak_subdomain      = var.keycloak_subdomain
-  keycloak_admin_password = var.keycloak_admin_password
+  keycloak_subdomain               = var.keycloak_subdomain
+  keycloak_admin_password          = var.keycloak_admin_password
+  keycloak_backup_bucket_base_path = var.keycloak_backup_bucket_base_path
 
   dev-portal_subdomain         = var.dev-portal_subdomain
   dev-portal_registry_password = var.dev-portal_registry_password
@@ -238,6 +239,8 @@ module "dev-portal-init" {
   google_idp_client_secret = var.google_idp_client_secret
   github_idp_client_secret = var.github_idp_client_secret
 
+  s3_bucket_access_key = var.s3_bucket_access_key
+  s3_bucket_secret_key = var.s3_bucket_secret_key
 
 }
 
