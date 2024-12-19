@@ -44,3 +44,21 @@ variable "devportal-domain" {
   description = "Restrict Admin API Access by IP"
   type        = string
 }
+
+variable "apisix_backup_bucket_base_path" {
+  description = "AWS S3 bucket base path for APISIX backup files"
+  type        = string
+  default     = "dev-rodeo-backups/ewc/apisix/"
+}
+
+variable "s3_bucket_access_key" {
+  description = "AWS access key for S3 bucket for backups"
+  type        = string
+  sensitive   = true
+}
+
+variable "s3_bucket_secret_key" {
+  description = "AWS secret key for S3 bucket for backups"
+  type        = string
+  sensitive   = true
+}
