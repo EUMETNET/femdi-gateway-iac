@@ -1,7 +1,9 @@
 ################################################################################
 
-# Keycloak backup
+# Keycloak
 ################################################################################
+
+# Backup Cron Job
 resource "kubernetes_secret" "keycloak_backup_cron_job_secrets" {
   metadata {
     name      = "keycloak-backup-cron-job"
@@ -41,7 +43,7 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
             restart_policy = "OnFailure"
             container {
               name              = "keycloak-backup"
-              image             = "ghcr.io/eurodeo/femdi-gateway-iac/cron-jobs:latest"
+              image             = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
               image_pull_policy = "Always" # TODO change to IfNotPresent once tested out to be working
               command           = ["/bin/sh", "-c", "/usr/local/bin/keycloak-snapshot.sh"]
 
@@ -104,3 +106,96 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
   }
 
 }
+
+# Restore from backup
+locals {
+  keycloak_restore_job_template = {
+    apiVersion = "batch/v1"
+    kind       = "Job"
+    metadata = {
+      generateName = "keycloak-restore-backup-"
+      namespace    = kubernetes_namespace.keycloak.metadata.0.name
+    }
+    spec = {
+      backoffLimit = 0
+      template = {
+        spec = {
+          restartPolicy = "Never"
+          containers = [
+            {
+              name    = "keycloak-restore-backup"
+              image   = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
+              command = ["/bin/sh", "-c", "/usr/local/bin/keycloak-restore.sh"]
+              env = [
+                {
+                  name  = "SNAPSHOT_NAME"
+                  value = "latest"
+                },
+                {
+                  name  = "S3_BUCKET_BASE_PATH"
+                  value = var.keycloak_backup_bucket_base_path
+                },
+                {
+                  name = "AWS_ACCESS_KEY_ID"
+                  valueFrom = {
+                    secretKeyRef = {
+                      name = kubernetes_secret.keycloak_backup_cron_job_secrets.metadata.0.name
+                      key  = "AWS_ACCESS_KEY_ID"
+                    }
+                  }
+                },
+                {
+                  name = "AWS_SECRET_ACCESS_KEY"
+                  valueFrom = {
+                    secretKeyRef = {
+                      name = kubernetes_secret.keycloak_backup_cron_job_secrets.metadata.0.name
+                      key  = "AWS_SECRET_ACCESS_KEY"
+                    }
+                  }
+                },
+                {
+                  name  = "NAMESPACE"
+                  value = kubernetes_namespace.keycloak.metadata.0.name
+                },
+                {
+                  name  = "POSTGRES_HOST"
+                  value = local.postgres_host
+                },
+                {
+                  name  = "POSTGRES_DB"
+                  value = local.postgres_db_name
+                },
+                {
+                  name  = "POSTGRES_USER"
+                  value = local.postgres_db_user
+                },
+                {
+                  name = "POSTGRES_PASSWORD"
+                  valueFrom = {
+                    secretKeyRef = {
+                      name = "keycloak-postgresql"
+                      key  = "password"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+resource "kubernetes_config_map" "keycloak_restore_backup_template" {
+  metadata {
+    name      = "keycloak-restore-backup"
+    namespace = kubernetes_namespace.keycloak.metadata.0.name
+  }
+
+  data = {
+    "job-template.yaml" = yamlencode(local.keycloak_restore_job_template)
+  }
+
+}
+
