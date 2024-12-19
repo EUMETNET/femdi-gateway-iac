@@ -4,6 +4,7 @@ FROM alpine:3.20
 ARG PRODUCT=vault
 ARG VAULT_VERSION=1.18.0
 ARG ETCD_VERSION=v3.5.17
+ARG KUBECTL_VERSION=v1.28.0
 
 # Install dependencies and AWS CLI & PostgreSQL client
 # aws-cli is around ~100MB
@@ -26,22 +27,33 @@ RUN apk add --update --virtual .deps --no-cache gnupg wget unzip && \
     wget https://github.com/etcd-io/etcd/releases/download/${ETCD_VERSION}/etcd-${ETCD_VERSION}-linux-amd64.tar.gz -O /tmp/etcd-${ETCD_VERSION}-linux-amd64.tar.gz && \
     tar xzvf /tmp/etcd-${ETCD_VERSION}-linux-amd64.tar.gz && \
     mv /tmp/etcd-${ETCD_VERSION}-linux-amd64/etcdctl /usr/local/bin/etcdctl && \
+    # Install kubectl
+    wget https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl && \
+    chmod +x /usr/local/bin/kubectl && \
     # Remove temporary files & build dependencies
     rm -rf /tmp/* && \
     rm -f ${PRODUCT}_${VAULT_VERSION}_SHA256SUMS ${PRODUCT}_${VAULT_VERSION}_SHA256SUMS.sig && \
     apk del .deps
 
 # Verify installations
-RUN etcdctl version && vault version && aws --version && pg_dump --version
+RUN etcdctl version && vault version && aws --version && pg_dump --version && kubectl version --client
 
 # Add scripts and make them executable
-COPY common-functions.sh /usr/local/bin/common-functions.sh
-COPY vault-snapshot.sh /usr/local/bin/vault-snapshot.sh
-COPY apisix-snapshot.sh /usr/local/bin/apisix-snapshot.sh
-COPY keycloak-snapshot.sh /usr/local/bin/keycloak-snapshot.sh
+COPY common-functions.sh \
+     vault-snapshot.sh \
+     vault-restore.sh \
+     apisix-snapshot.sh \
+     apisix-restore.sh \
+     keycloak-snapshot.sh \
+     keycloak-restore.sh \
+     /usr/local/bin/
+
 RUN chmod +x /usr/local/bin/common-functions.sh \
              /usr/local/bin/vault-snapshot.sh \
+             /usr/local/bin/vault-restore.sh \
              /usr/local/bin/apisix-snapshot.sh \
-             /usr/local/bin/keycloak-snapshot.sh
+             /usr/local/bin/apisix-restore.sh \
+             /usr/local/bin/keycloak-snapshot.sh \
+             /usr/local/bin/keycloak-restore.sh
 
 CMD ["/usr/local/bin/vault-snapshot.sh"]

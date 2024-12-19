@@ -22,3 +22,11 @@ generate_iso_8601_timestamp() {
     echo "${timestamp}$(echo $timezone_offset | sed 's/\(..\)$/:\1/')"
   fi
 }
+
+# Function to find latest file in given S3 bucket
+find_latest_file_in_s3_bucket() {
+  local s3_bucket_base_path=$1
+  local region=$2
+  local latest_file=$(aws s3 ls s3://${s3_bucket_base_path} --region "${region}" | sort | tail -n 1 | awk '{print $4}')
+  echo $latest_file
+}
