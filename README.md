@@ -43,7 +43,7 @@ vault_unseal_keys = <sensitive>
 > [!IMPORTANT] 
 > Make sure to store `vault_root_token` `vault_unseal_keys` and `dev-portal_keycloak_secret` somewhere safe. 
 >
-> If the Vault is recreated, do not delete the previous `vault_unseal_keys`. These keys are required to perform data restore operations. For more details, see the [Vault Restore](#vault-restore) section.
+> If the Vault is recreated for a data restore operation, do not delete the previous `vault_unseal_keys`. Continue using the old unseal keys and ignore the new ones. The new `vault_root_token` is needed. For more details, see the [Vault Restore](#vault-restore) section.
 
 You can access sensitive values using commands:
 ```bash
