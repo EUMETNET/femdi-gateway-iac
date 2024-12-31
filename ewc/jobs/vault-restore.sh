@@ -1,27 +1,37 @@
 #!/bin/bash
 
+set -e
+
 # Source common functions
 source /usr/local/bin/common-functions.sh
 
 # Variables
-SNAPSHOT_NAME=${SNAPSHOT_NAME}
+SNAPSHOT_NAME=${SNAPSHOT_NAME:-"latest"}
 S3_BUCKET_BASE_PATH=${S3_BUCKET_BASE_PATH}
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 AWS_REGION=${AWS_REGION:-"eu-north-1"}
 NAMESPACE=${NAMESPACE}
-KEY_TRESHOLD=${KEY_TRESHOLD}
+KEY_THRESHOLD=${KEY_THRESHOLD}
+VAULT_TOKEN=${VAULT_TOKEN}
 UNSEAL_KEYS=${UNSEAL_KEYS}
-VAULT_NAME=${VAULT_NAME:-NAMESPACE}
 
 # Check required variables
 check_var "S3_BUCKET_BASE_PATH" "$S3_BUCKET_BASE_PATH"
 check_var "AWS_ACCESS_KEY_ID" "$AWS_ACCESS_KEY_ID"
 check_var "AWS_SECRET_ACCESS_KEY" "$AWS_SECRET_ACCESS_KEY"
 check_var "NAMESPACE" "$NAMESPACE"
-check_var "KEY_TRESHOLD" "$KEY_TRESHOLD"
+check_var "KEY_THRESHOLD" "$KEY_THRESHOLD"
+check_var "VAULT_TOKEN" "$VAULT_TOKEN"
 check_var "UNSEAL_KEYS" "$UNSEAL_KEYS"
 
+
+# Validate and convert KEY_THRESHOLD to an integer
+if ! [[ "$KEY_THRESHOLD" =~ ^[0-9]+$ ]]; then
+  echo "ERROR: KEY_THRESHOLD must be a valid integer."
+  exit 1
+fi
+KEY_THRESHOLD=$(printf "%d" "$KEY_THRESHOLD")
 
 # Find the latest snapshot if no specific snapshot is provided
 if [ "$SNAPSHOT_NAME" == "latest" ]; then
@@ -29,51 +39,59 @@ if [ "$SNAPSHOT_NAME" == "latest" ]; then
 fi
 
 # Download the snapshot from S3
-aws s3 cp s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME} /tmp/${SNAPSHOT_NAME} --region "${AWS_REGION}"
+aws s3 cp s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME} /tmp/${SNAPSHOT_NAME} --region "${AWS_REGION}" || { echo "ERROR: Failed to download snapshot $SNAPSHOT_NAME from S3"; exit 1; }
 
-# Reinitialize the Vault cluster
-kubectl -n "$NAMESPACE" exec "${VAULT_NAME}-0" -- vault operator init -t $KEY_TRESHOLD -format=json > /tmp/init.json
+# Get the Vault pods
+echo "Getting the available Vault pods..."
+VAULT_PODS=$(kubectl -n "$NAMESPACE" get pods -l app.kubernetes.io/name=vault -o jsonpath='{.items[*].metadata.name}')
+if [ -z "$VAULT_PODS" ]; then
+  echo "ERROR: No available Vault pods found"
+  exit 1
+fi
 
-# Restore from snapshot
-# Vault will propagate the snapshot data to the other pods in the cluster once they are unsealed.
-kubectl cp /tmp/${SNAPSHOT_NAME} "${NAMESPACE}/${VAULT_NAME}-0:/tmp/${SNAPSHOT_NAME}"
-kubectl -n "$NAMESPACE" exec "${VAULT_NAME}-0" -- sh -c \
-  "vault operator raft snapshot restore -force /tmp/$SNAPSHOT_NAME &&
-  rm /tmp/$SNAPSHOT_NAME"
+# Select the first Vault pod for initialization and restore
+VAULT_POD=$(echo $VAULT_PODS | awk '{print $1}')
+echo "Using first found Vault pod: '$VAULT_POD' to perform the restore."
 
-# Get the Vault pods and unseal them
-$VAULT_PODS=$(kubectl -n "$NAMESPACE" get pods -l "app.kubernetes.io/name=${VAULT_NAME}" -o jsonpath='{.items[*].metadata.name}')
+# Check that the Vault cluster is initialized
+echo "Verifying that the Vault cluster is initialized..."
+kubectl -n "$NAMESPACE" exec "${VAULT_POD}" -- vault status -format=json > /tmp/init.json
 
+if [ "$(grep -o '\"initialized\": *[^,]*' /tmp/init.json | awk '{print $2}')" != "true" ]; then
+  echo "ERROR: Vault cluster is not initialized."
+  exit 1
+fi
+
+# Copy the snapshot to the Vault pod
+echo "Copying snapshot to the Vault pod using tar..."
+tar cf - -C /tmp ${SNAPSHOT_NAME} | kubectl exec -i -n "$NAMESPACE" "$VAULT_POD" -- tar xf - -C /tmp/
+if [ $? -ne 0 ]; then
+  echo "ERROR: Failed to copy snapshot to the Vault pod"
+  exit 1
+fi
+
+# Restore the Vault cluster from snapshot
+echo "Restoring the Vault cluster from snapshot..."
+kubectl -n "$NAMESPACE" exec "${VAULT_POD}" -- sh -c \
+  "VAULT_TOKEN=$VAULT_TOKEN vault operator raft snapshot restore -force /tmp/$SNAPSHOT_NAME &&
+  rm /tmp/$SNAPSHOT_NAME" || { echo "ERROR: Failed to restore the Vault cluster from snapshot"; exit 1; }
+
+# Unseal the Vault cluster
+echo "Unsealing the Vault cluster..."
 IFS=',' read -r -a keys <<< "$UNSEAL_KEYS"
 for pod in $VAULT_PODS; do
-  for (( i=0; i<$KEY_TRESHOLD; i++ )); do
-    kubectl -n "$NAMESPACE" exec "$pod" -- vault operator unseal "${keys[$i]}"
+  for (( i=0; i<$KEY_THRESHOLD; i++ )); do
+    kubectl -n "$NAMESPACE" exec "$pod" -- vault operator unseal "${keys[$i]}" || { echo "ERROR: Failed to unseal pod $pod"; exit 1; }
   done
 done
 
-# Verify that each Vault pod has joined the Raft cluster
-echo "Verifying that each Vault pod has joined the Raft cluster..."
-START_TIME=$(date +%s)
-for pod in $VAULT_PODS; do
-  while true; do
-    READY=$(kubectl get pod "$pod" -n "$NAMESPACE" -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')
-    if [ "$READY" == "True" ]; then
-      echo "Vault pod $pod has joined the Raft cluster"
-      break
-    fi
-    CURRENT_TIME=$(date +%s)
-    ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
-    if [ "$ELAPSED_TIME" -ge "$TIMEOUT" ]; then
-      echo "Error: Timeout waiting for all the Vault pods to join the Raft cluster"
-      exit 1
-    fi
-    echo "Waiting for Vault pod $pod to join the Raft cluster..."
-    sleep 5
-  done
-done
+# Verifying that the Vault StatefulSet is ready
+echo "Verifying that the Vault pods are joining the cluster..."
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault -n "$NAMESPACE" --timeout=300s || { echo "ERROR: Timeout reached when waiting for Vault StatefulSet to be ready"; exit 1; }
 
-echo "Vault cluster restored successfully from snapshot $SNAPSHOT_NAME"
 
 # Clean up
 rm /tmp/$SNAPSHOT_NAME
 rm /tmp/init.json
+
+echo "Vault cluster successfully restored from snapshot $SNAPSHOT_NAME"

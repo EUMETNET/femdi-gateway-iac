@@ -23,10 +23,16 @@ generate_iso_8601_timestamp() {
   fi
 }
 
-# Function to find latest file in given S3 bucket
+# TODO proper error loggin & handling
 find_latest_file_in_s3_bucket() {
   local s3_bucket_base_path=$1
   local region=$2
   local latest_file=$(aws s3 ls s3://${s3_bucket_base_path} --region "${region}" | sort | tail -n 1 | awk '{print $4}')
+
+  if [ -z "$latest_file" ]; then
+    echo "ERROR: No backup files found in S3 bucket ${s3_bucket_base_path}"
+    exit 1
+  fi
+
   echo $latest_file
 }

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # Source common functions
 source /usr/local/bin/common-functions.sh
 

@@ -1,28 +1,29 @@
 #!/bin/bash
+set -e
 
 # Source common functions
 source /usr/local/bin/common-functions.sh
 
 # Variables
-ETCD_ENDPOINT=${ETCD_ENDPOINT}
 S3_BUCKET_BASE_PATH=${S3_BUCKET_BASE_PATH}
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 AWS_REGION=${AWS_REGION:-"eu-north-1"}
-NAMESPACE=${NAMESPACE}
+SNAPSHOT_NAME=${SNAPSHOT_NAME:-"latest"}
 REPLICA_COUNT=${REPLICA_COUNT}
-
-ETCD_INITIAL_CLUSTER=""
+NAMESPACE=${NAMESPACE}
+APISIX_HELM_RELEASE_NAME=${APISIX_HELM_RELEASE_NAME}
+# Local variables
+INITIAL_CLUSTER_TOKEN="etcd-cluster-k8s"
+INITIAL_CLUSTER=""
 
 # Check required variables
-check_var "ETCD_ENDPOINT" "$ETCD_ENDPOINT"
 check_var "S3_BUCKET_BASE_PATH" "$S3_BUCKET_BASE_PATH"
 check_var "AWS_ACCESS_KEY_ID" "$AWS_ACCESS_KEY_ID"
 check_var "AWS_SECRET_ACCESS_KEY" "$AWS_SECRET_ACCESS_KEY"
+check_var "REPLICA_COUNT" "$REPLICA_COUNT"
 check_var "NAMESPACE" "$NAMESPACE"
-
-# NOT WORKING YET!!!
-# JUST SOME "SCRATCH" PAPER NOTES AND IDEAS FOR NOW
+check_var "APISIX_HELM_RELEASE_NAME" "$APISIX_HELM_RELEASE_NAME"
 
 # Find the latest snapshot if no specific snapshot is provided
 if [ "$SNAPSHOT_NAME" == "latest" ]; then
@@ -30,60 +31,37 @@ if [ "$SNAPSHOT_NAME" == "latest" ]; then
 fi
 
 # Download the snapshot from S3
-aws s3 cp s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME} /tmp/${SNAPSHOT_NAME} --region "${AWS_REGION}"
+aws s3 cp s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME} /tmp/${SNAPSHOT_NAME} --region "${AWS_REGION}" || { echo "ERROR: Failed to download snapshot $SNAPSHOT_NAME from S3"; exit 1; }
 
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to download snapshot from S3"
-  exit 1
-fi
+# Construct the initial cluster configuration
+for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
+  INITIAL_CLUSTER="${INITIAL_CLUSTER}${APISIX_HELM_RELEASE_NAME}-etcd-${i}=http://${APISIX_HELM_RELEASE_NAME}-etcd-${i}.${APISIX_HELM_RELEASE_NAME}-etcd-headless.${NAMESPACE}.svc.cluster.local:2380,"
+done
+INITIAL_CLUSTER=${INITIAL_CLUSTER%,}
 
-STATEFULSET_JSON=$(kubectl get statefulset ${NAMESPACE}-etcd -n ${NAMESPACE} -o json)
-
-# Extract needed values from the statefulset
-ETCD_INITIAL_CLUSTER_TOKEN=$(echo $STATEFULSET_JSON | jq -r '.spec.template.spec.containers[0].env[] | select(.name == "ETCD_INITIAL_CLUSTER_TOKEN") | .value')
-
-ETCD_INITIAL_CLUSTER=$(echo $STATEFULSET_JSON | jq -r '.spec.template.spec.containers[0].env[] | select(.name == "ETCD_INITIAL_CLUSTER") | .value')
-
-ETCD_INITIAL_ADVERTISE_PEER_URLS_TEMPLATE=$(echo $STATEFULSET_JSON | jq -r '.spec.template.spec.containers[0].env[] | select(.name == "ETCD_INITIAL_ADVERTISE_PEER_URLS") | .value')
-
-ETCD_DATA_DIR=$(echo $STATEFULSET_JSON | jq -r '.spec.template.spec.containers[0].env[] | select(.name == "ETCD_DATA_DIR") | .value')
-
-# Extract readyReplicas
-READY_REPLICAS=$(echo $STATEFULSET_JSON | jq -r '.status.readyReplicas')
-
-# Get the list of current etcd pods
-ETCD_PODS=$(kubectl get pods -l app.kubernetes.io/name=etcd -n "$NAMESPACE" -o jsonpath='{.items[*].metadata.name}')
-
-for POD_NAME in $ETCD_PODS; do
-  ETCD_INITIAL_ADVERTISE_PEER_URLS="${ETCD_INITIAL_ADVERTISE_PEER_URLS_TEMPLATE//\$(MY_POD_NAME)/${POD_NAME}}"
-
-  # Copy the snapshot to the pod
-  kubectl cp /tmp/${SNAPSHOT_NAME} ${NAMESPACE}/${POD_NAME}:/tmp/${SNAPSHOT_NAME}
-
-  # Restore the snapshot
-  kubectl exec -n "$NAMESPACE" "$POD_NAME" -- sh -c "
-    ETCDCTL_API=3 etcdctl snapshot restore /tmp/$SNAPSHOT_NAME \
-      --name ${POD_NAME} \
-      --initial-cluster ${ETCD_INITIAL_CLUSTER} \
-      --initial-cluster-token ${ETCD_INITIAL_CLUSTER_TOKEN} \
-      --initial-advertise-peer-urls ${ETCD_INITIAL_ADVERTISE_PEER_URLS} \
-      --data-dir ${ETCD_DATA_DIR}
-  "
-
-  if [ $? -ne 0 ]; then
-    echo "Error: Failed to restore etcd snapshot to member ${POD_NAME}"
-    exit 1
+# Restore the snapshot to each volume and form new logical cluster
+for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
+  volume="/etcd-volumes/data-${APISIX_HELM_RELEASE_NAME}-etcd-${i}"
+  if [ -d "$volume" ]; then
+    data_dir="$volume/data"  # Note: etcd statefulSet has env ETCD_DATA_DIR set to /bitnami/etcd/data hence just the /data
+    echo "Cleaning up data directory $data_dir"
+    rm -rf "$data_dir"
+    mkdir -p "$data_dir"
+    echo "Restoring snapshot to $data_dir"
+    etcdutl snapshot restore /tmp/${SNAPSHOT_NAME} --data-dir "$data_dir" \
+      --name "${APISIX_HELM_RELEASE_NAME}-etcd-${i}" \
+      --initial-cluster "${INITIAL_CLUSTER}" \
+      --initial-cluster-token "${INITIAL_CLUSTER_TOKEN}" \
+      --initial-advertise-peer-urls "http://${APISIX_HELM_RELEASE_NAME}-etcd-${i}.${APISIX_HELM_RELEASE_NAME}-etcd-headless.${NAMESPACE}.svc.cluster.local:2380"
+    if [ $? -ne 0 ]; then
+      echo "Error: Failed to restore snapshot to $data_dir"
+      exit 1
+    fi
   fi
-
-  # Remove the snapshot from the pod
-  kubectl exec -n "$NAMESPACE" "$POD_NAME" -- rm /tmp/${SNAPSHOT_NAME}
-
-  # Restart the pod to apply the restored data
-  echo "Restarting etcd pod $POD_NAME..."
-  kubectl delete pod "$POD_NAME" -n "$NAMESPACE"
-
 done
 
 
 # Clean up
 rm /tmp/$SNAPSHOT_NAME
+
+echo "APISIX etcd successfully restored from snapshot $SNAPSHOT_NAME"

@@ -23,10 +23,11 @@ RUN apk add --update --virtual .deps --no-cache gnupg wget unzip && \
     grep ${PRODUCT}_${VAULT_VERSION}_linux_amd64.zip ${PRODUCT}_${VAULT_VERSION}_SHA256SUMS | sha256sum -c && \
     unzip /tmp/${PRODUCT}_${VAULT_VERSION}_linux_amd64.zip -d /tmp && \
     mv /tmp/${PRODUCT} /usr/local/bin/${PRODUCT} && \
-    # Install etcd
+    # Install etcd & etcdutl
     wget https://github.com/etcd-io/etcd/releases/download/${ETCD_VERSION}/etcd-${ETCD_VERSION}-linux-amd64.tar.gz -O /tmp/etcd-${ETCD_VERSION}-linux-amd64.tar.gz && \
     tar xzvf /tmp/etcd-${ETCD_VERSION}-linux-amd64.tar.gz && \
     mv /tmp/etcd-${ETCD_VERSION}-linux-amd64/etcdctl /usr/local/bin/etcdctl && \
+    mv /tmp/etcd-${ETCD_VERSION}-linux-amd64/etcdutl /usr/local/bin/etcdutl && \
     # Install kubectl
     wget https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl -O /usr/local/bin/kubectl && \
     chmod +x /usr/local/bin/kubectl && \
@@ -36,7 +37,7 @@ RUN apk add --update --virtual .deps --no-cache gnupg wget unzip && \
     apk del .deps
 
 # Verify installations
-RUN etcdctl version && vault version && aws --version && pg_dump --version && kubectl version --client
+RUN etcdctl version && etcdutl version && vault version && aws --version && pg_dump --version && kubectl version --client
 
 # Add scripts and make them executable
 COPY common-functions.sh \
