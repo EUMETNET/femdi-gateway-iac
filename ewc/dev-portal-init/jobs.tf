@@ -107,6 +107,57 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
 
 }
 
+resource "kubernetes_service_account" "keycloak_restore_sa" {
+  metadata {
+    name      = "keycloak-restore-sa"
+    namespace = kubernetes_namespace.keycloak.metadata.0.name
+  }
+}
+
+resource "kubernetes_role" "keycloak_restore_role" {
+  metadata {
+    name      = "keycloak-restore-role"
+    namespace = kubernetes_namespace.keycloak.metadata[0].name
+  }
+
+  rule {
+    api_groups = ["apps"]
+    resources  = ["statefulsets"]
+    verbs      = ["get"]
+  }
+
+  rule {
+    api_groups = ["apps"]
+    resources  = ["statefulsets/scale"]
+    verbs      = ["get", "update", "patch"]
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = ["pods"]
+    verbs      = ["get", "list", "watch"]
+  }
+}
+
+resource "kubernetes_role_binding" "keycloak_restore_role_binding" {
+  metadata {
+    name      = "keycloak-restore-role-binding"
+    namespace = kubernetes_namespace.keycloak.metadata.0.name
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.keycloak_restore_sa.metadata.0.name
+    namespace = kubernetes_namespace.keycloak.metadata.0.name
+  }
+
+  role_ref {
+    kind      = "Role"
+    name      = kubernetes_role.keycloak_restore_role.metadata.0.name
+    api_group = "rbac.authorization.k8s.io"
+  }
+}
+
 # Restore from backup
 locals {
   keycloak_restore_job_template = {
@@ -115,21 +166,26 @@ locals {
     metadata = {
       generateName = "keycloak-restore-backup-"
       namespace    = kubernetes_namespace.keycloak.metadata.0.name
+      labels = {
+        "app.kubernetes.io/instance" = "keycloak-restore-backup"
+      }
     }
     spec = {
       backoffLimit = 0
       template = {
         spec = {
-          restartPolicy = "Never"
+          serviceAccountName = kubernetes_service_account.keycloak_restore_sa.metadata.0.name
+          restartPolicy      = "Never"
           containers = [
             {
-              name    = "keycloak-restore-backup"
-              image   = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
-              command = ["/bin/sh", "-c", "/usr/local/bin/keycloak-restore.sh"]
+              name            = "keycloak-restore-backup"
+              image           = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
+              imagePullPolicy = "Always"
+              command         = ["/bin/sh", "-c", "/usr/local/bin/keycloak-restore.sh"]
               env = [
                 {
                   name  = "SNAPSHOT_NAME"
-                  value = "latest"
+                  value = "$${SNAPSHOT_NAME}" # Make it possible to override the default value at runtime with envsubst
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
@@ -177,7 +233,15 @@ locals {
                       key  = "password"
                     }
                   }
-                }
+                },
+                {
+                  name  = "REPLICA_COUNT"
+                  value = format("%s", var.keycloak_replicas)
+                },
+                {
+                  name  = "KEYCLOAK_HELM_RELEASE_NAME"
+                  value = "${local.keycloak_helm_release_name}"
+                },
               ]
             }
           ]
@@ -198,4 +262,3 @@ resource "kubernetes_config_map" "keycloak_restore_backup_template" {
   }
 
 }
-

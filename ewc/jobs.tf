@@ -19,9 +19,47 @@ resource "kubernetes_service_account" "vault_backup_cron_job_service_account" {
 
 }
 
+resource "kubernetes_role" "vault_restore_role" {
+  metadata {
+    name      = "vault-restore-role"
+    namespace = module.ewc-vault-init.vault_namespace_name
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = ["pods"]
+    verbs      = ["get", "list", "watch"]
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = ["pods/exec"]
+    verbs      = ["create"]
+  }
+}
+
+resource "kubernetes_role_binding" "keycloak_restore_role_binding" {
+  metadata {
+    name      = "keycloak-restore-role-binding"
+    namespace = module.ewc-vault-init.vault_namespace_name
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.vault_backup_cron_job_service_account.metadata.0.name
+    namespace = module.ewc-vault-init.vault_namespace_name
+  }
+
+  role_ref {
+    kind      = "Role"
+    name      = kubernetes_role.vault_restore_role.metadata.0.name
+    api_group = "rbac.authorization.k8s.io"
+  }
+}
+
 resource "kubernetes_secret" "vault_backup_cron_job_secrets" {
   metadata {
-    name      = "vault-backup-cron-jobs"
+    name      = "vault-backup-cron-job"
     namespace = module.ewc-vault-init.vault_namespace_name
   }
 
@@ -115,16 +153,18 @@ locals {
       backoffLimit = 0
       template = {
         spec = {
-          restartPolicy = "Never"
+          serviceAccountName = kubernetes_service_account.vault_backup_cron_job_service_account.metadata.0.name
+          restartPolicy      = "Never"
           containers = [
             {
-              name    = "vault-restore-backup"
-              image   = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
-              command = ["/bin/sh", "-c", "/usr/local/bin/vault-restore.sh"]
+              name            = "vault-restore-backup"
+              image           = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
+              imagePullPolicy = "Always"
+              command         = ["/bin/sh", "-c", "/usr/local/bin/vault-restore.sh"]
               env = [
                 {
                   name  = "SNAPSHOT_NAME"
-                  value = "latest"
+                  value = "$${SNAPSHOT_NAME}"
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
@@ -153,12 +193,16 @@ locals {
                   value = module.ewc-vault-init.vault_namespace_name
                 },
                 {
+                  name  = "VAULT_TOKEN"
+                  value = "$${VAULT_TOKEN}"
+                },
+                {
                   name  = "KEY_THRESHOLD"
-                  value = var.vault_key_treshold
+                  value = format("%s", var.vault_key_treshold)
                 },
                 {
                   name  = "UNSEAL_KEYS"
-                  value = ""
+                  value = "$${UNSEAL_KEYS}"
                 }
               ]
             }
@@ -189,11 +233,13 @@ resource "kubernetes_config_map" "vault_restore_backup" {
 
 ################################################################################
 
-# APISIX backup
+# APISIX
 ################################################################################
+
+# Backup
 resource "kubernetes_secret" "apisix_backup_cron_job_secrets" {
   metadata {
-    name      = "apisix-backup-cron-jobs"
+    name      = "apisix-backup-cron-job"
     namespace = kubernetes_namespace.apisix.metadata.0.name
   }
 
@@ -235,7 +281,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
 
               env {
                 name  = "ETCD_ENDPOINT"
-                value = local.etcd_host
+                value = local.apisix_etcd_host
               }
 
               env {
@@ -267,6 +313,231 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
         }
       }
     }
+  }
+
+}
+
+# APISIX restore
+resource "kubernetes_service_account" "apisix_restore_sa" {
+  metadata {
+    name      = "apisix-restore-sa"
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  }
+}
+
+resource "kubernetes_role" "apisix_restore_role" {
+  metadata {
+    name      = "apisix-restore-role"
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  }
+
+  rule {
+    api_groups = ["apps"]
+    resources  = ["statefulsets"]
+    verbs      = ["get"]
+  }
+
+  rule {
+    api_groups = ["apps"]
+    resources  = ["statefulsets/scale"]
+    verbs      = ["get", "update", "patch"]
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = ["pods"]
+    verbs      = ["get", "list", "watch"]
+  }
+}
+
+resource "kubernetes_role_binding" "apisix_restore_role_binding" {
+  metadata {
+    name      = "apisix-restore-role-binding"
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.apisix_restore_sa.metadata.0.name
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  }
+
+  role_ref {
+    kind      = "Role"
+    name      = kubernetes_role.apisix_restore_role.metadata.0.name
+    api_group = "rbac.authorization.k8s.io"
+  }
+}
+
+locals {
+  apisix_pre_restore_job_template = {
+    apiVersion = "batch/v1"
+    kind       = "Job"
+    metadata = {
+      generateName = "apisix-pre-restore-backup-"
+      namespace    = kubernetes_namespace.apisix.metadata.0.name
+    }
+    spec = {
+      backoffLimit = 0
+      template = {
+        spec = {
+          serviceAccountName = kubernetes_service_account.apisix_restore_sa.metadata.0.name
+          restartPolicy      = "Never"
+          containers = [
+            {
+              name            = "pre-apisix-restore-backup"
+              image           = "bitnami/kubectl:1.28"
+              imagePullPolicy = "IfNotPresent"
+              command = [
+                "/bin/sh",
+                "-c",
+                <<-EOF
+                set -e
+                echo "Scaling down the etcd StatefulSet...";
+                kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=0 -n ${kubernetes_namespace.apisix.metadata.0.name};
+
+                echo "Waiting for StatefulSet pods to terminate...";
+                kubectl wait --for=delete pod -l app.kubernetes.io/instance=${local.apisix_helm_release_name},app.kubernetes.io/name=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s
+
+                echo "StatefulSet is scaled down.";
+                EOF
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+  apisix_restore_job_template = {
+    apiVersion = "batch/v1"
+    kind       = "Job"
+    metadata = {
+      generateName = "apisix-restore-backup-"
+      namespace    = kubernetes_namespace.apisix.metadata.0.name
+    }
+    spec = {
+      backoffLimit = 0
+      template = {
+        spec = {
+          serviceAccountName = kubernetes_service_account.apisix_backup_cron_job_service_account.metadata.0.name
+          restartPolicy      = "Never"
+          containers = [
+            {
+              name            = "apisix-restore-backup"
+              image           = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
+              imagePullPolicy = "Always"
+              command         = ["/bin/sh", "-c", "/usr/local/bin/apisix-restore.sh"]
+              env = [
+                {
+                  name  = "SNAPSHOT_NAME"
+                  value = "$${SNAPSHOT_NAME}"
+                },
+                {
+                  name  = "S3_BUCKET_BASE_PATH"
+                  value = var.apisix_backup_bucket_base_path
+                },
+                {
+                  name = "AWS_ACCESS_KEY_ID"
+                  valueFrom = {
+                    secretKeyRef = {
+                      name = kubernetes_secret.apisix_backup_cron_job_secrets.metadata[0].name
+                      key  = "AWS_ACCESS_KEY_ID"
+                    }
+                  }
+                },
+                {
+                  name = "AWS_SECRET_ACCESS_KEY"
+                  valueFrom = {
+                    secretKeyRef = {
+                      name = kubernetes_secret.apisix_backup_cron_job_secrets.metadata[0].name
+                      key  = "AWS_SECRET_ACCESS_KEY"
+                    }
+                  }
+                },
+                {
+                  name  = "NAMESPACE"
+                  value = kubernetes_namespace.apisix.metadata.0.name
+                },
+                {
+                  name  = "REPLICA_COUNT"
+                  value = format("%s", var.apisix_etcd_replicas)
+                },
+                {
+                  name  = "APISIX_HELM_RELEASE_NAME"
+                  value = "${local.apisix_helm_release_name}"
+                },
+              ]
+              volumeMounts = [
+                for i in range(var.apisix_etcd_replicas) : {
+                  name      = "data-${local.apisix_helm_release_name}-etcd-${i}"
+                  mountPath = "/etcd-volumes/data-apisix-jani-etcd-${i}"
+                }
+              ]
+            }
+          ],
+          volumes = [
+            for i in range(var.apisix_etcd_replicas) : {
+              name = "data-${local.apisix_helm_release_name}-etcd-${i}"
+              persistentVolumeClaim = {
+                claimName = "data-${local.apisix_helm_release_name}-etcd-${i}"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+  apisix_post_restore_job_template = {
+    apiVersion = "batch/v1"
+    kind       = "Job"
+    metadata = {
+      generateName = "apisix-post-restore-backup-"
+      namespace    = kubernetes_namespace.apisix.metadata.0.name
+    }
+    spec = {
+      backoffLimit = 0
+      template = {
+        spec = {
+          serviceAccountName = kubernetes_service_account.apisix_restore_sa.metadata.0.name
+          restartPolicy      = "Never"
+          containers = [
+            {
+              name            = "post-apisix-restore-backup"
+              image           = "bitnami/kubectl:1.28"
+              imagePullPolicy = "IfNotPresent"
+              command = [
+                "/bin/sh",
+                "-c",
+                <<-EOF
+                set -e
+                echo "Scaling up the etcd StatefulSet...";
+                kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=${var.apisix_etcd_replicas} -n ${kubernetes_namespace.apisix.metadata.0.name};
+
+                echo "Waiting for StatefulSet pods to scale up...";
+                kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=${local.apisix_helm_release_name},app.kubernetes.io/name=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s
+
+                echo "StatefulSet is scaled up.";
+                EOF
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+
+}
+
+resource "kubernetes_config_map" "apisix_restore_backup" {
+  metadata {
+    name      = "apisix-restore-backup"
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  }
+
+  data = {
+    "pre-job-template.yaml"  = yamlencode(local.apisix_pre_restore_job_template)
+    "job-template.yaml"      = yamlencode(local.apisix_restore_job_template)
+    "post-job-template.yaml" = yamlencode(local.apisix_post_restore_job_template)
   }
 
 }
