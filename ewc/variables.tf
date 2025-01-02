@@ -91,6 +91,12 @@ variable "apisix_ip_list" {
   }
 }
 
+variable "apisix_etcd_replicas" {
+  description = "Amount of etcd replicas for APISIX"
+  type        = number
+  default     = 3
+}
+
 variable "apisix_backup_bucket_base_path" {
   description = "AWS S3 bucket base path for APISIX backup files"
   type        = string
@@ -107,6 +113,12 @@ variable "keycloak_subdomain" {
   description = "subdomain where keycloak will be hosted"
   type        = string
   default     = "keycloak"
+}
+
+variable "keycloak_replicas" {
+  description = "Amount of keycloak replicas"
+  type        = number
+  default     = 1
 }
 
 variable "keycloak_backup_bucket_base_path" {

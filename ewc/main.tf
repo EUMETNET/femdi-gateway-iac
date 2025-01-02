@@ -31,8 +31,7 @@ provider "random" {
 }
 
 locals {
-  vault_host = "http://vault-active.vault.svc.cluster.local:8200"
-  etcd_host  = "http://apisix-etcd.apisix.svc.cluster.local:2379"
+  vault_host = "http://vault-jani-active.vault-jani.svc.cluster.local:8200"
 }
 
 
@@ -173,7 +172,7 @@ resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
 resource "vault_kubernetes_auth_backend_role" "backup-cron-job" {
   backend                          = vault_auth_backend.kubernetes.path
   role_name                        = "backup-cron-job"
-  bound_service_account_names      = [kubernetes_service_account.vault_backup_cron_job_service_account.metadata.0.name]
+  bound_service_account_names      = [kubernetes_service_account.vault_jobs_service_account.metadata.0.name]
   bound_service_account_namespaces = [module.ewc-vault-init.vault_namespace_name]
   token_policies                   = [vault_policy.backup-cron-job.name]
   token_ttl                        = 300
@@ -227,6 +226,7 @@ module "dev-portal-init" {
 
   keycloak_subdomain               = var.keycloak_subdomain
   keycloak_admin_password          = var.keycloak_admin_password
+  keycloak_replicas                = var.keycloak_replicas
   keycloak_backup_bucket_base_path = var.keycloak_backup_bucket_base_path
 
   dev-portal_subdomain         = var.dev-portal_subdomain
@@ -274,8 +274,13 @@ resource "kubernetes_config_map" "custom_error_pages" {
   }
 }
 
+locals {
+  apisix_helm_release_name = "apisix-jani"
+  apisix_etcd_host         = "http://${local.apisix_helm_release_name}-etcd.${kubernetes_namespace.apisix.metadata.0.name}.svc.cluster.local:2379"
+}
+
 resource "helm_release" "apisix" {
-  name             = "apisix"
+  name             = local.apisix_helm_release_name
   repository       = "https://charts.apiseven.com"
   chart            = "apisix"
   version          = "2.6.0"
@@ -397,6 +402,12 @@ resource "helm_release" "apisix" {
     name  = "apisix.nginx.configurationSnippet.httpEnd"
     value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
 
+  }
+
+  # etcd config
+  set {
+    name  = "etcd.replicaCount"
+    value = var.apisix_etcd_replicas
   }
 
   depends_on = [module.ewc-vault-init]
