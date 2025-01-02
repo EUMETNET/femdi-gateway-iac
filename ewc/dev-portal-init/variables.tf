@@ -38,6 +38,11 @@ variable "keycloak_subdomain" {
   type        = string
 }
 
+variable "keycloak_replicas" {
+  description = "Amount of keycloak replicas"
+  type        = number
+}
+
 variable "keycloak_backup_bucket_base_path" {
   description = "AWS S3 bucket base path for Keycloak backup files"
   type        = string

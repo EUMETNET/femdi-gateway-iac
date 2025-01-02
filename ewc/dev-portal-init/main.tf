@@ -1,13 +1,6 @@
 ################################################################################
 # Install Keycloak 
 ################################################################################
-
-locals {
-  postgres_host    = "keycloak-postgresql.keycloak.svc.cluster.local"
-  postgres_db_name = "bitnami_keycloak" # Default from Helm chart
-  postgres_db_user = "bn_keycloak"      # default from Helm chart
-}
-
 resource "kubernetes_namespace" "keycloak" {
   metadata {
     annotations = {
@@ -16,6 +9,13 @@ resource "kubernetes_namespace" "keycloak" {
 
     name = "keycloak"
   }
+}
+
+locals {
+  postgres_host              = "${local.keycloak_helm_release_name}-postgresql.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
+  postgres_db_name           = "bitnami_keycloak" # Default from Helm chart
+  postgres_db_user           = "bn_keycloak"      # default from Helm chart
+  keycloak_helm_release_name = "keycloak"
 }
 
 resource "random_password" "keycloak-dev-portal-secret" {
@@ -42,7 +42,7 @@ resource "kubernetes_config_map" "realm-json" {
 #TODO: Consider managing the secrets in self managed kubernetes_secret instead of using Helm chart generated secret
 #      Could not make self managed secret work reliably. Possible cause of this https://github.com/bitnami/charts/issues/18014
 resource "helm_release" "keycloak" {
-  name             = "keycloak"
+  name             = local.keycloak_helm_release_name
   repository       = "https://charts.bitnami.com/bitnami"
   chart            = "keycloak"
   version          = "21.1.2"
@@ -134,6 +134,11 @@ resource "helm_release" "keycloak" {
 
   }
 
+  # Statefulset params
+  set {
+    name  = "replicaCount"
+    value = var.keycloak_replicas
+  }
 
 }
 
@@ -184,7 +189,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         ]
       }
       "keycloak" = {
-        "url"           = "http://keycloak.keycloak.svc.cluster.local"
+        "url"           = "http://${local.keycloak_helm_release_name}.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
         "realm"         = "test"
         "client_id"     = "dev-portal-api"
         "client_secret" = random_password.keycloak-dev-portal-secret.result
@@ -250,6 +255,5 @@ resource "helm_release" "dev-portal" {
     name  = "frontend.keycloak_url"
     value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
   }
-
 
 }
