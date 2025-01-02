@@ -4,9 +4,9 @@
 ################################################################################
 
 # Backup Cron Job
-resource "kubernetes_secret" "keycloak_backup_cron_job_secrets" {
+resource "kubernetes_secret" "keycloak_jobs_secrets" {
   metadata {
-    name      = "keycloak-backup-cron-job"
+    name      = "keycloak-jobs"
     namespace = kubernetes_namespace.keycloak.metadata.0.name
   }
 
@@ -83,7 +83,7 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
                 name = "AWS_ACCESS_KEY_ID"
                 value_from {
                   secret_key_ref {
-                    name = kubernetes_secret.keycloak_backup_cron_job_secrets.metadata.0.name
+                    name = kubernetes_secret.keycloak_jobs_secrets.metadata.0.name
                     key  = "AWS_ACCESS_KEY_ID"
                   }
                 }
@@ -93,7 +93,7 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
                 name = "AWS_SECRET_ACCESS_KEY"
                 value_from {
                   secret_key_ref {
-                    name = kubernetes_secret.keycloak_backup_cron_job_secrets.metadata.0.name
+                    name = kubernetes_secret.keycloak_jobs_secrets.metadata.0.name
                     key  = "AWS_SECRET_ACCESS_KEY"
                   }
                 }
@@ -165,7 +165,7 @@ locals {
     kind       = "Job"
     metadata = {
       generateName = "keycloak-restore-backup-"
-      namespace    = kubernetes_namespace.keycloak.metadata.0.name
+      namespace    = "${kubernetes_namespace.keycloak.metadata.0.name}"
       labels = {
         "app.kubernetes.io/instance" = "keycloak-restore-backup"
       }
@@ -174,7 +174,7 @@ locals {
       backoffLimit = 0
       template = {
         spec = {
-          serviceAccountName = kubernetes_service_account.keycloak_restore_sa.metadata.0.name
+          serviceAccountName = "${kubernetes_service_account.keycloak_restore_sa.metadata.0.name}"
           restartPolicy      = "Never"
           containers = [
             {
@@ -189,13 +189,13 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = var.keycloak_backup_bucket_base_path
+                  value = "${var.keycloak_backup_bucket_base_path}"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"
                   valueFrom = {
                     secretKeyRef = {
-                      name = kubernetes_secret.keycloak_backup_cron_job_secrets.metadata.0.name
+                      name = "${kubernetes_secret.keycloak_jobs_secrets.metadata.0.name}"
                       key  = "AWS_ACCESS_KEY_ID"
                     }
                   }
@@ -204,26 +204,26 @@ locals {
                   name = "AWS_SECRET_ACCESS_KEY"
                   valueFrom = {
                     secretKeyRef = {
-                      name = kubernetes_secret.keycloak_backup_cron_job_secrets.metadata.0.name
+                      name = "${kubernetes_secret.keycloak_jobs_secrets.metadata.0.name}"
                       key  = "AWS_SECRET_ACCESS_KEY"
                     }
                   }
                 },
                 {
                   name  = "NAMESPACE"
-                  value = kubernetes_namespace.keycloak.metadata.0.name
+                  value = "${kubernetes_namespace.keycloak.metadata.0.name}"
                 },
                 {
                   name  = "POSTGRES_HOST"
-                  value = local.postgres_host
+                  value = "${local.postgres_host}"
                 },
                 {
                   name  = "POSTGRES_DB"
-                  value = local.postgres_db_name
+                  value = "${local.postgres_db_name}"
                 },
                 {
                   name  = "POSTGRES_USER"
-                  value = local.postgres_db_user
+                  value = "${local.postgres_db_user}"
                 },
                 {
                   name = "POSTGRES_PASSWORD"

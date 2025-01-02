@@ -6,10 +6,10 @@
 # Vault
 ################################################################################
 
-# Vault backup
-resource "kubernetes_service_account" "vault_backup_cron_job_service_account" {
+# Backup
+resource "kubernetes_service_account" "vault_jobs_service_account" {
   metadata {
-    name      = "vault-backup-cron-job-sa"
+    name      = "vault-jobs-sa"
     namespace = module.ewc-vault-init.vault_namespace_name
   }
 
@@ -38,15 +38,15 @@ resource "kubernetes_role" "vault_restore_role" {
   }
 }
 
-resource "kubernetes_role_binding" "keycloak_restore_role_binding" {
+resource "kubernetes_role_binding" "vault_restore_role_binding" {
   metadata {
-    name      = "keycloak-restore-role-binding"
+    name      = "vault-restore-role-binding"
     namespace = module.ewc-vault-init.vault_namespace_name
   }
 
   subject {
     kind      = "ServiceAccount"
-    name      = kubernetes_service_account.vault_backup_cron_job_service_account.metadata.0.name
+    name      = kubernetes_service_account.vault_jobs_service_account.metadata.0.name
     namespace = module.ewc-vault-init.vault_namespace_name
   }
 
@@ -57,9 +57,9 @@ resource "kubernetes_role_binding" "keycloak_restore_role_binding" {
   }
 }
 
-resource "kubernetes_secret" "vault_backup_cron_job_secrets" {
+resource "kubernetes_secret" "vault_jobs_secrets" {
   metadata {
-    name      = "vault-backup-cron-job"
+    name      = "vault-jobs"
     namespace = module.ewc-vault-init.vault_namespace_name
   }
 
@@ -93,7 +93,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
           metadata {}
           spec {
             restart_policy       = "OnFailure"
-            service_account_name = kubernetes_service_account.vault_backup_cron_job_service_account.metadata.0.name
+            service_account_name = kubernetes_service_account.vault_jobs_service_account.metadata.0.name
             container {
               name              = "vault-backup"
               image             = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
@@ -114,7 +114,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
                 name = "AWS_ACCESS_KEY_ID"
                 value_from {
                   secret_key_ref {
-                    name = kubernetes_secret.vault_backup_cron_job_secrets.metadata.0.name
+                    name = kubernetes_secret.vault_jobs_secrets.metadata.0.name
                     key  = "AWS_ACCESS_KEY_ID"
                   }
                 }
@@ -124,7 +124,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
                 name = "AWS_SECRET_ACCESS_KEY"
                 value_from {
                   secret_key_ref {
-                    name = kubernetes_secret.vault_backup_cron_job_secrets.metadata.0.name
+                    name = kubernetes_secret.vault_jobs_secrets.metadata.0.name
                     key  = "AWS_SECRET_ACCESS_KEY"
                   }
                 }
@@ -140,20 +140,20 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
 
 }
 
-# Vault restore
+# Restore
 locals {
   vault_restore_job_template = {
     apiVersion = "batch/v1"
     kind       = "Job"
     metadata = {
       generateName = "vault-restore-backup-"
-      namespace    = module.ewc-vault-init.vault_namespace_name
+      namespace    = "${module.ewc-vault-init.vault_namespace_name}"
     }
     spec = {
       backoffLimit = 0
       template = {
         spec = {
-          serviceAccountName = kubernetes_service_account.vault_backup_cron_job_service_account.metadata.0.name
+          serviceAccountName = "${kubernetes_service_account.vault_jobs_service_account.metadata.0.name}"
           restartPolicy      = "Never"
           containers = [
             {
@@ -174,7 +174,7 @@ locals {
                   name = "AWS_ACCESS_KEY_ID"
                   valueFrom = {
                     secretKeyRef = {
-                      name = kubernetes_secret.vault_backup_cron_job_secrets.metadata[0].name
+                      name = "${kubernetes_secret.vault_jobs_secrets.metadata.0.name}"
                       key  = "AWS_ACCESS_KEY_ID"
                     }
                   }
@@ -183,14 +183,14 @@ locals {
                   name = "AWS_SECRET_ACCESS_KEY"
                   valueFrom = {
                     secretKeyRef = {
-                      name = kubernetes_secret.vault_backup_cron_job_secrets.metadata[0].name
+                      name = "${kubernetes_secret.vault_jobs_secrets.metadata.0.name}"
                       key  = "AWS_SECRET_ACCESS_KEY"
                     }
                   }
                 },
                 {
                   name  = "NAMESPACE"
-                  value = module.ewc-vault-init.vault_namespace_name
+                  value = "${module.ewc-vault-init.vault_namespace_name}"
                 },
                 {
                   name  = "VAULT_TOKEN"
@@ -237,9 +237,9 @@ resource "kubernetes_config_map" "vault_restore_backup" {
 ################################################################################
 
 # Backup
-resource "kubernetes_secret" "apisix_backup_cron_job_secrets" {
+resource "kubernetes_secret" "apisix_jobs_secrets" {
   metadata {
-    name      = "apisix-backup-cron-job"
+    name      = "apisix-jobs"
     namespace = kubernetes_namespace.apisix.metadata.0.name
   }
 
@@ -293,7 +293,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
                 name = "AWS_ACCESS_KEY_ID"
                 value_from {
                   secret_key_ref {
-                    name = kubernetes_secret.apisix_backup_cron_job_secrets.metadata.0.name
+                    name = kubernetes_secret.apisix_jobs_secrets.metadata.0.name
                     key  = "AWS_ACCESS_KEY_ID"
                   }
                 }
@@ -303,7 +303,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
                 name = "AWS_SECRET_ACCESS_KEY"
                 value_from {
                   secret_key_ref {
-                    name = kubernetes_secret.apisix_backup_cron_job_secrets.metadata.0.name
+                    name = kubernetes_secret.apisix_jobs_secrets.metadata.0.name
                     key  = "AWS_SECRET_ACCESS_KEY"
                   }
                 }
@@ -317,7 +317,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
 
 }
 
-# APISIX restore
+# Restore
 resource "kubernetes_service_account" "apisix_restore_sa" {
   metadata {
     name      = "apisix-restore-sa"
@@ -375,13 +375,13 @@ locals {
     kind       = "Job"
     metadata = {
       generateName = "apisix-pre-restore-backup-"
-      namespace    = kubernetes_namespace.apisix.metadata.0.name
+      namespace    = "${kubernetes_namespace.apisix.metadata.0.name}"
     }
     spec = {
       backoffLimit = 0
       template = {
         spec = {
-          serviceAccountName = kubernetes_service_account.apisix_restore_sa.metadata.0.name
+          serviceAccountName = "${kubernetes_service_account.apisix_restore_sa.metadata.0.name}"
           restartPolicy      = "Never"
           containers = [
             {
@@ -413,13 +413,12 @@ locals {
     kind       = "Job"
     metadata = {
       generateName = "apisix-restore-backup-"
-      namespace    = kubernetes_namespace.apisix.metadata.0.name
+      namespace    = "${kubernetes_namespace.apisix.metadata.0.name}"
     }
     spec = {
       backoffLimit = 0
       template = {
         spec = {
-          serviceAccountName = kubernetes_service_account.apisix_backup_cron_job_service_account.metadata.0.name
           restartPolicy      = "Never"
           containers = [
             {
@@ -434,13 +433,13 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = var.apisix_backup_bucket_base_path
+                  value = "${var.apisix_backup_bucket_base_path}"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"
                   valueFrom = {
                     secretKeyRef = {
-                      name = kubernetes_secret.apisix_backup_cron_job_secrets.metadata[0].name
+                      name = "${kubernetes_secret.apisix_jobs_secrets.metadata.0.name}"
                       key  = "AWS_ACCESS_KEY_ID"
                     }
                   }
@@ -449,14 +448,14 @@ locals {
                   name = "AWS_SECRET_ACCESS_KEY"
                   valueFrom = {
                     secretKeyRef = {
-                      name = kubernetes_secret.apisix_backup_cron_job_secrets.metadata[0].name
+                      name = "${kubernetes_secret.apisix_jobs_secrets.metadata.0.name}"
                       key  = "AWS_SECRET_ACCESS_KEY"
                     }
                   }
                 },
                 {
                   name  = "NAMESPACE"
-                  value = kubernetes_namespace.apisix.metadata.0.name
+                  value = "${kubernetes_namespace.apisix.metadata.0.name}"
                 },
                 {
                   name  = "REPLICA_COUNT"
@@ -492,13 +491,13 @@ locals {
     kind       = "Job"
     metadata = {
       generateName = "apisix-post-restore-backup-"
-      namespace    = kubernetes_namespace.apisix.metadata.0.name
+      namespace    = "${kubernetes_namespace.apisix.metadata.0.name}"
     }
     spec = {
       backoffLimit = 0
       template = {
         spec = {
-          serviceAccountName = kubernetes_service_account.apisix_restore_sa.metadata.0.name
+          serviceAccountName = "${kubernetes_service_account.apisix_restore_sa.metadata.0.name}"
           restartPolicy      = "Never"
           containers = [
             {
