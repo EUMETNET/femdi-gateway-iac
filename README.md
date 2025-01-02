@@ -103,7 +103,7 @@ export SNAPSHOT_NAME="specific_snapshot.db" # Optionally provide a specific snap
 # Create the restore job and capture the job name
 JOB_NAME=$(kubectl get configmap keycloak-restore-backup -n keycloak -o jsonpath='{.data.job-template\.yaml}' | envsubst | kubectl create -f - -o name)
 
-# Optionally, tail the logs of the job
+# Optionally, tail the logs
 kubectl logs -f $JOB_NAME -n keycloak
 
 # Optionally, delete the job and its resources after completion
@@ -116,16 +116,20 @@ kubectl delete $JOB_NAME -n keycloak
 
 ```sh
 export KUBECONFIG="~/.kube/config" # Replace with the path to your kubeconfig file
-export SNAPSHOT_NAME="specific_snapshot.db" # Optionally provide a specific snapshot name if you need to restore a snapshot other than the latest one
-export UNSEAL_KEYS= # Provide the unseal keys
-export VAULT_TOKEN= # Provide the Vault token
+export SNAPSHOT_NAME="specific_snapshot.db" # Optionally provide a specific snapshot name if need to restore other than latest snapshot file
 
+JOB_TEMPLATE=$(kubectl get configmap vault-restore-backup -n vault -o jsonpath='{.data.job-template\.yaml}')
+
+# Pass the unseal keys and vault token, place and logic to fetch these might need adjusting
 # Create the restore job and capture the job name
-JOB_NAME=$(kubectl get configmap vault-restore-backup -n vault -o jsonpath='{.data.job-template\.yaml}' | envsubst | kubectl create -f - -o name)
-
-# Optionally, tail the logs of the job
+JOB_NAME=$(
+    UNSEAL_KEYS=$(jq -r '. | join(",")' ~/path-to/unseal_keys.txt) \
+    VAULT_TOKEN=$(cat ~/path-to/vault_token.txt) \
+    envsubst <<< "$JOB_TEMPLATE" | \
+    kubectl create -f - -o name
+)
+# Optionally, tail the logs
 kubectl logs -f $JOB_NAME -n vault
-
 # Optionally, delete the job and its resources after completion
 kubectl delete $JOB_NAME -n vault
 ```
@@ -148,7 +152,7 @@ kubectl delete $PRE_JOB_NAME -n apisix
 # Create the main restore job and capture the job name
 MAIN_JOB_NAME=$(kubectl get configmap apisix-restore-backup -n apisix -o jsonpath='{.data.job-template\.yaml}' | envsubst | kubectl create -f - -o name)
 
-# Optionally, tail the logs of the main restore job
+# Optionally, tail the logs
 kubectl logs -f $MAIN_JOB_NAME -n apisix
 
 # Optionally, delete the main restore job and its resources after completion
