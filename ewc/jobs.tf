@@ -419,7 +419,7 @@ locals {
       backoffLimit = 0
       template = {
         spec = {
-          restartPolicy      = "Never"
+          restartPolicy = "Never"
           containers = [
             {
               name            = "apisix-restore-backup"
