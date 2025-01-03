@@ -71,7 +71,7 @@ PGPASSWORD=$POSTGRES_PASSWORD pg_restore -h $POSTGRES_HOST -U $POSTGRES_USER -d 
 
 # Scale up the Keycloak StatefulSet back to its original replica count
 echo "Scaling up the Keycloak StatefulSet back to its original replica count..."
-kubectl scale statefulset keycloak --replicas=${REPLICA_COUNT} -n "$NAMESPACE" || { echo "ERROR: Failed to scale up Keycloak StatefulSet"; exit 1; }
+kubectl scale statefulset "$KEYCLOAK_HELM_RELEASE_NAME" --replicas=${REPLICA_COUNT} -n "$NAMESPACE" || { echo "ERROR: Failed to scale up Keycloak StatefulSet"; exit 1; }
 
 # Wait for the StatefulSet to scale up
 echo "Waiting for the Keycloak StatefulSet to scale up..."
