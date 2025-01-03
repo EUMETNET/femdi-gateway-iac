@@ -171,7 +171,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
     "secrets.yaml" = yamlencode({
 
       "vault" = {
-        "url"          = "http://vault-active.vault.svc.cluster.local:8200"
+        "url"          = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
         "token"        = var.dev-portal_vault_token
         "base_path"    = "apisix-dev/consumers"
         "secret_phase" = random_password.dev-portal-password.result
@@ -182,7 +182,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         "instances" = [
           {
             "name"          = "EWC"
-            "admin_url"     = "http://apisix-admin.apisix.svc.cluster.local:9180"
+            "admin_url"     = "http://${var.apisix_helm_release_name}-admin.${var.apisix_namespace_name}.svc.cluster.local:9180"
             "gateway_url"   = "https://${var.apisix_subdomain}.${var.dns_zone}"
             "admin_api_key" = var.apisix_admin
           }

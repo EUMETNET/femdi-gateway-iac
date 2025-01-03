@@ -43,12 +43,6 @@ variable "keycloak_replicas" {
   type        = number
 }
 
-variable "keycloak_backup_bucket_base_path" {
-  description = "AWS S3 bucket base path for Keycloak backup files"
-  type        = string
-  default     = "dev-rodeo-backups/ewc/keycloak/"
-}
-
 variable "dev-portal_subdomain" {
   description = "subdomain where devportal will be hosted"
   type        = string
@@ -77,6 +71,26 @@ variable "apisix_admin" {
   sensitive   = true
 }
 
+variable "apisix_helm_release_name" {
+  description = "Name of the Helm release for Apisix"
+  type        = string
+}
+
+variable "apisix_namespace_name" {
+  description = "Name of the namespace where Apisix is running"
+  type        = string
+}
+
+variable "vault_helm_release_name" {
+  description = "Name of the Helm release for Vault"
+  type        = string
+}
+
+variable "vault_namespace_name" {
+  description = "Name of the namespace where Vault is running"
+  type        = string
+}
+
 variable "google_idp_client_secret" {
   description = "Secret to use Google idp"
   type        = string
@@ -99,4 +113,9 @@ variable "s3_bucket_secret_key" {
   description = "AWS secret key for S3 bucket for backups"
   type        = string
   sensitive   = true
+}
+
+variable "backup_bucket_base_path" {
+  description = "AWS S3 bucket base path for Keycloak backup files"
+  type        = string
 }
