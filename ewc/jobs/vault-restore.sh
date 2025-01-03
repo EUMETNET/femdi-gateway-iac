@@ -49,18 +49,19 @@ if [ -z "$VAULT_PODS" ]; then
   exit 1
 fi
 
-# Select the first Vault pod for initialization and restore
+# Check that the Vault cluster is initialized
+echo "Verifying that the pods in Vault cluster are in initialized state..."
+for pod in $VAULT_PODS; do
+  initialized=$(kubectl -n "$NAMESPACE" exec "$pod" -- sh -c "vault status -format=json" | grep -o '"initialized":[^,]*' | awk -F: '{print $2}' | tr -d ' ')
+  if [ "$initialized" != "true" ]; then
+    echo "ERROR: Vault pod $pod is not initialized. All the Vault pods needs to be initialized before restoring from snapshot."
+    exit 1
+  fi
+done
+
+# Select the first Vault pod for restore
 VAULT_POD=$(echo $VAULT_PODS | awk '{print $1}')
 echo "Using first found Vault pod: '$VAULT_POD' to perform the restore."
-
-# Check that the Vault cluster is initialized
-echo "Verifying that the Vault cluster is initialized..."
-kubectl -n "$NAMESPACE" exec "${VAULT_POD}" -- vault status -format=json > /tmp/init.json
-
-if [ "$(grep -o '\"initialized\": *[^,]*' /tmp/init.json | awk '{print $2}')" != "true" ]; then
-  echo "ERROR: Vault cluster is not initialized."
-  exit 1
-fi
 
 # Copy the snapshot to the Vault pod
 echo "Copying snapshot to the Vault pod using tar..."
@@ -81,7 +82,7 @@ echo "Unsealing the Vault cluster..."
 IFS=',' read -r -a keys <<< "$UNSEAL_KEYS"
 for pod in $VAULT_PODS; do
   for (( i=0; i<$KEY_THRESHOLD; i++ )); do
-    kubectl -n "$NAMESPACE" exec "$pod" -- vault operator unseal "${keys[$i]}" || { echo "ERROR: Failed to unseal pod $pod"; exit 1; }
+    kubectl -n "$NAMESPACE" exec "$pod" -- vault operator unseal "${keys[$i]}" > /dev/null || { echo "ERROR: Failed to unseal pod $pod"; exit 1; }
   done
 done
 
@@ -89,9 +90,7 @@ done
 echo "Verifying that the Vault pods are joining the cluster..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault -n "$NAMESPACE" --timeout=300s || { echo "ERROR: Timeout reached when waiting for Vault StatefulSet to be ready"; exit 1; }
 
-
 # Clean up
 rm /tmp/$SNAPSHOT_NAME
-rm /tmp/init.json
 
 echo "Vault cluster successfully restored from snapshot $SNAPSHOT_NAME"
