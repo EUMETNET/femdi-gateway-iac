@@ -68,7 +68,7 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
                 name = "POSTGRES_PASSWORD"
                 value_from {
                   secret_key_ref {
-                    name = "keycloak-postgresql"
+                    name = "${local.keycloak_helm_release_name}-postgresql"
                     key  = "password"
                   }
                 }
@@ -229,7 +229,7 @@ locals {
                   name = "POSTGRES_PASSWORD"
                   valueFrom = {
                     secretKeyRef = {
-                      name = "keycloak-postgresql"
+                      name = "${local.keycloak_helm_release_name}-postgresql"
                       key  = "password"
                     }
                   }
