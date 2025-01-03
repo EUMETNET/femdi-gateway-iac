@@ -30,10 +30,6 @@ provider "vault" {
 provider "random" {
 }
 
-locals {
-  vault_host = "http://vault-jani-active.vault-jani.svc.cluster.local:8200"
-}
-
 
 ################################################################################
 # Install Vault and it's policies and tokens
@@ -142,12 +138,16 @@ EOT
   depends_on = [module.ewc-vault-init]
 }
 
-resource "vault_policy" "backup-cron-job" {
-  name = "backup-cron-job"
+resource "vault_policy" "cron-jobs" {
+  name = "cron-jobs"
 
   policy = <<EOT
 path "sys/storage/raft/snapshot" {
   capabilities = ["read"]
+}
+
+path "auth/token/renew" {
+  capabilities = ["update"]
 }
 EOT
 
@@ -171,10 +171,10 @@ resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
 
 resource "vault_kubernetes_auth_backend_role" "backup-cron-job" {
   backend                          = vault_auth_backend.kubernetes.path
-  role_name                        = "backup-cron-job"
+  role_name                        = "cron-jobs"
   bound_service_account_names      = [kubernetes_service_account.vault_jobs_service_account.metadata.0.name]
   bound_service_account_namespaces = [module.ewc-vault-init.vault_namespace_name]
-  token_policies                   = [vault_policy.backup-cron-job.name]
+  token_policies                   = [vault_policy.cron-jobs.name]
   token_ttl                        = 300
 
   depends_on = [module.ewc-vault-init]
@@ -224,17 +224,22 @@ module "dev-portal-init" {
 
   rancher_project_id = rancher2_project.gateway.id
 
-  keycloak_subdomain               = var.keycloak_subdomain
-  keycloak_admin_password          = var.keycloak_admin_password
-  keycloak_replicas                = var.keycloak_replicas
-  keycloak_backup_bucket_base_path = var.keycloak_backup_bucket_base_path
+  keycloak_subdomain      = var.keycloak_subdomain
+  keycloak_admin_password = var.keycloak_admin_password
+  keycloak_replicas       = var.keycloak_replicas
+  backup_bucket_base_path = var.backup_bucket_base_path
 
   dev-portal_subdomain         = var.dev-portal_subdomain
   dev-portal_registry_password = var.dev-portal_registry_password
   dev-portal_vault_token       = vault_token.dev-portal-global.client_token
 
-  apisix_subdomain = var.apisix_subdomain
-  apisix_admin     = var.apisix_admin
+  apisix_subdomain         = var.apisix_subdomain
+  apisix_admin             = var.apisix_admin
+  apisix_helm_release_name = local.apisix_helm_release_name
+  apisix_namespace_name    = kubernetes_namespace.apisix.metadata.0.name
+
+  vault_helm_release_name = module.ewc-vault-init.vault_helm_release_name
+  vault_namespace_name    = module.ewc-vault-init.vault_namespace_name
 
   google_idp_client_secret = var.google_idp_client_secret
   github_idp_client_secret = var.github_idp_client_secret
@@ -277,6 +282,7 @@ resource "kubernetes_config_map" "custom_error_pages" {
 locals {
   apisix_helm_release_name = "apisix-jani"
   apisix_etcd_host         = "http://${local.apisix_helm_release_name}-etcd.${kubernetes_namespace.apisix.metadata.0.name}.svc.cluster.local:2379"
+  vault_host               = "http://${module.ewc-vault-init.vault_helm_release_name}-active.${module.ewc-vault-init.vault_namespace_name}.svc.cluster.local:8200"
 }
 
 resource "helm_release" "apisix" {
