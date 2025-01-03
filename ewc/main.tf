@@ -280,7 +280,7 @@ resource "kubernetes_config_map" "custom_error_pages" {
 }
 
 locals {
-  apisix_helm_release_name = "apisix-jani"
+  apisix_helm_release_name = "apisix"
   apisix_etcd_host         = "http://${local.apisix_helm_release_name}-etcd.${kubernetes_namespace.apisix.metadata.0.name}.svc.cluster.local:2379"
   vault_host               = "http://${module.ewc-vault-init.vault_helm_release_name}-active.${module.ewc-vault-init.vault_namespace_name}.svc.cluster.local:8200"
 }
