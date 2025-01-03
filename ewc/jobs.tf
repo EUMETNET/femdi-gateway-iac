@@ -536,7 +536,7 @@ locals {
               volumeMounts = [
                 for i in range(var.apisix_etcd_replicas) : {
                   name      = "data-${local.apisix_helm_release_name}-etcd-${i}"
-                  mountPath = "/etcd-volumes/data-apisix-jani-etcd-${i}"
+                  mountPath = "/etcd-volumes/data-${local.apisix_helm_release_name}-etcd-${i}"
                 }
               ]
             }
