@@ -97,12 +97,6 @@ variable "apisix_etcd_replicas" {
   default     = 3
 }
 
-variable "apisix_backup_bucket_base_path" {
-  description = "AWS S3 bucket base path for APISIX backup files"
-  type        = string
-  default     = "dev-rodeo-backups/ewc/apisix/"
-}
-
 variable "keycloak_admin_password" {
   description = "Password for keycloak admin"
   type        = string
@@ -119,12 +113,6 @@ variable "keycloak_replicas" {
   description = "Amount of keycloak replicas"
   type        = number
   default     = 1
-}
-
-variable "keycloak_backup_bucket_base_path" {
-  description = "AWS S3 bucket base path for Keycloak backup files"
-  type        = string
-  default     = "dev-rodeo-backups/ewc/keycloak/"
 }
 
 variable "vault_subdomain" {
@@ -155,12 +143,6 @@ variable "vault_token" {
   description = "Token for Vault if it is already initialized"
   type        = string
   sensitive   = true
-}
-
-variable "vault_backup_bucket_base_path" {
-  description = "AWS S3 bucket base path for vault backup files"
-  type        = string
-  default     = "dev-rodeo-backups/ewc/vault/"
 }
 
 variable "install_dev-portal" {
@@ -203,4 +185,10 @@ variable "s3_bucket_secret_key" {
   description = "AWS secret key for S3 bucket for backups"
   type        = string
   sensitive   = true
+}
+
+variable "backup_bucket_base_path" {
+  description = "AWS S3 backup bucket base path"
+  type        = string
+  default     = "dev-rodeo-backups/ewc"
 }

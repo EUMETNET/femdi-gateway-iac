@@ -28,7 +28,7 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
   spec {
     concurrency_policy            = "Replace"
     failed_jobs_history_limit     = 3 # Keep the latest 3 failed jobs
-    schedule                      = "1 0 * * *"
+    schedule                      = "0 3 * * *"
     timezone                      = "Etc/UTC"
     starting_deadline_seconds     = 43200 # 12 hours
     successful_jobs_history_limit = 1     # Keep the latest
@@ -76,7 +76,7 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
 
               env {
                 name  = "S3_BUCKET_BASE_PATH"
-                value = var.keycloak_backup_bucket_base_path
+                value = "${var.backup_bucket_base_path}/${kubernetes_namespace.keycloak.metadata.0.name}/"
               }
 
               env {
@@ -189,7 +189,7 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = "${var.keycloak_backup_bucket_base_path}"
+                  value = "${var.backup_bucket_base_path}/${kubernetes_namespace.keycloak.metadata.0.name}/"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"

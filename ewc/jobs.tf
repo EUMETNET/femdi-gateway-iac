@@ -6,6 +6,71 @@
 # Vault
 ################################################################################
 
+# Service token renewal
+resource "kubernetes_cron_job_v1" "vault_token_renewal" {
+  metadata {
+    name      = "vault-token-renewal"
+    namespace = module.ewc-vault-init.vault_namespace_name
+  }
+
+  spec {
+    concurrency_policy            = "Replace"
+    failed_jobs_history_limit     = 3              # Keep the latest 3 failed jobs
+    schedule                      = "0 4 1,15 * *" # Run at 4 AM twice a month to provide sufficient buffer
+    timezone                      = "Etc/UTC"
+    starting_deadline_seconds     = 43200 # 12 hours
+    successful_jobs_history_limit = 1     # Keep the latest
+
+    job_template {
+      metadata {}
+      spec {
+        backoff_limit = 6 # This is the default value
+        template {
+          metadata {}
+          spec {
+            restart_policy       = "OnFailure"
+            service_account_name = kubernetes_service_account.vault_jobs_service_account.metadata.0.name
+            container {
+              name              = "vault-token-renewal"
+              image             = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
+              image_pull_policy = "Always" # TODO change to IfNotPresent once tested out to be working
+              command           = ["/bin/sh", "-c", "/usr/local/bin/vault-token-renewal.sh"]
+
+              env {
+                name  = "VAULT_ADDR"
+                value = local.vault_host
+              }
+
+              env {
+                name = "APISIX_SERVICE_TOKEN"
+                value_from {
+                  secret_key_ref {
+                    name = kubernetes_secret.vault_jobs_secrets.metadata.0.name
+                    key  = "APISIX_SERVICE_TOKEN"
+                  }
+                }
+              }
+
+              env {
+                name = "DEV_PORTAL_SERVICE_TOKEN"
+                value_from {
+                  secret_key_ref {
+                    name = kubernetes_secret.vault_jobs_secrets.metadata.0.name
+                    key  = "DEV_PORTAL_SERVICE_TOKEN"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  depends_on = [module.ewc-vault-init]
+
+}
+
 # Backup
 resource "kubernetes_service_account" "vault_jobs_service_account" {
   metadata {
@@ -64,8 +129,10 @@ resource "kubernetes_secret" "vault_jobs_secrets" {
   }
 
   data = {
-    AWS_ACCESS_KEY_ID     = var.s3_bucket_access_key
-    AWS_SECRET_ACCESS_KEY = var.s3_bucket_secret_key
+    AWS_ACCESS_KEY_ID        = var.s3_bucket_access_key
+    AWS_SECRET_ACCESS_KEY    = var.s3_bucket_secret_key
+    APISIX_SERVICE_TOKEN     = vault_token.apisix-global.client_token
+    DEV_PORTAL_SERVICE_TOKEN = vault_token.dev-portal-global.client_token
   }
 
   type = "Opaque"
@@ -80,7 +147,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
   spec {
     concurrency_policy            = "Replace"
     failed_jobs_history_limit     = 3 # Keep the latest 3 failed jobs
-    schedule                      = "1 0 * * *"
+    schedule                      = "0 3 * * *"
     timezone                      = "Etc/UTC"
     starting_deadline_seconds     = 43200 # 12 hours
     successful_jobs_history_limit = 1     # Keep the latest
@@ -107,7 +174,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
 
               env {
                 name  = "S3_BUCKET_BASE_PATH"
-                value = var.vault_backup_bucket_base_path
+                value = "${var.backup_bucket_base_path}/${module.ewc-vault-init.vault_namespace_name}/"
               }
 
               env {
@@ -168,7 +235,7 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = var.vault_backup_bucket_base_path
+                  value = "${var.backup_bucket_base_path}/${module.ewc-vault-init.vault_namespace_name}/"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"
@@ -260,7 +327,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
   spec {
     concurrency_policy            = "Replace"
     failed_jobs_history_limit     = 3 # Keep the latest 3 failed jobs
-    schedule                      = "1 0 * * *"
+    schedule                      = "0 3 * * *"
     timezone                      = "Etc/UTC"
     starting_deadline_seconds     = 43200 # 12 hours
     successful_jobs_history_limit = 1     # Keep the latest
@@ -286,7 +353,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
 
               env {
                 name  = "S3_BUCKET_BASE_PATH"
-                value = var.apisix_backup_bucket_base_path
+                value = "${var.backup_bucket_base_path}/${kubernetes_namespace.apisix.metadata.0.name}/"
               }
 
               env {
@@ -433,7 +500,7 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = "${var.apisix_backup_bucket_base_path}"
+                  value = "${var.backup_bucket_base_path}/${kubernetes_namespace.apisix.metadata.0.name}/"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"
