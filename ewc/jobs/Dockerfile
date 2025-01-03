@@ -43,6 +43,7 @@ RUN etcdctl version && etcdutl version && vault version && aws --version && pg_d
 COPY common-functions.sh \
      vault-snapshot.sh \
      vault-restore.sh \
+     vault-token-renewal.sh \
      apisix-snapshot.sh \
      apisix-restore.sh \
      keycloak-snapshot.sh \
@@ -52,6 +53,7 @@ COPY common-functions.sh \
 RUN chmod +x /usr/local/bin/common-functions.sh \
              /usr/local/bin/vault-snapshot.sh \
              /usr/local/bin/vault-restore.sh \
+             /usr/local/bin/vault-token-renewal.sh \
              /usr/local/bin/apisix-snapshot.sh \
              /usr/local/bin/apisix-restore.sh \
              /usr/local/bin/keycloak-snapshot.sh \

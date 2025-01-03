@@ -23,7 +23,7 @@ SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 
 # Authenticate with Vault using the Kubernetes auth method to obtain a Vault token
 export VAULT_TOKEN=$(vault write -field=token auth/kubernetes/login \
-  role=backup-cron-job \
+  role=cron-jobs \
   jwt=$SA_TOKEN)
 
 # Generate ISO 8601 compliant timestamp
