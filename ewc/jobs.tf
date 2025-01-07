@@ -576,7 +576,7 @@ locals {
                 "-c",
                 <<-EOF
                 set -e
-                echo "Scaling up the etcd StatefulSet...";
+                echo "Scaling up the etcd StatefulSet back to its original replica count..";
                 kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=${var.apisix_etcd_replicas} -n ${kubernetes_namespace.apisix.metadata.0.name};
 
                 echo "Waiting for StatefulSet pods to scale up...";

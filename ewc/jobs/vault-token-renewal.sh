@@ -25,11 +25,13 @@ export VAULT_TOKEN=$(vault write -field=token auth/kubernetes/login \
   role=cron-jobs \
   jwt=$SA_TOKEN)
 
+echo "Renewing APISIX service token..."
 vault token renew $APISIX_SERVICE_TOKEN > /dev/null || {
   echo "Error renewing APISIX_SERVICE_TOKEN"
   error_occurred=true
 }
 
+echo "Renewing Dev Portal service token..."
 vault token renew $DEV_PORTAL_SERVICE_TOKEN > /dev/null || {
   echo "Error renewing DEV_PORTAL_SERVICE_TOKEN"
   error_occurred=true

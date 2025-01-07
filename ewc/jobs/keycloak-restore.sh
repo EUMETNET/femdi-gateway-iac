@@ -55,6 +55,12 @@ fi
 echo "Downloading the snapshot "$SNAPSHOT_NAME" from S3..."
 aws s3 cp s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME} /tmp/${SNAPSHOT_NAME} --region "${AWS_REGION}" || { echo "ERROR: Failed to download snapshot from S3"; exit 1; }
 
+# Decompress the snapshot
+gzip -d /tmp/${SNAPSHOT_NAME} || { echo "ERROR: Failed to decompress snapshot $SNAPSHOT_NAME"; exit 1; }
+
+# Create a new variable for the decompressed snapshot name
+DECOMPRESSED_SNAPSHOT_NAME="${SNAPSHOT_NAME%.gz}"
+
 # Scale the Keycloak StatefulSet down to prevent writes
 echo "Scaling down the Keycloak StatefulSet to prevent writes to PostgreSQL..."
 kubectl scale statefulset "$KEYCLOAK_HELM_RELEASE_NAME" --replicas=0 -n "$NAMESPACE" || { echo "ERROR: Failed to scale down Keycloak StatefulSet"; exit 1; }
@@ -67,7 +73,7 @@ echo "Keycloak StatefulSet scaled down successfully"
 # Restore the PostgreSQL database from the snapshot
 # -c for clean state before restore
 echo "Restoring the PostgreSQL database from the snapshot..."
-PGPASSWORD=$POSTGRES_PASSWORD pg_restore -h $POSTGRES_HOST -U $POSTGRES_USER -d postgres -v /tmp/$SNAPSHOT_NAME -C -c --if-exists|| { echo "ERROR: Failed to restore PostgreSQL database from snapshot"; exit 1; }
+PGPASSWORD=$POSTGRES_PASSWORD pg_restore -h $POSTGRES_HOST -U $POSTGRES_USER -d postgres /tmp/$DECOMPRESSED_SNAPSHOT_NAME -C -c --if-exists > /dev/null || { echo "ERROR: Failed to restore PostgreSQL database from snapshot"; exit 1; }
 
 # Scale up the Keycloak StatefulSet back to its original replica count
 echo "Scaling up the Keycloak StatefulSet back to its original replica count..."
@@ -79,6 +85,6 @@ kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=${KEYCLOAK_
 echo "Keycloak StatefulSet scaled up successfully"
 
 # Clean up
-rm /tmp/$SNAPSHOT_NAME
+rm /tmp/$DECOMPRESSED_SNAPSHOT_NAME
 
-echo "Keycloak PostgreSQL database successfully restored from snapshot $SNAPSHOT_NAME"
+echo "Keycloak PostgreSQL database successfully restored from snapshot $DECOMPRESSED_SNAPSHOT_NAME"

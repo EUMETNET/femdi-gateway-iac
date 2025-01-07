@@ -30,15 +30,17 @@ TIMESTAMP_ISO_8601=$(generate_iso_8601_timestamp)
 SNAPSHOT_NAME="snapshot-$TIMESTAMP_ISO_8601.sql"
 
 # Take the db snapshot
-PGPASSWORD=$POSTGRES_PASSWORD pg_dump -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -F c -b -v -f /tmp/$SNAPSHOT_NAME
+echo "Taking the db dump..."
+PGPASSWORD=$POSTGRES_PASSWORD pg_dump -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -F c -b -v -f /tmp/$SNAPSHOT_NAME || { echo "ERROR: Failed to take db dump"; exit 1; }
+
+# Compress the snapshot
+gzip /tmp/$SNAPSHOT_NAME
 
 # Upload to S3
-aws s3 cp /tmp/$SNAPSHOT_NAME s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME} --region "${AWS_REGION}"
-
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to upload snapshot to S3"
-  exit 1
-fi
+echo "Uploading the snapshot to S3..."
+aws s3 cp /tmp/$SNAPSHOT_NAME.gz s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME}.gz --region "${AWS_REGION}" || { echo "ERROR: Failed to upload snapshot to S3"; exit 1; }
 
 # Clean up
-rm /tmp/$SNAPSHOT_NAME
+rm /tmp/$SNAPSHOT_NAME.gz
+
+echo "Snapshot $SNAPSHOT_NAME has been successfully uploaded to S3"

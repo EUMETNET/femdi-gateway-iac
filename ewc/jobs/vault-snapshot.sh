@@ -33,15 +33,17 @@ SNAPSHOT_NAME="snapshot-$TIMESTAMP_ISO_8601.snap"
 
 # Take the snapshot
 # https://developer.hashicorp.com/vault/tutorials/standard-procedures/sop-backup
-vault operator raft snapshot save /tmp/$SNAPSHOT_NAME
+echo "Taking the raft snapshot..."
+vault operator raft snapshot save /tmp/$SNAPSHOT_NAME || { echo "ERROR: Failed to take raft snapshot"; exit 1; }
+
+# Compress the snapshot
+gzip /tmp/$SNAPSHOT_NAME
 
 # Upload to S3
-aws s3 cp /tmp/$SNAPSHOT_NAME s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME} --region "${AWS_REGION}"
-
-if [ $? -ne 0 ]; then
-  echo "Error: Failed to upload snapshot to S3"
-  exit 1
-fi
+echo "Uploading the snapshot to S3..."
+aws s3 cp /tmp/$SNAPSHOT_NAME.gz s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME}.gz --region "${AWS_REGION}" || { echo "ERROR: Failed to upload snapshot to S3"; exit 1; }
 
 # Clean up
-rm /tmp/$SNAPSHOT_NAME
+rm /tmp/$SNAPSHOT_NAME.gz
+
+echo "Snapshot $SNAPSHOT_NAME has been successfully uploaded to S3"

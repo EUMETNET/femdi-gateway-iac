@@ -28,18 +28,26 @@ check_var "UNSEAL_KEYS" "$UNSEAL_KEYS"
 
 # Validate and convert KEY_THRESHOLD to an integer
 if ! [[ "$KEY_THRESHOLD" =~ ^[0-9]+$ ]]; then
-  echo "ERROR: KEY_THRESHOLD must be a valid integer."
+  echo "ERROR: KEY_THRESHOLD must be a valid integer. Provided value: $KEY_THRESHOLD"
   exit 1
 fi
 KEY_THRESHOLD=$(printf "%d" "$KEY_THRESHOLD")
 
 # Find the latest snapshot if no specific snapshot is provided
 if [ "$SNAPSHOT_NAME" == "latest" ]; then
-  SNAPSHOT_NAME=$(find_latest_file_in_s3_bucket $S3_BUCKET_BASE_PATH $AWS_REGION)
+  echo "Finding the latest snapshot from S3..."
+  SNAPSHOT_NAME=$(find_latest_file_in_s3_bucket $S3_BUCKET_BASE_PATH $AWS_REGION) || { echo "ERROR: Failed to download snapshot $SNAPSHOT_NAME from S3"; exit 1; }
 fi
 
 # Download the snapshot from S3
+echo "Downloading the snapshot "$SNAPSHOT_NAME" from S3..."
 aws s3 cp s3://${S3_BUCKET_BASE_PATH}${SNAPSHOT_NAME} /tmp/${SNAPSHOT_NAME} --region "${AWS_REGION}" || { echo "ERROR: Failed to download snapshot $SNAPSHOT_NAME from S3"; exit 1; }
+
+# Decompress the snapshot
+gzip -d /tmp/${SNAPSHOT_NAME} || { echo "ERROR: Failed to decompress snapshot $SNAPSHOT_NAME"; exit 1; }
+
+# Create a new variable for the decompressed snapshot name
+DECOMPRESSED_SNAPSHOT_NAME="${SNAPSHOT_NAME%.gz}"
 
 # Get the Vault pods
 echo "Getting the available Vault pods..."
@@ -64,18 +72,15 @@ VAULT_POD=$(echo $VAULT_PODS | awk '{print $1}')
 echo "Using first found Vault pod: '$VAULT_POD' to perform the restore."
 
 # Copy the snapshot to the Vault pod
+# Had issues with kubectl cp, so using tar instead
 echo "Copying snapshot to the Vault pod using tar..."
-tar cf - -C /tmp ${SNAPSHOT_NAME} | kubectl exec -i -n "$NAMESPACE" "$VAULT_POD" -- tar xf - -C /tmp/
-if [ $? -ne 0 ]; then
-  echo "ERROR: Failed to copy snapshot to the Vault pod"
-  exit 1
-fi
+tar cf - -C /tmp ${DECOMPRESSED_SNAPSHOT_NAME} | kubectl exec -i -n "$NAMESPACE" "$VAULT_POD" -- tar xf - -C /tmp/ || { echo "ERROR: Failed to copy snapshot to the Vault pod"; exit 1; }
 
 # Restore the Vault cluster from snapshot
 echo "Restoring the Vault cluster from snapshot..."
 kubectl -n "$NAMESPACE" exec "${VAULT_POD}" -- sh -c \
-  "VAULT_TOKEN=$VAULT_TOKEN vault operator raft snapshot restore -force /tmp/$SNAPSHOT_NAME &&
-  rm /tmp/$SNAPSHOT_NAME" || { echo "ERROR: Failed to restore the Vault cluster from snapshot"; exit 1; }
+  "VAULT_TOKEN=$VAULT_TOKEN vault operator raft snapshot restore -force /tmp/$DECOMPRESSED_SNAPSHOT_NAME &&
+  rm /tmp/$DECOMPRESSED_SNAPSHOT_NAME" || { echo "ERROR: Failed to restore the Vault cluster from snapshot"; exit 1; }
 
 # Unseal the Vault cluster
 echo "Unsealing the Vault cluster..."
@@ -89,8 +94,9 @@ done
 # Verifying that the Vault StatefulSet is ready
 echo "Verifying that the Vault pods are joining the cluster..."
 kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=vault -n "$NAMESPACE" --timeout=300s || { echo "ERROR: Timeout reached when waiting for Vault StatefulSet to be ready"; exit 1; }
+echo "Vault cluster is ready"
 
 # Clean up
-rm /tmp/$SNAPSHOT_NAME
+rm /tmp/$DECOMPRESSED_SNAPSHOT_NAME
 
-echo "Vault cluster successfully restored from snapshot $SNAPSHOT_NAME"
+echo "Vault cluster successfully restored from snapshot $DECOMPRESSED_SNAPSHOT_NAME"
