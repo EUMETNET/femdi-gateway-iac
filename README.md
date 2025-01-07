@@ -80,25 +80,48 @@ vault_pod_ready_statuses_before_init = [
 terraform output dev-portal_keycloak_secret
 ```
 
+## Vault token renewals
+
+APISIX and the Dev Portal use service tokens to communicate with Vault. These tokens have a maximum TTL of 768 hours (32 days). To prevent token revocation, a cron job is scheduled to run on the 1st and 15th of each month to reset the token period.
+
 ## Disaster Recovery
 
 The disaster recovery plan includes backing up application databases and logical data, and restoring them from snapshot files. The backup and restore processes are performed using database-specific tools like `pg_dump` and `pg_restore`.
 
 ### Backups
 
-Each application (Keycloak, APISIX, Vault) has a dedicated Cron job for backups. The backup schedule can be adjusted using Terraform if needed. Currently, backups are saved to an AWS S3 bucket. If there is no need to store files older than a certain number of days, bucket retention policies can be used to manage this.
+Each application's database (Keycloak PostgreSQL, APISIX etcd, Vault raft) has a dedicated Cron job for backups. The backup schedule can be adjusted using Terraform if needed. Currently, backups are saved to an AWS S3 bucket. If there is no need to store files older than a certain number of days, bucket retention policies can be used to manage this.
 
 ### Restore
 
 Each application has dedicated job(s) to restore data from snapshots. These jobs are invoked with independent commands, but the job templates are managed within Terraform.
 
-**Note:** Ensure that the Terraform state and the actual cluster state are aligned before running restore jobs to avoid potential issues.
+> [!IMPORTANT]
+> Ensure that the Terraform state and the actual cluster state are aligned before running restore jobs to avoid potential issues.
+>
+> You can try to take manual snapshot from desired database(s) before attempting the restore operation(s).
 
 #### Keycloak Restore
 
 ```sh
 export KUBECONFIG="~/.kube/config" # Replace with the path to your kubeconfig file
-export SNAPSHOT_NAME="specific_snapshot.db" # Optionally provide a specific snapshot name if you need to restore a snapshot other than the latest one
+
+###########################################
+# Optional manual backup before the restore
+###########################################
+
+JOB_NAME=$(kubectl create job --from=cronjob/keycloak-backup keycloak-backup-$(date +%s) -n keycloak -o jsonpath='{.metadata.name}')
+POD_NAME=$(kubectl get pods -n keycloak -l job-name=$JOB_NAME -o jsonpath='{.items[0].metadata.name}')
+# Optionally, tail the logs
+kubectl logs -f $POD_NAME -n keycloak
+# Optionally, delete the job and its resources after completion
+kubectl delete job $JOB_NAME -n keycloak
+
+###########################################
+# Restore
+###########################################
+
+export SNAPSHOT_NAME="specific_snapshot.db.gz" # Optionally provide a specific snapshot name if you need to restore a snapshot other than the latest one
 
 # Create the restore job and capture the job name
 JOB_NAME=$(kubectl get configmap keycloak-restore-backup -n keycloak -o jsonpath='{.data.job-template\.yaml}' | envsubst | kubectl create -f - -o name)
@@ -116,7 +139,23 @@ kubectl delete $JOB_NAME -n keycloak
 
 ```sh
 export KUBECONFIG="~/.kube/config" # Replace with the path to your kubeconfig file
-export SNAPSHOT_NAME="specific_snapshot.db" # Optionally provide a specific snapshot name if need to restore other than latest snapshot file
+
+###########################################
+# Optional manual backup before the restore
+###########################################
+
+JOB_NAME=$(kubectl create job --from=cronjob/vault-backup vault-backup-$(date +%s) -n vault -o jsonpath='{.metadata.name}')
+POD_NAME=$(kubectl get pods -n vault -l job-name=$JOB_NAME -o jsonpath='{.items[0].metadata.name}')
+# Optionally, tail the logs
+kubectl logs -f $POD_NAME -n vault
+# Optionally, delete the job and its resources after completion
+kubectl delete job $JOB_NAME -n vault
+
+###########################################
+# Restore
+###########################################
+
+export SNAPSHOT_NAME="specific_snapshot.snap.gz" # Optionally provide a specific snapshot name if need to restore other than latest snapshot file
 
 JOB_TEMPLATE=$(kubectl get configmap vault-restore-backup -n vault -o jsonpath='{.data.job-template\.yaml}')
 
@@ -138,7 +177,23 @@ kubectl delete $JOB_NAME -n vault
 
 ```sh
 export KUBECONFIG="~/.kube/config" # Replace with the path to your kubeconfig file
-export SNAPSHOT_NAME="specific_snapshot.db" # Optionally provide a specific snapshot name if you need to restore a snapshot other than the latest one
+
+###########################################
+# Optional manual backup before the restore
+###########################################
+
+JOB_NAME=$(kubectl create job --from=cronjob/apisix-backup apisix-backup-$(date +%s) -n apisix -o jsonpath='{.metadata.name}')
+POD_NAME=$(kubectl get pods -n apisix -l job-name=$JOB_NAME -o jsonpath='{.items[0].metadata.name}')
+# Optionally, tail the logs
+kubectl logs -f $POD_NAME -n apisix
+# Optionally, delete the job and its resources after completion
+kubectl delete job $JOB_NAME -n apisix
+
+###########################################
+# Restore
+###########################################
+
+export SNAPSHOT_NAME="specific_snapshot.snap.gz" # Optionally provide a specific snapshot name if you need to restore a snapshot other than the latest one
 
 # Create the pre-restore job and capture the job name
 PRE_JOB_NAME=$(kubectl get configmap apisix-restore-backup -n apisix -o jsonpath='{.data.pre-job-template\.yaml}' | envsubst | kubectl create -f - -o name)
