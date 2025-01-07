@@ -11,19 +11,21 @@ S3_BUCKET_BASE_PATH=${S3_BUCKET_BASE_PATH}
 AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
 AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 AWS_REGION=${AWS_REGION:-"eu-north-1"}
+VAULT_ROLE=${VAULT_ROLE}
 
 # Check required variables
 check_var "VAULT_ADDR" "$VAULT_ADDR"
 check_var "S3_BUCKET_BASE_PATH" "$S3_BUCKET_BASE_PATH"
 check_var "AWS_ACCESS_KEY_ID" "$AWS_ACCESS_KEY_ID"
 check_var "AWS_SECRET_ACCESS_KEY" "$AWS_SECRET_ACCESS_KEY"
+check_var "VAULT_ROLE" "$VAULT_ROLE"
 
 # Retrieve the provided service account token
 SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 
 # Authenticate with Vault using the Kubernetes auth method to obtain a Vault token
 export VAULT_TOKEN=$(vault write -field=token auth/kubernetes/login \
-  role=cron-jobs \
+  role=$VAULT_ROLE \
   jwt=$SA_TOKEN)
 
 # Generate ISO 8601 compliant timestamp

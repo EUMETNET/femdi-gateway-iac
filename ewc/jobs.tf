@@ -42,6 +42,11 @@ resource "kubernetes_cron_job_v1" "vault_token_renewal" {
               }
 
               env {
+                name  = "VAULT_ROLE"
+                value = vault_kubernetes_auth_backend_role.cron-job.role_name
+              }
+
+              env {
                 name = "APISIX_SERVICE_TOKEN"
                 value_from {
                   secret_key_ref {
@@ -175,6 +180,11 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
               env {
                 name  = "S3_BUCKET_BASE_PATH"
                 value = "${var.backup_bucket_base_path}/${module.ewc-vault-init.vault_namespace_name}/"
+              }
+
+              env {
+                name  = "VAULT_ROLE"
+                value = vault_kubernetes_auth_backend_role.cron-job.role_name
               }
 
               env {

@@ -138,14 +138,22 @@ EOT
   depends_on = [module.ewc-vault-init]
 }
 
-resource "vault_policy" "cron-jobs" {
-  name = "cron-jobs"
+resource "vault_policy" "take-snapshot" {
+  name = "take-snapshot"
 
   policy = <<EOT
 path "sys/storage/raft/snapshot" {
   capabilities = ["read"]
 }
+EOT
 
+  depends_on = [module.ewc-vault-init]
+}
+
+resource "vault_policy" "renew-token" {
+  name = "renew-token"
+
+  policy = <<EOT
 path "auth/token/renew" {
   capabilities = ["update"]
 }
@@ -169,12 +177,12 @@ resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
   depends_on = [module.ewc-vault-init]
 }
 
-resource "vault_kubernetes_auth_backend_role" "backup-cron-job" {
+resource "vault_kubernetes_auth_backend_role" "cron-job" {
   backend                          = vault_auth_backend.kubernetes.path
-  role_name                        = "cron-jobs"
+  role_name                        = "cron-job"
   bound_service_account_names      = [kubernetes_service_account.vault_jobs_service_account.metadata.0.name]
   bound_service_account_namespaces = [module.ewc-vault-init.vault_namespace_name]
-  token_policies                   = [vault_policy.cron-jobs.name]
+  token_policies                   = [vault_policy.take-snapshot.name, vault_policy.renew-token.name]
   token_ttl                        = 300
 
   depends_on = [module.ewc-vault-init]

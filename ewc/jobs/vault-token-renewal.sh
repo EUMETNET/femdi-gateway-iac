@@ -9,11 +9,13 @@ source /usr/local/bin/common-functions.sh
 VAULT_ADDR=${VAULT_ADDR}
 APISIX_SERVICE_TOKEN=${APISIX_SERVICE_TOKEN}
 DEV_PORTAL_SERVICE_TOKEN=${DEV_PORTAL_SERVICE_TOKEN}
+VAULT_ROLE=${VAULT_ROLE}
 
 # Check required variables
 check_var "VAULT_ADDR" "$VAULT_ADDR"
 check_var "APISIX_SERVICE_TOKEN" "$APISIX_SERVICE_TOKEN"
 check_var "DEV_PORTAL_SERVICE_TOKEN" "$DEV_PORTAL_SERVICE_TOKEN"
+check_var "VAULT_ROLE" "$VAULT_ROLE"
 
 error_occured=false
 
@@ -22,7 +24,7 @@ SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
 
 # Authenticate with Vault using the Kubernetes auth method to obtain a Vault token
 export VAULT_TOKEN=$(vault write -field=token auth/kubernetes/login \
-  role=cron-jobs \
+  role=$VAULT_ROLE \
   jwt=$SA_TOKEN)
 
 echo "Renewing APISIX service token..."
