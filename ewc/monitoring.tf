@@ -119,6 +119,7 @@ resource "vault_policy" "prometheus" {
   policy = <<EOT
 path "sys/metrics" {
   capabilities = ["read", "list"]
+}
 EOT
 
   depends_on = [module.ewc-vault-init]
@@ -214,6 +215,6 @@ resource "kubernetes_config_map" "dashboard-vault" {
     }
   }
   data = {
-    "dashboard-apisix.json" = file("./grafana-dashboards/vault-dashboard.json")
+    "vault-dashboard.json" = file("./grafana-dashboards/vault-dashboard.json")
   }
 }
