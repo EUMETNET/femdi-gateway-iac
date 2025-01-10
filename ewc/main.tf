@@ -59,9 +59,13 @@ module "ewc-vault-init" {
 
 }
 
+locals {
+  vault_mount_kv_base_path = "apisix"
+}
+
 # Vault configurations after initialization and bootsrap
 resource "vault_mount" "apisix" {
-  path        = "apisix"
+  path        = local.vault_mount_kv_base_path
   type        = "kv"
   options     = { version = "1" }
   description = "Apisix secrets"
@@ -82,7 +86,7 @@ resource "vault_policy" "apisix-global" {
   name = "apisix-global"
 
   policy = <<EOT
-path "apisix/consumers/*" {
+path "${local.vault_mount_kv_base_path}/consumers/*" {
   capabilities = ["read"]
 }
 
@@ -95,7 +99,7 @@ resource "vault_policy" "dev-portal-global" {
   name = "dev-portal-global"
 
   policy = <<EOT
-path "apisix/consumers/*" {
+path "${local.vault_mount_kv_base_path}/consumers/*" {
 	capabilities = ["create", "read", "update", "patch", "delete", "list"]
 }
 EOT
@@ -104,12 +108,12 @@ EOT
 }
 
 resource "vault_policy" "api-management-tool-gha" {
-  name = "dev-portal-global"
+  name = "api-management-tool-gha"
 
   policy = <<EOT
-path "apisix-dev/apikeys/*" { capabilities = ["read"] } 
-path "apisix-dev/urls/*" { capabilities = ["read"] } 
-path "apisix-dev/admin/*" { capabilities = ["read"] }
+path "${local.vault_mount_kv_base_path}/apikeys/*" { capabilities = ["read"] } 
+path "${local.vault_mount_kv_base_path}/urls/*" { capabilities = ["read"] } 
+path "${local.vault_mount_kv_base_path}/admin/*" { capabilities = ["read"] }
 EOT
 
   depends_on = [module.ewc-vault-init]
@@ -183,6 +187,8 @@ module "dev-portal-init" {
 
   apisix_subdomain = var.apisix_subdomain
   apisix_admin     = var.apisix_admin
+
+  vault_mount_kv_base_path = local.vault_mount_kv_base_path
 
   google_idp_client_secret = var.google_idp_client_secret
   github_idp_client_secret = var.github_idp_client_secret
@@ -264,7 +270,7 @@ resource "helm_release" "apisix" {
 
   set {
     name  = "apisix.vault.prefix"
-    value = "apisix-dev/consumers"
+    value = "${local.vault_mount_kv_base_path}/consumers"
   }
 
   set_sensitive {

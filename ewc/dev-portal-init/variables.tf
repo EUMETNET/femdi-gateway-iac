@@ -65,6 +65,11 @@ variable "apisix_admin" {
   sensitive   = true
 }
 
+variable "vault_mount_kv_base_path" {
+  description = "Base path for KV secrets engine in Vault"
+  type        = string
+}
+
 variable "google_idp_client_secret" {
   description = "Secret to use Google idp"
   type        = string
