@@ -224,7 +224,7 @@ resource "helm_release" "apisix" {
   name             = "apisix"
   repository       = "https://charts.apiseven.com"
   chart            = "apisix"
-  version          = "2.6.0"
+  version          = "2.10.0"
   namespace        = kubernetes_namespace.apisix.metadata.0.name
   create_namespace = false
 
@@ -249,6 +249,17 @@ resource "helm_release" "apisix" {
   set_list {
     name  = "apisix.admin.allow.ipList"
     value = var.apisix_ip_list
+  }
+
+  # Enable Prometheus
+  set {
+    name  = "apisix.prometheus.enabled"
+    value = true
+  }
+
+  set {
+    name  = "metrics.serviceMonitor.enabled"
+    value = true
   }
 
   # Apisix vault integration
