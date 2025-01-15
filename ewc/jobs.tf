@@ -34,7 +34,7 @@ resource "kubernetes_cron_job_v1" "vault_token_renewal" {
               name              = "vault-token-renewal"
               image             = "ghcr.io/eurodeo/femdi-gateway-iac/jobs:latest"
               image_pull_policy = "Always" # TODO change to IfNotPresent once tested out to be working
-              command           = ["/bin/sh", "-c", "/usr/local/bin/vault-token-renewal.sh"]
+              command           = ["/bin/bash", "-c", "/usr/local/bin/vault-token-renewal.sh"]
 
               env {
                 name  = "VAULT_ADDR"
@@ -47,24 +47,15 @@ resource "kubernetes_cron_job_v1" "vault_token_renewal" {
               }
 
               env {
-                name = "APISIX_SERVICE_TOKEN"
+                name = "TOKENS_TO_RENEW"
                 value_from {
                   secret_key_ref {
                     name = kubernetes_secret.vault_jobs_secrets.metadata.0.name
-                    key  = "APISIX_SERVICE_TOKEN"
+                    key  = "TOKENS_TO_RENEW"
                   }
                 }
               }
 
-              env {
-                name = "DEV_PORTAL_SERVICE_TOKEN"
-                value_from {
-                  secret_key_ref {
-                    name = kubernetes_secret.vault_jobs_secrets.metadata.0.name
-                    key  = "DEV_PORTAL_SERVICE_TOKEN"
-                  }
-                }
-              }
             }
           }
         }
@@ -134,10 +125,9 @@ resource "kubernetes_secret" "vault_jobs_secrets" {
   }
 
   data = {
-    AWS_ACCESS_KEY_ID        = var.s3_bucket_access_key
-    AWS_SECRET_ACCESS_KEY    = var.s3_bucket_secret_key
-    APISIX_SERVICE_TOKEN     = vault_token.apisix-global.client_token
-    DEV_PORTAL_SERVICE_TOKEN = vault_token.dev-portal-global.client_token
+    AWS_ACCESS_KEY_ID     = var.s3_bucket_access_key
+    AWS_SECRET_ACCESS_KEY = var.s3_bucket_secret_key
+    TOKENS_TO_RENEW       = join(" ", [vault_token.apisix-global.client_token, vault_token.dev-portal-global.client_token])
   }
 
   type = "Opaque"
