@@ -127,7 +127,7 @@ resource "kubernetes_secret" "vault_jobs_secrets" {
   data = {
     AWS_ACCESS_KEY_ID     = var.s3_bucket_access_key
     AWS_SECRET_ACCESS_KEY = var.s3_bucket_secret_key
-    TOKENS_TO_RENEW       = join(" ", [vault_token.apisix-global.client_token, vault_token.dev-portal-global.client_token])
+    TOKENS_TO_RENEW       = "(${join(" ", [vault_token.apisix-global.client_token, vault_token.dev-portal-global.client_token])})"
   }
 
   type = "Opaque"
