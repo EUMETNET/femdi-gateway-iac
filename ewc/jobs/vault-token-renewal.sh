@@ -28,7 +28,7 @@ export VAULT_TOKEN=$(vault write -field=token auth/kubernetes/login \
 index=0
 for token in "${TOKENS[@]}"; do
     echo "Renewing token index $index ..."
-    vault token renew $APISIX_SERVICE_TOKEN > /dev/null || {
+    vault token renew $token > /dev/null || {
       echo "Error renewing $index"
       error_occurred=true
     }
