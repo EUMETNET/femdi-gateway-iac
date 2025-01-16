@@ -209,6 +209,7 @@ resource "kubernetes_namespace" "vault" {
 }
 
 locals {
+  vault_helm_release_name  = "vault"
   vault_certificate_secret = "vault-certificates"
   vault_issuer_manifest = {
     "apiVersion" = "cert-manager.io/v1"
@@ -242,10 +243,10 @@ locals {
         "name"  = kubectl_manifest.vault-issuer.name
       }
       "dnsNames" = [
-        "*.vault-internal",
-        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}",
-        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}.svc",
-        "*.vault-internal.${kubernetes_namespace.vault.metadata.0.name}.svc.cluster.local",
+        "*.${local.vault_helm_release_name}-internal",
+        "*.${local.vault_helm_release_name}-internal.${kubernetes_namespace.vault.metadata.0.name}",
+        "*.${local.vault_helm_release_name}-internal.${kubernetes_namespace.vault.metadata.0.name}.svc",
+        "*.${local.vault_helm_release_name}-internal.${kubernetes_namespace.vault.metadata.0.name}.svc.cluster.local",
       ]
     }
   }
@@ -263,7 +264,7 @@ resource "kubectl_manifest" "vault-certificates" {
 }
 
 resource "helm_release" "vault" {
-  name             = "vault"
+  name             = local.vault_helm_release_name
   repository       = "https://helm.releases.hashicorp.com"
   chart            = "vault"
   version          = "0.28.0"
@@ -279,6 +280,7 @@ resource "helm_release" "vault" {
       replicas                 = var.vault_replicas
       replicas_iterator        = range(var.vault_replicas)
       anti-affinity            = var.vault_anti-affinity
+      release_name             = local.vault_helm_release_name
     })
   ]
 
@@ -300,7 +302,7 @@ data "kubernetes_resource" "vault-pods-before" {
   kind        = "Pod"
 
   metadata {
-    name      = "vault-${count.index}"
+    name      = "${local.vault_helm_release_name}-${count.index}"
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 
@@ -319,7 +321,8 @@ data "external" "vault-init" {
         if condition.type == "Ready"
       ]])
     ),
-    var.vault_key_treshold
+    var.vault_key_treshold,
+    local.vault_helm_release_name
   ]
 
   depends_on = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before]
@@ -339,7 +342,7 @@ data "kubernetes_resource" "vault-pods-after" {
   kind        = "Pod"
 
   metadata {
-    name      = "vault-${count.index}"
+    name      = "${local.vault_helm_release_name}-${count.index}"
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 

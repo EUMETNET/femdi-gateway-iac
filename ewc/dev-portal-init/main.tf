@@ -11,6 +11,13 @@ resource "kubernetes_namespace" "keycloak" {
   }
 }
 
+locals {
+  postgres_host              = "${local.keycloak_helm_release_name}-postgresql.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
+  postgres_db_name           = "bitnami_keycloak" # Default from Helm chart
+  postgres_db_user           = "bn_keycloak"      # default from Helm chart
+  keycloak_helm_release_name = "keycloak"
+}
+
 resource "random_password" "keycloak-dev-portal-secret" {
   length = 32
 }
@@ -32,8 +39,10 @@ resource "kubernetes_config_map" "realm-json" {
 }
 
 #TODO: Add HPA
+#TODO: Consider managing the secrets in self managed kubernetes_secret instead of using Helm chart generated secret
+#      Could not make self managed secret work reliably. Possible cause of this https://github.com/bitnami/charts/issues/18014
 resource "helm_release" "keycloak" {
-  name             = "keycloak"
+  name             = local.keycloak_helm_release_name
   repository       = "https://charts.bitnami.com/bitnami"
   chart            = "keycloak"
   version          = "21.1.2"
@@ -63,6 +72,16 @@ resource "helm_release" "keycloak" {
   set_sensitive {
     name  = "auth.adminPassword"
     value = var.keycloak_admin_password
+  }
+
+  set {
+    name  = "postgresql.auth.username"
+    value = local.postgres_db_user
+  }
+
+  set {
+    name  = "postgresql.auth.database"
+    value = local.postgres_db_name
   }
 
   # Needed for configmap realm import
@@ -115,8 +134,14 @@ resource "helm_release" "keycloak" {
 
   }
 
+  # Statefulset params
+  set {
+    name  = "replicaCount"
+    value = var.keycloak_replicas
+  }
 
 }
+
 ################################################################################
 
 # Install Dev-portal
@@ -146,7 +171,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
     "secrets.yaml" = yamlencode({
 
       "vault" = {
-        "url"          = "http://vault-active.vault.svc.cluster.local:8200"
+        "url"          = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
         "token"        = var.dev-portal_vault_token
         "base_path"    = "apisix-dev/consumers"
         "secret_phase" = random_password.dev-portal-password.result
@@ -157,14 +182,14 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         "instances" = [
           {
             "name"          = "EWC"
-            "admin_url"     = "http://apisix-admin.apisix.svc.cluster.local:9180"
+            "admin_url"     = "http://${var.apisix_helm_release_name}-admin.${var.apisix_namespace_name}.svc.cluster.local:9180"
             "gateway_url"   = "https://${var.apisix_subdomain}.${var.dns_zone}"
             "admin_api_key" = var.apisix_admin
           }
         ]
       }
       "keycloak" = {
-        "url"           = "http://keycloak.keycloak.svc.cluster.local"
+        "url"           = "http://${local.keycloak_helm_release_name}.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
         "realm"         = "test"
         "client_id"     = "dev-portal-api"
         "client_secret" = random_password.keycloak-dev-portal-secret.result
@@ -230,6 +255,5 @@ resource "helm_release" "dev-portal" {
     name  = "frontend.keycloak_url"
     value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
   }
-
 
 }

@@ -78,6 +78,29 @@ resource "vault_jwt_auth_backend" "github" {
   depends_on = [module.ewc-vault-init]
 }
 
+resource "vault_auth_backend" "kubernetes" {
+  type        = "kubernetes"
+  description = "Kubernetes auth backend"
+
+  depends_on = [module.ewc-vault-init]
+}
+
+resource "vault_kubernetes_auth_backend_config" "k8s_auth_config" {
+  backend = vault_auth_backend.kubernetes.path
+
+  # Use the internal Kubernetes API server URL for communication within the cluster.
+  # This URL is automatically resolved by the Kubernetes DNS service to the internal IP address of the Kubernetes API server.
+  # If the provided host doesn't work (403 response) in future you can check correct DNS search paths using:
+  # kubectl run -it --rm --restart=Never busybox --image=busybox -- sh
+  # cat /etc/resolv.conf
+
+  kubernetes_host = "https://kubernetes.default.svc.kubernetes.local"
+
+  # We can omit rest of params, e.g. CA certificate and token reviewer JWT as long as 
+  # Vault and calling service are run in same k8s cluster
+  # https://developer.hashicorp.com/vault/docs/auth/kubernetes#use-local-service-account-token-as-the-reviewer-jwt
+}
+
 resource "vault_policy" "apisix-global" {
   name = "apisix-global"
 
@@ -115,6 +138,30 @@ EOT
   depends_on = [module.ewc-vault-init]
 }
 
+resource "vault_policy" "take-snapshot" {
+  name = "take-snapshot"
+
+  policy = <<EOT
+path "sys/storage/raft/snapshot" {
+  capabilities = ["read"]
+}
+EOT
+
+  depends_on = [module.ewc-vault-init]
+}
+
+resource "vault_policy" "renew-token" {
+  name = "renew-token"
+
+  policy = <<EOT
+path "auth/token/renew" {
+  capabilities = ["update"]
+}
+EOT
+
+  depends_on = [module.ewc-vault-init]
+}
+
 resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
   role_name  = "api-management-tool-gha"
   backend    = vault_jwt_auth_backend.github.path
@@ -126,6 +173,17 @@ resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
   bound_audiences = ["https://github.com/EURODEO/api-management-tool-poc"]
   token_policies  = [vault_policy.api-management-tool-gha.name]
   token_ttl       = 300
+
+  depends_on = [module.ewc-vault-init]
+}
+
+resource "vault_kubernetes_auth_backend_role" "cron-job" {
+  backend                          = vault_auth_backend.kubernetes.path
+  role_name                        = "cron-job"
+  bound_service_account_names      = [kubernetes_service_account.vault_jobs_service_account.metadata.0.name]
+  bound_service_account_namespaces = [module.ewc-vault-init.vault_namespace_name]
+  token_policies                   = [vault_policy.take-snapshot.name, vault_policy.renew-token.name]
+  token_ttl                        = 300
 
   depends_on = [module.ewc-vault-init]
 }
@@ -176,17 +234,26 @@ module "dev-portal-init" {
 
   keycloak_subdomain      = var.keycloak_subdomain
   keycloak_admin_password = var.keycloak_admin_password
+  keycloak_replicas       = var.keycloak_replicas
+  backup_bucket_base_path = var.backup_bucket_base_path
 
   dev-portal_subdomain         = var.dev-portal_subdomain
   dev-portal_registry_password = var.dev-portal_registry_password
   dev-portal_vault_token       = vault_token.dev-portal-global.client_token
 
-  apisix_subdomain = var.apisix_subdomain
-  apisix_admin     = var.apisix_admin
+  apisix_subdomain         = var.apisix_subdomain
+  apisix_admin             = var.apisix_admin
+  apisix_helm_release_name = local.apisix_helm_release_name
+  apisix_namespace_name    = kubernetes_namespace.apisix.metadata.0.name
+
+  vault_helm_release_name = module.ewc-vault-init.vault_helm_release_name
+  vault_namespace_name    = module.ewc-vault-init.vault_namespace_name
 
   google_idp_client_secret = var.google_idp_client_secret
   github_idp_client_secret = var.github_idp_client_secret
 
+  s3_bucket_access_key = var.s3_bucket_access_key
+  s3_bucket_secret_key = var.s3_bucket_secret_key
 
 }
 
@@ -220,8 +287,14 @@ resource "kubernetes_config_map" "custom_error_pages" {
   }
 }
 
+locals {
+  apisix_helm_release_name = "apisix"
+  apisix_etcd_host         = "http://${local.apisix_helm_release_name}-etcd.${kubernetes_namespace.apisix.metadata.0.name}.svc.cluster.local:2379"
+  vault_host               = "http://${module.ewc-vault-init.vault_helm_release_name}-active.${module.ewc-vault-init.vault_namespace_name}.svc.cluster.local:8200"
+}
+
 resource "helm_release" "apisix" {
-  name             = "apisix"
+  name             = local.apisix_helm_release_name
   repository       = "https://charts.apiseven.com"
   chart            = "apisix"
   version          = "2.10.0"
@@ -270,7 +343,7 @@ resource "helm_release" "apisix" {
 
   set {
     name  = "apisix.vault.host"
-    value = "http://vault-active.vault.svc.cluster.local:8200"
+    value = local.vault_host
   }
 
   set {
@@ -354,6 +427,12 @@ resource "helm_release" "apisix" {
     name  = "apisix.nginx.configurationSnippet.httpEnd"
     value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
 
+  }
+
+  # etcd config
+  set {
+    name  = "etcd.replicaCount"
+    value = var.apisix_etcd_replicas
   }
 
   depends_on = [module.ewc-vault-init]
