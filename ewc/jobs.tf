@@ -46,16 +46,27 @@ resource "kubernetes_cron_job_v1" "vault_token_renewal" {
                 value = vault_kubernetes_auth_backend_role.cron-job.role_name
               }
 
-              env {
-                name = "TOKENS_TO_RENEW"
-                value_from {
-                  secret_key_ref {
-                    name = kubernetes_secret.vault_jobs_secrets.metadata.0.name
-                    key  = "TOKENS_TO_RENEW"
-                  }
-                }
+
+              volume_mount {
+                name       = "tokens-volume"
+                mount_path = "/tmp/secret/tokens"
+                sub_path   = "tokens"
               }
 
+
+
+            }
+
+            volume {
+              name = "tokens-volume"
+              secret {
+                secret_name = kubernetes_secret.vault_jobs_secrets.metadata.0.name
+                items {
+
+                  key  = "TOKENS_TO_RENEW"
+                  path = "tokens"
+                }
+              }
             }
           }
         }
@@ -127,7 +138,7 @@ resource "kubernetes_secret" "vault_jobs_secrets" {
   data = {
     AWS_ACCESS_KEY_ID     = var.s3_bucket_access_key
     AWS_SECRET_ACCESS_KEY = var.s3_bucket_secret_key
-    TOKENS_TO_RENEW       = "(${join(" ", [vault_token.apisix-global.client_token, vault_token.dev-portal-global.client_token])})"
+    TOKENS_TO_RENEW       = "${join("\n", [vault_token.apisix-global.client_token, vault_token.dev-portal-global.client_token])}\n"
   }
 
   type = "Opaque"
