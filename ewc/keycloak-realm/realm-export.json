@@ -726,7 +726,7 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "${dev_portal_api_secret}",
+      "secret": ${dev_portal_api_secret},
       "redirectUris": [],
       "webOrigins": [],
       "notBefore": 0,
