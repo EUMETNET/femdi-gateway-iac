@@ -66,8 +66,9 @@ EOF
 # Create ingress-nginx serviceMonitor manually because we don't want to upgrade the chart.
 # This should work as the EWC RKE2 default install for ingress-nginx has monitoring enable but not the serviceMonitor.
 # See: https://kubernetes.github.io/ingress-nginx/user-guide/monitoring/#re-configure-ingress-nginx-controller
-resource "kubernetes_manifest" "ingress_nginx_controller-servicemonitor" {
-  manifest = local.ingress-nginx-servicemonitor-manifest
+resource "kubectl_manifest" "ingress_nginx_controller-servicemonitor" {
+  yaml_body  = yamlencode(local.ingress-nginx-servicemonitor-manifest)
+  depends_on = [rancher2_app_v2.rancher-monitoring]
 }
 
 # Create configmap for Apisix grafana dashboard
@@ -201,8 +202,9 @@ locals {
 
 # Create Vault ServiceMonitor manually so we don't have to install prometheus-operator
 # before Vault helm chart
-resource "kubernetes_manifest" "vault_servicemonitor" {
-  manifest = local.vault-servicemonitor-manifest
+resource "kubectl_manifest" "vault_servicemonitor" {
+  yaml_body  = yamlencode(local.vault-servicemonitor-manifest)
+  depends_on = [rancher2_app_v2.rancher-monitoring]
 }
 
 # Create configmap for Vault grafana dashboard
