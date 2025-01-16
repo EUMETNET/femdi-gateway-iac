@@ -19,7 +19,7 @@ locals {
 }
 
 resource "random_password" "keycloak-dev-portal-secret" {
-  length = 32
+  length  = 32
   special = false
 }
 

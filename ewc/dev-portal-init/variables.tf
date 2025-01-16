@@ -93,7 +93,7 @@ variable "vault_namespace_name" {
 
 variable "vault_mount_kv_base_path" {
   description = "Base path for KV secrets engine in Vault"
-  type = string
+  type        = string
 }
 
 variable "google_idp_client_secret" {
