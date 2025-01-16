@@ -94,7 +94,7 @@ server:
           %{ for replica in replicas_iterator ~}
 
           retry_join {
-            leader_api_addr = "https://vault-${replica}.vault-internal:8200"
+            leader_api_addr = "https://${release_name}-${replica}.${release_name}-internal:8200"
             leader_client_cert_file  = "/vault/userconfig/vault-server-tls/tls.crt"
             leader_client_key_file   = "/vault/userconfig/vault-server-tls/tls.key"
             leader_ca_cert_file    = "/vault/userconfig/vault-server-tls/ca.crt"
@@ -102,4 +102,9 @@ server:
           %{ endfor ~}
         }
 
+        # Monitoring
+        telemetry {
+          prometheus_retention_time = "30s"
+          disable_hostname = true
+        }
 

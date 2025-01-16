@@ -91,6 +91,12 @@ variable "apisix_ip_list" {
   }
 }
 
+variable "apisix_etcd_replicas" {
+  description = "Amount of etcd replicas for APISIX"
+  type        = number
+  default     = 3
+}
+
 variable "keycloak_admin_password" {
   description = "Password for keycloak admin"
   type        = string
@@ -101,6 +107,12 @@ variable "keycloak_subdomain" {
   description = "subdomain where keycloak will be hosted"
   type        = string
   default     = "keycloak"
+}
+
+variable "keycloak_replicas" {
+  description = "Amount of keycloak replicas"
+  type        = number
+  default     = 1
 }
 
 variable "vault_subdomain" {
@@ -161,4 +173,22 @@ variable "github_idp_client_secret" {
   description = "Secret to use Github idp"
   type        = string
   sensitive   = true
+}
+
+variable "s3_bucket_access_key" {
+  description = "AWS access key for S3 bucket for backups"
+  type        = string
+  sensitive   = true
+}
+
+variable "s3_bucket_secret_key" {
+  description = "AWS secret key for S3 bucket for backups"
+  type        = string
+  sensitive   = true
+}
+
+variable "backup_bucket_base_path" {
+  description = "AWS S3 backup bucket base path"
+  type        = string
+  default     = "dev-rodeo-backups/ewc"
 }
