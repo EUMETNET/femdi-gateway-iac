@@ -173,7 +173,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
       "vault" = {
         "url"          = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
         "token"        = var.dev-portal_vault_token
-        "base_path"    = "apisix-dev/consumers"
+        "base_path"    = "${var.vault_mount_kv_base_path}/consumers"
         "secret_phase" = random_password.dev-portal-password.result
       }
 
