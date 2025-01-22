@@ -130,6 +130,7 @@ resource "vault_token" "prometheus" {
   policies  = [vault_policy.prometheus.name]
   period    = "768h"
   renewable = true
+  no_parent = true
 
   depends_on = [module.ewc-vault-init]
 }

@@ -196,6 +196,7 @@ resource "vault_token" "apisix-global" {
   policies  = [vault_policy.apisix-global.name]
   period    = "768h"
   renewable = true
+  no_parent = true
 
   depends_on = [module.ewc-vault-init]
 }
@@ -203,6 +204,7 @@ resource "vault_token" "dev-portal-global" {
   policies  = [vault_policy.dev-portal-global.name]
   period    = "768h"
   renewable = true
+  no_parent = true
 
   depends_on = [module.ewc-vault-init]
 }
