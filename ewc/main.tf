@@ -476,5 +476,7 @@ resource "restapi_object" "apsisix_secret_put" {
   id_attribute = "1"
   object_id    = "1"
   data         = jsonencode(local.apisix_secret_put_body)
+
+  depends_on = [helm_release.apisix]
 }
 
