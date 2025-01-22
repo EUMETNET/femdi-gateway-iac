@@ -19,7 +19,8 @@ locals {
 }
 
 resource "random_password" "keycloak-dev-portal-secret" {
-  length = 32
+  length  = 32
+  special = false
 }
 
 # Create configmap for realm json
@@ -30,7 +31,7 @@ resource "kubernetes_config_map" "realm-json" {
   }
   data = {
     "realm.json" = templatefile("./keycloak-realm/realm-export.json", {
-      dev_portal_api_secret    = random_password.keycloak-dev-portal-secret.result
+      dev_portal_api_secret    = jsonencode(random_password.keycloak-dev-portal-secret.result)
       frontend_url             = "https://${var.dev-portal_subdomain}.${var.dns_zone}",
       google_idp_client_secret = var.google_idp_client_secret
       github_idp_client_secret = var.github_idp_client_secret
@@ -173,7 +174,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
       "vault" = {
         "url"          = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
         "token"        = var.dev-portal_vault_token
-        "base_path"    = "apisix-dev/consumers"
+        "base_path"    = "${var.vault_mount_kv_base_path}/consumers"
         "secret_phase" = random_password.dev-portal-password.result
       }
 
