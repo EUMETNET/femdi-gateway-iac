@@ -179,7 +179,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
       }
 
       "apisix" = {
-        "key_path" = "$secret:/vault/1"
+        "key_path" = "$secret://vault/1/"
         "instances" = [
           {
             "name"          = "EWC"
