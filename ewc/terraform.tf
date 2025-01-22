@@ -40,7 +40,9 @@ terraform {
       version = "3.6.3"
     }
 
+    restapi = {
+      source  = "Mastercard/restapi"
+      version = "1.20.0"
+    }
   }
-
-  required_version = "~> 1.3"
 }

@@ -30,6 +30,19 @@ provider "vault" {
 provider "random" {
 }
 
+# Use restapi provider as http does not supprot PUT and Apisix needs PUT
+provider "restapi" {
+  uri                  = "https://admin-${var.apisix_subdomain}.${var.dns_zone}/"
+  write_returns_object = true
+
+  headers = {
+    "X-API-KEY"    = var.apisix_admin
+    "Content-Type" = "application/json"
+  }
+
+  create_method = "PUT"
+  update_method = "PUT"
+}
 
 ################################################################################
 # Install Vault and it's policies and tokens
@@ -344,25 +357,27 @@ resource "helm_release" "apisix" {
   }
 
   # Apisix vault integration
-  set {
-    name  = "apisix.vault.enabled"
-    value = true
-  }
+  # Does not work. See https://github.com/apache/apisix-helm-chart/issues/795
+  # Replaced by data.http request after this
+  #set {
+  #  name  = "apisix.vault.enabled"
+  #  value = true
+  #}
 
-  set {
-    name  = "apisix.vault.host"
-    value = local.vault_host
-  }
+  #set {
+  #  name  = "apisix.vault.host"
+  #  value = local.vault_host
+  #}
 
-  set {
-    name  = "apisix.vault.prefix"
-    value = "${local.vault_mount_kv_base_path}/consumers"
-  }
+  #set {
+  #  name  = "apisix.vault.prefix"
+  #  value = "${local.vault_mount_kv_base_path}/consumers"
+  #}
 
-  set_sensitive {
-    name  = "apisix.vault.token"
-    value = vault_token.apisix-global.client_token
-  }
+  #set_sensitive {
+  #  name  = "apisix.vault.token"
+  #  value = vault_token.apisix-global.client_token
+  #}
 
   # Custom error pages mount
   set {
@@ -445,5 +460,21 @@ resource "helm_release" "apisix" {
 
   depends_on = [module.ewc-vault-init]
 
+}
+
+locals {
+  apisix_secret_put_body = {
+    uri    = local.vault_host
+    prefix = "${local.vault_mount_kv_base_path}/consumers"
+    token  = vault_token.apisix-global.client_token
+  }
+}
+
+# Needed for Apisix Vault integration as the Helm chart apisix.vault.enabled does nothing
+resource "restapi_object" "apsisix_secret_put" {
+  path         = "/apisix/admin/secrets/vault/{id}"
+  id_attribute = "1"
+  object_id    = "1"
+  data         = jsonencode(local.apisix_secret_put_body)
 }
 
