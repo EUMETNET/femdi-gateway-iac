@@ -14,6 +14,11 @@ resource "kubernetes_secret" "alertmanager_default_smtp_password" {
 # Default example Alertmanager Config
 # sends all the received info, warning and critical alerts via email
 resource "kubectl_manifest" "default_alertmanager_config" {
+
+  # Only create the config if the SMTP username and password are set
+  # So that we don't block the creation of other resources and can create the config later
+  count = var.alert_smtp_auth_username != "" && var.alert_smtp_auth_password != "" ? 1 : 0
+
   yaml_body = yamlencode({
     apiVersion = "monitoring.coreos.com/v1alpha1"
     kind       = "AlertmanagerConfig"
@@ -48,14 +53,14 @@ resource "kubectl_manifest" "default_alertmanager_config" {
         groupBy       = []
         groupInterval = "5m"
         groupWait     = "30s"
-        matchers      = [
+        matchers = [
           {
             matchType = "=~"
             name      = "severity"
             value     = "^(info|warning|critical)$"
           }
         ]
-        receiver      = "default-receiver"
+        receiver       = "default-receiver"
         repeatInterval = "4h"
       }
     }
