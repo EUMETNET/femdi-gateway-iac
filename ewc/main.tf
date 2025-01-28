@@ -179,30 +179,6 @@ EOT
   depends_on = [module.ewc-vault-init]
 }
 
-resource "vault_policy" "take-snapshot" {
-  name = "take-snapshot"
-
-  policy = <<EOT
-path "sys/storage/raft/snapshot" {
-  capabilities = ["read"]
-}
-EOT
-
-  depends_on = [module.ewc-vault-init]
-}
-
-resource "vault_policy" "renew-token" {
-  name = "renew-token"
-
-  policy = <<EOT
-path "auth/token/renew" {
-  capabilities = ["update"]
-}
-EOT
-
-  depends_on = [module.ewc-vault-init]
-}
-
 resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
   role_name  = "api-management-tool-gha"
   backend    = vault_jwt_auth_backend.github.path
