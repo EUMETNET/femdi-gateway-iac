@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 # Source common functions
 source /usr/local/bin/common-functions.sh
@@ -11,7 +11,6 @@ VAULT_ROLE=${VAULT_ROLE}
 
 readarray -t TOKENS < /tmp/secret/tokens
 
-echo "${TOKENS[*]}"
 
 # Check required variables
 check_var "VAULT_ADDR" "$VAULT_ADDR"
@@ -28,14 +27,12 @@ export VAULT_TOKEN=$(vault write -field=token auth/kubernetes/login \
   role=$VAULT_ROLE \
   jwt=$SA_TOKEN)
 
-index=0
-for token in "${TOKENS[@]}"; do
+for index in "${!TOKENS[@]}"; do
     echo "Renewing token index $index ..."
-    vault token renew "$token" > /dev/null || {
+    vault token renew "${TOKENS[$index]}" > /dev/null || {
       echo "Error renewing $index"
       error_occurred=true
     }
-    ((index++))
 done
 
 if [ "$error_occurred" = true ]; then
