@@ -13,7 +13,7 @@ resource "kubernetes_secret" "alertmanager_default_smtp_password" {
 
 # Default example Alertmanager Config
 # sends all the received info, warning and critical alerts via email
-resource "kubectl_manifest" "default_alertmanager_config" {
+resource "kubectl_manifest" "alertmanager_default_config" {
 
   # Only create the config if the SMTP username and password are set
   # So that we don't block the creation of other resources and can create the config later
@@ -32,12 +32,10 @@ resource "kubectl_manifest" "default_alertmanager_config" {
           name = "default-receiver"
           emailConfigs = [
             for email in var.alert_email_recipients : {
-              authPassword = [
-                {
-                  name = "${kubernetes_secret.alertmanager_default_smtp_password.metadata.0.name}"
-                  key  = "password"
-                }
-              ]
+              authPassword = {
+                name = "${kubernetes_secret.alertmanager_default_smtp_password.metadata.0.name}"
+                key  = "password"
+              }
               authUsername = "${var.alert_smtp_auth_username}"
               from         = "${var.alert_email_sender}"
               requireTLS   = true

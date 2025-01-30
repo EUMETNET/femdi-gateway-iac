@@ -196,6 +196,7 @@ variable "backup_bucket_base_path" {
 variable "alert_email_recipients" {
   description = "Email addresses to receive alerts"
   type        = list(string)
+  default     = []
 }
 
 variable "alert_email_sender" {
