@@ -66,9 +66,10 @@ grafana:
   grafana.ini:
     security:
       angular_support_enabled: true
-alertmanagerSpec:
-  alertmanagerConfigMatcherStrategy:
-    type: None
+alertmanager:
+  alertmanagerSpec:
+    alertmanagerConfigMatcherStrategy:
+      type: None
 EOF
 }
 
