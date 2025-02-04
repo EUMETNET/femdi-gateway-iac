@@ -458,7 +458,8 @@ resource "helm_release" "apisix" {
     value = var.apisix_etcd_replicas
   }
 
-  depends_on = [module.ewc-vault-init]
+  # Need connection to vault and Installs ServiceMonitor for scraping metrics
+  depends_on = [module.ewc-vault-init, rancher2_app_v2.rancher-monitoring]
 
 }
 
