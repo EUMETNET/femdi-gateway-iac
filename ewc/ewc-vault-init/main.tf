@@ -290,7 +290,7 @@ resource "helm_release" "vault" {
 }
 
 # Wait for vault container to be availible
-resource "time_sleep" "wait_before" {
+resource "time_sleep" "wait_vault_before" {
   create_duration = "10s"
   depends_on      = [helm_release.vault]
 }
@@ -306,7 +306,7 @@ data "kubernetes_resource" "vault-pods-before" {
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 
-  depends_on = [helm_release.vault, time_sleep.wait_before]
+  depends_on = [helm_release.vault, time_sleep.wait_vault_before]
 }
 
 data "external" "vault-init" {
@@ -325,14 +325,14 @@ data "external" "vault-init" {
     local.vault_helm_release_name
   ]
 
-  depends_on = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before]
+  depends_on = [helm_release.vault, time_sleep.wait_vault_before, data.kubernetes_resource.vault-pods-before]
 
 }
 
 # Wait for vault container to be ready
-resource "time_sleep" "wait_after" {
+resource "time_sleep" "wait_vault_after" {
   create_duration = "10s"
-  depends_on      = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
+  depends_on      = [helm_release.vault, time_sleep.wait_vault_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init]
 }
 
 data "kubernetes_resource" "vault-pods-after" {
@@ -346,5 +346,5 @@ data "kubernetes_resource" "vault-pods-after" {
     namespace = kubernetes_namespace.vault.metadata.0.name
   }
 
-  depends_on = [helm_release.vault, time_sleep.wait_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init, time_sleep.wait_after]
+  depends_on = [helm_release.vault, time_sleep.wait_vault_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init, time_sleep.wait_vault_after]
 }

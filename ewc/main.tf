@@ -463,6 +463,12 @@ resource "helm_release" "apisix" {
 
 }
 
+# Wait for Apisix before doing a PUT-request
+resource "time_sleep" "wait_apisix" {
+  create_duration = "10s"
+  depends_on = [helm_release.apisix]
+}
+
 locals {
   apisix_secret_put_body = {
     uri    = local.vault_host
@@ -478,6 +484,6 @@ resource "restapi_object" "apsisix_secret_put" {
   object_id    = "1"
   data         = jsonencode(local.apisix_secret_put_body)
 
-  depends_on = [helm_release.apisix]
+  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
 }
 
