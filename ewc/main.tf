@@ -345,6 +345,19 @@ resource "helm_release" "apisix" {
     value = var.apisix_ip_list
   }
 
+  # Autoscaling
+  set {
+    name  = "autoscaling.enabled"
+    value = true
+
+  }
+
+  set {
+    name  = "autoscaling.minReplicas"
+    value = var.apisix_replicas
+
+  }
+
   # Enable Prometheus
   set {
     name  = "apisix.prometheus.enabled"
@@ -466,7 +479,7 @@ resource "helm_release" "apisix" {
 # Wait for Apisix before doing a PUT-request
 resource "time_sleep" "wait_apisix" {
   create_duration = "10s"
-  depends_on = [helm_release.apisix]
+  depends_on      = [helm_release.apisix]
 }
 
 locals {
