@@ -93,6 +93,8 @@ resource "kubernetes_config_map" "dashboard-apisix" {
   data = {
     "dashboard-apisix.json" = file("./grafana-dashboards/apisix-dashboard.json")
   }
+
+  depends_on = [rancher2_app_v2.rancher-monitoring]
 }
 
 # Create configmap for NGINX Ingress controller grafana dashboard
@@ -107,6 +109,8 @@ resource "kubernetes_config_map" "dashboard-nginx-ingress-controller" {
   data = {
     "dashboard-nginx-ingress-controller.json" = file("./grafana-dashboards/ingress-nginx-dashboard.json")
   }
+
+  depends_on = [rancher2_app_v2.rancher-monitoring]
 }
 
 # Create configmap for NGINX request-handling-performance grafana dashboard
@@ -121,6 +125,8 @@ resource "kubernetes_config_map" "dashboard-request-handling-performance" {
   data = {
     "dashboard-request-handling-performance.json" = file("./grafana-dashboards/reguest-handling-performance-dashboard.json")
   }
+
+  depends_on = [rancher2_app_v2.rancher-monitoring]
 }
 
 # Vault Needs its own policy and token for Promtheus metrics
@@ -230,4 +236,6 @@ resource "kubernetes_config_map" "dashboard-vault" {
   data = {
     "vault-dashboard.json" = file("./grafana-dashboards/vault-dashboard.json")
   }
+
+  depends_on = [rancher2_app_v2.rancher-monitoring]
 }

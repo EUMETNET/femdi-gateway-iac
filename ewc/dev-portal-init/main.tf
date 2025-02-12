@@ -172,17 +172,22 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
     "secrets.yaml" = yamlencode({
 
       "vault" = {
-        "url"          = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
-        "token"        = var.dev-portal_vault_token
         "base_path"    = "${var.vault_mount_kv_base_path}/consumers"
         "secret_phase" = random_password.dev-portal-password.result
+        "instances"    = [
+          {
+            "name"  = "EUMETSAT"
+            "token" = var.dev-portal_vault_token
+            "url"   = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
+          }
+        ]
       }
 
       "apisix" = {
         "key_path" = "$secret://vault/1/"
         "instances" = [
           {
-            "name"          = "EWC"
+            "name"          = "EUMETSAT"
             "admin_url"     = "http://${var.apisix_helm_release_name}-admin.${var.apisix_namespace_name}.svc.cluster.local:9180"
             "gateway_url"   = "https://${var.apisix_subdomain}.${var.dns_zone}"
             "admin_api_key" = var.apisix_admin
@@ -205,7 +210,7 @@ resource "helm_release" "dev-portal" {
   name             = "dev-portal"
   repository       = "https://rodeo-project.eu/Dev-portal/"
   chart            = "dev-portal"
-  version          = "1.10.2"
+  version          = "1.11.0"
   namespace        = kubernetes_namespace.dev-portal.metadata.0.name
   create_namespace = false
 
@@ -229,12 +234,7 @@ resource "helm_release" "dev-portal" {
 
   set {
     name  = "backend.image.tag"
-    value = "sha-e5fe5f5"
-  }
-
-  set {
-    name  = "backend.secrets.secretName"
-    value = kubernetes_secret.dev-portal-secret-for-backend.metadata.0.name
+    value = "sha-bc3492d"
   }
 
   set {
