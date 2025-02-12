@@ -91,6 +91,12 @@ variable "apisix_ip_list" {
   }
 }
 
+variable "apisix_replicas" {
+  description = "Amount of minimum replicas for APISIX"
+  type        = number
+  default     = 1
+}
+
 variable "apisix_etcd_replicas" {
   description = "Amount of etcd replicas for APISIX"
   type        = number

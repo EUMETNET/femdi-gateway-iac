@@ -345,6 +345,19 @@ resource "helm_release" "apisix" {
     value = var.apisix_ip_list
   }
 
+  # Autoscaling
+  set {
+    name  = "autoscaling.enabled"
+    value = true
+
+  }
+
+  set {
+    name  = "autoscaling.minReplicas"
+    value = var.apisix_replicas
+
+  }
+
   # Enable Prometheus
   set {
     name  = "apisix.prometheus.enabled"
@@ -458,8 +471,15 @@ resource "helm_release" "apisix" {
     value = var.apisix_etcd_replicas
   }
 
-  depends_on = [module.ewc-vault-init]
+  # Need connection to vault and Installs ServiceMonitor for scraping metrics
+  depends_on = [module.ewc-vault-init, rancher2_app_v2.rancher-monitoring]
 
+}
+
+# Wait for Apisix before doing a PUT-request
+resource "time_sleep" "wait_apisix" {
+  create_duration = "10s"
+  depends_on      = [helm_release.apisix]
 }
 
 locals {
@@ -477,6 +497,6 @@ resource "restapi_object" "apsisix_secret_put" {
   object_id    = "1"
   data         = jsonencode(local.apisix_secret_put_body)
 
-  depends_on = [helm_release.apisix]
+  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
 }
 
