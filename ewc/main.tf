@@ -461,11 +461,7 @@ resource "helm_release" "apisix" {
   # Trust container's CA for Vault and other outbound CA requests
   set {
     name  = "apisix.nginx.configurationSnippet.httpEnd"
-    value = <<EOT
-proxy_request_buffering off;
-client_body_buffer_size 200m;
-lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
-    EOT
+    value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
   }
 
   # etcd config
