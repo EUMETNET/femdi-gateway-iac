@@ -185,9 +185,9 @@ resource "vault_jwt_auth_backend_role" "api-management-tool-gha" {
   role_type  = "jwt"
   user_claim = "actor"
   bound_claims = {
-    repository : "EURODEO/api-management-tool-poc"
+    repository : "EUMETNET/api-management-tool-poc"
   }
-  bound_audiences = ["https://github.com/EURODEO/api-management-tool-poc"]
+  bound_audiences = ["https://github.com/EUMETNET/api-management-tool-poc"]
   token_policies  = [vault_policy.api-management-tool-gha.name]
   token_ttl       = 300
 
