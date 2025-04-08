@@ -208,7 +208,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
 
 resource "helm_release" "dev-portal" {
   name             = "dev-portal"
-  repository       = "https://rodeo-project.eu/Dev-portal/"
+  repository       = "https://eumetnet.github.io/Dev-portal/"
   chart            = "dev-portal"
   version          = "1.11.0"
   namespace        = kubernetes_namespace.dev-portal.metadata.0.name
