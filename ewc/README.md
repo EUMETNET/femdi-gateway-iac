@@ -1,5 +1,11 @@
 # EWC
 
+
+## Dependencies
+The `EWC` module requires `Bash`, [jq](https://github.com/jqlang/jq) and [kubectl](https://kubernetes.io/docs/reference/kubectl/)
+
+#TODO: Add template for .tfvars and explain variables
+
 ## Init
 Initialize the Terraform project:
 ```bash
@@ -21,6 +27,8 @@ Provide the needed variables. The varialbe `var.vault_token` can be anything for
 
 The expected output should look something like this.
 All the vault pods should be ready after the initialization.
+If some of the pods are not ready. Check the pods status using `kubectl`.
+You might need to run pod unsealing manually using `kubectl -n vault exec -it pods/vault-<n> -- vault operator unseal` and provide keys stored in `vault_unseal_keys`.
 ```txt
 Outputs:
 
@@ -41,7 +49,7 @@ vault_unseal_keys = <sensitive>
 ```
 
 > [!IMPORTANT] 
-> Make sure to store `vault_root_token` `vault_unseal_keys` and `dev-portal_keycloak_secret` somewhere safe. 
+> Make sure to store `vault_root_token` and `vault_unseal_keys` are stored somewhere safe. 
 >
 > If the Vault is recreated for a data restore operation, do not delete the previous `vault_unseal_keys`. Continue using the old unseal keys and ignore the new ones. The new `vault_root_token` is needed. For more details, see the [Vault Restore](#vault-restore) section.
 
@@ -75,7 +83,7 @@ vault_pod_ready_statuses_before_init = [
 ```
 
 > [!IMPORTANT] 
-> This time make sure to store `dev-portal_keycloak_secret` somewhere safe:
+> This time make sure to store `dev-portal_keycloak_secret` somewhere safe. This the secret which dev-portal uses to authenticate to Keycloak and its generated dynamically.:
 ```bash
 terraform output dev-portal_keycloak_secret
 ```
