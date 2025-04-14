@@ -31,6 +31,10 @@ variable "kubeconfig_path" {
   }
 }
 
+variable "cluster_name" {
+  description = "Identifier for the cluster"
+  type        = string
+}
 
 variable "route53_access_key" {
   description = "AWS access key for route53"
@@ -55,6 +59,17 @@ variable "dns_zone" {
   default     = "eumetnet-femdi.eumetsat.ewcloud.host"
 }
 
+variable "new_route53_zone_id_filter" {
+  description = "New hosted zone ID in route53"
+  type        = string
+}
+
+variable "new_dns_zone" {
+  description = "New DNS zone for cert-manager"
+  type        = string
+  default     = "meteogate.eu"
+}
+
 variable "email_cert_manager" {
   description = "email for Let's encrypt cert-manager"
   type        = string
@@ -76,6 +91,12 @@ variable "apisix_subdomain" {
   description = "subdomain where apisix will be hosted"
   type        = string
   default     = "gateway"
+}
+
+variable "apisix_global_subdomain" {
+  description = "Unified subdomain to access any APISIX gateway instance"
+  type        = string
+  default     = "api"
 }
 
 variable "apisix_ip_list" {
