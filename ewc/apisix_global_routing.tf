@@ -19,7 +19,8 @@ resource "aws_route53_health_check" "apisix_health" {
   resource_path     = "/health"
   request_interval  = 30                                      # Default from UI
   failure_threshold = 3                                       # Default from UI
-  regions           = ["eu-west-1", "us-east-1", "us-east-2"] # Three regions required
+  regions           = ["eu-west-1", "us-east-1", "us-west-2"] # Three regions required
+  disabled          = true                                    # enable once nameservers pointed to hosted zone 
 }
 
 resource "aws_route53_record" "apisix" {

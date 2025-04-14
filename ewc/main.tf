@@ -44,6 +44,10 @@ provider "restapi" {
   update_method = "PUT"
 }
 
+provider "aws" {
+  profile = "ewc"
+}
+
 ################################################################################
 # Install Vault and it's policies and tokens
 ################################################################################
