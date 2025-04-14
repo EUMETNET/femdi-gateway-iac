@@ -9,6 +9,8 @@ resource "kubernetes_secret" "alertmanager_default_smtp_password" {
   }
 
   type = "Opaque"
+
+  depends_on = [ rancher2_app_v2.rancher-monitoring ]
 }
 
 # Default example Alertmanager Config
@@ -63,4 +65,6 @@ resource "kubectl_manifest" "alertmanager_default_config" {
       }
     }
   })
+
+  depends_on = [ rancher2_app_v2.rancher-monitoring ]
 }
