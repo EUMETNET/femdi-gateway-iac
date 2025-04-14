@@ -63,7 +63,7 @@ resource "kubectl_manifest" "apisix_global_ingress" {
             "paths" = [
               {
                 "path"     = "/"
-                "pathType" = "Prefix"
+                "pathType" = "ImplementationSpecific"
                 "backend" = {
                   "service" = {
                     "name" = "${local.apisix_helm_release_name}-gateway"
@@ -77,13 +77,13 @@ resource "kubectl_manifest" "apisix_global_ingress" {
           }
         }
       ]
+      "tls" = [
+        {
+          "hosts"      = ["${local.apisix_global_dns_name}"]
+          "secretName" = "${local.apisix_global_dns_name}-certificate"
+        }
+      ]
     }
-    "tls" = [
-      {
-        "hosts"      = ["${local.apisix_global_dns_name}"]
-        "secretName" = "${local.apisix_global_dns_name}-certificate"
-      }
-    ]
   })
   depends_on = [helm_release.apisix]
 }
