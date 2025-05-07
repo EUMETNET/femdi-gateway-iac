@@ -51,11 +51,11 @@ resource "kubectl_manifest" "apisix_global_ingress" {
         "cert-manager.io/cluster-issuer" = "${module.ewc-vault-init.cluster_issuer}"
         "app.kubernetes.io/instance"     = "apisix"
         "app.kubernetes.io/name"         = "apisix"
-        "kubernetes.io/ingress.class"    = "nginx"
         "kubernetes.io/tls-acme"         = "true"
       }
     }
     "spec" = {
+      "ingressClassName" = "nginx"
       "rules" = [
         {
           "host" = "${local.apisix_global_dns_name}"
@@ -63,7 +63,7 @@ resource "kubectl_manifest" "apisix_global_ingress" {
             "paths" = [
               {
                 "path"     = "/"
-                "pathType" = "ImplementationSpecific"
+                "pathType" = "ImplementationSpecific" # Same what is used in APISIX
                 "backend" = {
                   "service" = {
                     "name" = "${local.apisix_helm_release_name}-gateway"

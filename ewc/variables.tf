@@ -59,6 +59,18 @@ variable "dns_zone" {
   default     = "eumetnet-femdi.eumetsat.ewcloud.host"
 }
 
+variable "new_route53_access_key" {
+  description = "New AWS access key for route53"
+  type        = string
+  sensitive   = true
+}
+
+variable "new_route53_secret_key" {
+  description = "New AWS secret key for route53"
+  type        = string
+  sensitive   = true
+}
+
 variable "new_route53_zone_id_filter" {
   description = "New hosted zone ID in route53"
   type        = string
@@ -68,6 +80,22 @@ variable "new_dns_zone" {
   description = "New DNS zone for cert-manager"
   type        = string
   default     = "meteogate.eu"
+}
+
+variable "manage_global_dns_records" {
+  description = "Should this cluster manage global DNS records"
+  type        = bool
+  default     = false
+}
+
+variable "observations_ip" {
+  description = "IP address for observations A record"
+  type        = string
+}
+
+variable "radar_ip" {
+  description = "IP address for radar A record"
+  type        = string 
 }
 
 variable "email_cert_manager" {
