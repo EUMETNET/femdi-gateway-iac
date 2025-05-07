@@ -55,6 +55,23 @@ variable "dns_zone" {
   default     = "eumetnet-femdi.eumetsat.ewcloud.host"
 }
 
+variable "new_route53_access_key" {
+  description = "New AWS access key for route53"
+  type        = string
+  sensitive   = true
+}
+
+variable "new_route53_secret_key" {
+  description = "New AWS secret key for route53"
+  type        = string
+  sensitive   = true
+}
+
+variable "new_dns_zone" {
+  description = "New DNS zone for cert-manager"
+  type        = string
+}
+
 variable "email_cert_manager" {
   description = "email for Let's encrypt cert-manager"
   type        = string

@@ -144,7 +144,8 @@ resource "kubernetes_secret" "acme-route53-secret" {
   }
 
   data = {
-    secret-access-key = var.route53_secret_key
+    secret-access-key     = var.route53_secret_key
+    new-secret-access-key = var.new_route53_secret_key
   }
 
   type = "Opaque"
@@ -179,6 +180,21 @@ locals {
             }
             "selector" = {
               "dnsZones" = [var.dns_zone]
+            }
+          },
+          {
+            "dns01" = {
+              "route53" = {
+                "accessKeyID" = var.new_route53_access_key
+                "region"      = "eu-central-1"
+                "secretAccessKeySecretRef" = {
+                  "key"  = "new-secret-access-key"
+                  "name" = kubernetes_secret.acme-route53-secret.metadata.0.name
+                }
+              }
+            }
+            "selector" = {
+              "dnsZones" = [var.new_dns_zone]
             }
           },
         ]
