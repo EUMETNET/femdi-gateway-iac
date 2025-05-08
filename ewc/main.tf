@@ -522,3 +522,23 @@ resource "restapi_object" "apsisix_secret_put" {
   depends_on = [time_sleep.wait_apisix, helm_release.apisix]
 }
 
+# Enable prometheus and real-ip plugins for APISIX
+# Prometheus for observability and metrics scraping
+# Real-ip plugin to limit the unauthenticated requests based on client IP address
+resource "restapi_object" "apisix_global_rules_config" {
+  path         = "/apisix/admin/global_rules"
+  id_attribute = "1"
+  object_id    = "1"
+  data         = jsonencode({
+    id      = "1",
+    plugins = {
+      "prometheus" = {}
+      "real-ip" = {
+        source            = "http_x_real_ip",
+        trusted_addresses = var.ingress_nginx_private_subnets
+      }
+    }
+  })
+
+  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
+}

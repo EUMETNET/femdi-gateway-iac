@@ -36,6 +36,11 @@ variable "cluster_name" {
   type        = string
 }
 
+variable "ingress_nginx_private_subnets" {
+  description = "Ingress NGINX subnets"
+  type        = list(string)
+}
+
 variable "route53_access_key" {
   description = "AWS access key for route53"
   type        = string
