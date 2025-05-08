@@ -44,6 +44,10 @@ provider "restapi" {
   update_method = "PUT"
 }
 
+provider "aws" {
+  profile = "ewc"
+}
+
 ################################################################################
 # Install Vault and it's policies and tokens
 ################################################################################
@@ -513,7 +517,7 @@ resource "restapi_object" "apisix_global_rules_config" {
       "prometheus" = {}
       "real-ip" = {
         source            = "http_x_real_ip",
-        trusted_addresses = ["10.42.99.0/24"]
+        trusted_addresses = var.ingress_nginx_private_subnets
       }
     }
   })
