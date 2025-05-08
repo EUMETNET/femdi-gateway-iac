@@ -65,6 +65,10 @@ module "ewc-vault-init" {
   route53_zone_id_filter = var.route53_zone_id_filter
   dns_zone               = var.dns_zone
 
+  new_route53_access_key = var.new_route53_access_key
+  new_route53_secret_key = var.new_route53_secret_key
+  new_dns_zone           = var.new_dns_zone
+
   email_cert_manager = var.email_cert_manager
 
   vault_project_id    = rancher2_project.gateway.id
@@ -280,6 +284,20 @@ module "dev-portal-init" {
   s3_bucket_access_key = var.s3_bucket_access_key
   s3_bucket_secret_key = var.s3_bucket_secret_key
 
+}
+
+################################################################################
+
+# Misc global DNS records
+################################################################################
+module "global_dns" {
+  count = var.manage_global_dns_records ? 1 : 0
+
+  source = "./global-dns-records/"
+
+  new_route53_zone_id_filter = var.new_route53_zone_id_filter
+  observations_ip = var.manage_global_dns_records ? var.observations_ip : ""
+  radar_ip =  var.manage_global_dns_records ? var.radar_ip : ""
 }
 
 ################################################################################
