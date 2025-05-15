@@ -155,8 +155,9 @@ resource "vault_policy" "api-management-tool-gha" {
   name = "api-management-tool-gha"
 
   policy = <<EOT
-path "${local.vault_mount_kv_base_path}/apikeys/*" { capabilities = ["read"] } 
-path "${local.vault_mount_kv_base_path}/urls/*" { capabilities = ["read"] } 
+path "${local.vault_mount_kv_base_path}/apikeys/*" { capabilities = ["read"] }
+path "${local.vault_mount_kv_base_path}/urls" { capabilities = ["read"] }
+path "${local.vault_mount_kv_base_path}/urls/*" { capabilities = ["read"] }
 path "${local.vault_mount_kv_base_path}/admin/*" { capabilities = ["read"] }
 EOT
 
