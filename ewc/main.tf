@@ -65,6 +65,10 @@ module "ewc-vault-init" {
   route53_zone_id_filter = var.route53_zone_id_filter
   dns_zone               = var.dns_zone
 
+  new_route53_access_key = var.new_route53_access_key
+  new_route53_secret_key = var.new_route53_secret_key
+  new_dns_zone           = var.new_dns_zone
+
   email_cert_manager = var.email_cert_manager
 
   vault_project_id    = rancher2_project.gateway.id
@@ -151,8 +155,9 @@ resource "vault_policy" "api-management-tool-gha" {
   name = "api-management-tool-gha"
 
   policy = <<EOT
-path "${local.vault_mount_kv_base_path}/apikeys/*" { capabilities = ["read"] } 
-path "${local.vault_mount_kv_base_path}/urls/*" { capabilities = ["read"] } 
+path "${local.vault_mount_kv_base_path}/apikeys/*" { capabilities = ["read"] }
+path "${local.vault_mount_kv_base_path}/urls" { capabilities = ["read"] }
+path "${local.vault_mount_kv_base_path}/urls/*" { capabilities = ["read"] }
 path "${local.vault_mount_kv_base_path}/admin/*" { capabilities = ["read"] }
 EOT
 
@@ -248,7 +253,8 @@ module "dev-portal-init" {
 
   kubeconfig_path = var.kubeconfig_path
 
-  dns_zone = var.dns_zone
+  dns_zone     = var.dns_zone
+  new_dns_zone = var.new_dns_zone
 
   cluster_issuer   = module.ewc-vault-init.cluster_issuer
   load_balancer_ip = module.ewc-vault-init.load_balancer_ip
@@ -265,6 +271,7 @@ module "dev-portal-init" {
   dev-portal_vault_token       = vault_token.dev-portal-global.client_token
 
   apisix_subdomain         = var.apisix_subdomain
+  apisix_global_subdomain  = var.apisix_global_subdomain
   apisix_admin             = var.apisix_admin
   apisix_helm_release_name = local.apisix_helm_release_name
   apisix_namespace_name    = kubernetes_namespace.apisix.metadata.0.name
@@ -280,6 +287,20 @@ module "dev-portal-init" {
   s3_bucket_access_key = var.s3_bucket_access_key
   s3_bucket_secret_key = var.s3_bucket_secret_key
 
+}
+
+################################################################################
+
+# Misc global DNS records
+################################################################################
+module "global_dns" {
+  count = var.manage_global_dns_records ? 1 : 0
+
+  source = "./global-dns-records/"
+
+  new_route53_zone_id_filter = var.new_route53_zone_id_filter
+  observations_ip            = var.manage_global_dns_records ? var.observations_ip : ""
+  radar_ip                   = var.manage_global_dns_records ? var.radar_ip : ""
 }
 
 ################################################################################
@@ -511,8 +532,8 @@ resource "restapi_object" "apisix_global_rules_config" {
   path         = "/apisix/admin/global_rules"
   id_attribute = "1"
   object_id    = "1"
-  data         = jsonencode({
-    id      = "1",
+  data = jsonencode({
+    id = "1",
     plugins = {
       "prometheus" = {}
       "real-ip" = {

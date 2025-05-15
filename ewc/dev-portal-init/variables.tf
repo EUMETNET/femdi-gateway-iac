@@ -13,6 +13,11 @@ variable "dns_zone" {
   default     = "eumetnet-femdi.eumetsat.ewcloud.host"
 }
 
+variable "new_dns_zone" {
+  description = "New DNS zone for cert-manager"
+  type        = string
+}
+
 variable "cluster_issuer" {
   description = "Certrificate issuer for the cluster"
 }
@@ -62,6 +67,11 @@ variable "dev-portal_vault_token" {
 
 variable "apisix_subdomain" {
   description = "Subdomain for Apisix"
+  type        = string
+}
+
+variable "apisix_global_subdomain" {
+  description = "Unified subdomain to access any APISIX gateway instance"
   type        = string
 }
 
