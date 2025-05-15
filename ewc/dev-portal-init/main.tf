@@ -184,12 +184,12 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
       }
 
       "apisix" = {
-        "key_path" = "$secret://vault/1/"
+        "key_path"           = "$secret://vault/1/"
+        "global_gateway_url" = "https://${var.apisix_global_subdomain}.${var.new_dns_zone}"
         "instances" = [
           {
             "name"          = "EUMETSAT"
             "admin_url"     = "http://${var.apisix_helm_release_name}-admin.${var.apisix_namespace_name}.svc.cluster.local:9180"
-            "gateway_url"   = "https://${var.apisix_subdomain}.${var.dns_zone}"
             "admin_api_key" = var.apisix_admin
           }
         ]
@@ -210,7 +210,7 @@ resource "helm_release" "dev-portal" {
   name             = "dev-portal"
   repository       = "https://eumetnet.github.io/Dev-portal/"
   chart            = "dev-portal"
-  version          = "1.11.2"
+  version          = "1.12.0"
   namespace        = kubernetes_namespace.dev-portal.metadata.0.name
   create_namespace = false
 
@@ -234,7 +234,7 @@ resource "helm_release" "dev-portal" {
 
   set {
     name  = "backend.image.tag"
-    value = "sha-bc3492d"
+    value = "sha-9f9429f"
   }
 
   set {

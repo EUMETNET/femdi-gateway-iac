@@ -253,7 +253,8 @@ module "dev-portal-init" {
 
   kubeconfig_path = var.kubeconfig_path
 
-  dns_zone = var.dns_zone
+  dns_zone     = var.dns_zone
+  new_dns_zone = var.new_dns_zone
 
   cluster_issuer   = module.ewc-vault-init.cluster_issuer
   load_balancer_ip = module.ewc-vault-init.load_balancer_ip
@@ -270,6 +271,7 @@ module "dev-portal-init" {
   dev-portal_vault_token       = vault_token.dev-portal-global.client_token
 
   apisix_subdomain         = var.apisix_subdomain
+  apisix_global_subdomain  = var.apisix_global_subdomain
   apisix_admin             = var.apisix_admin
   apisix_helm_release_name = local.apisix_helm_release_name
   apisix_namespace_name    = kubernetes_namespace.apisix.metadata.0.name
@@ -297,8 +299,8 @@ module "global_dns" {
   source = "./global-dns-records/"
 
   new_route53_zone_id_filter = var.new_route53_zone_id_filter
-  observations_ip = var.manage_global_dns_records ? var.observations_ip : ""
-  radar_ip =  var.manage_global_dns_records ? var.radar_ip : ""
+  observations_ip            = var.manage_global_dns_records ? var.observations_ip : ""
+  radar_ip                   = var.manage_global_dns_records ? var.radar_ip : ""
 }
 
 ################################################################################
@@ -530,8 +532,8 @@ resource "restapi_object" "apisix_global_rules_config" {
   path         = "/apisix/admin/global_rules"
   id_attribute = "1"
   object_id    = "1"
-  data         = jsonencode({
-    id      = "1",
+  data = jsonencode({
+    id = "1",
     plugins = {
       "prometheus" = {}
       "real-ip" = {

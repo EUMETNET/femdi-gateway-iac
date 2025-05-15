@@ -100,7 +100,7 @@ variable "observations_ip" {
 
 variable "radar_ip" {
   description = "IP address for radar A record"
-  type        = string 
+  type        = string
 }
 
 variable "email_cert_manager" {
