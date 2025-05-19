@@ -23,7 +23,7 @@ provider "rancher2" {
 
 
 provider "vault" {
-  address = "https://${var.vault_subdomain}.${var.dns_zone}"
+  address = "https://${var.vault_subdomain}.${var.cluster_name}.${var.new_dns_zone}"
   token   = var.vault_token
 }
 
@@ -32,7 +32,7 @@ provider "random" {
 
 # Use restapi provider as http does not supprot PUT and Apisix needs PUT
 provider "restapi" {
-  uri                  = "https://admin-${var.apisix_subdomain}.${var.dns_zone}/"
+  uri                  = "https://admin-${var.apisix_subdomain}.${var.cluster_name}.${var.new_dns_zone}/"
   write_returns_object = true
 
   headers = {
@@ -59,15 +59,18 @@ module "ewc-vault-init" {
   rancher_token      = var.rancher_token
   rancher_cluster_id = var.rancher_cluster_id
   kubeconfig_path    = var.kubeconfig_path
+  cluster_name       = var.cluster_name
 
-  route53_access_key     = var.route53_access_key
-  route53_secret_key     = var.route53_secret_key
-  route53_zone_id_filter = var.route53_zone_id_filter
-  dns_zone               = var.dns_zone
+  apisix_global_subdomain = var.apisix_global_subdomain
+  route53_access_key      = var.route53_access_key
+  route53_secret_key      = var.route53_secret_key
+  route53_zone_id_filter  = var.route53_zone_id_filter
+  dns_zone                = var.dns_zone
 
-  new_route53_access_key = var.new_route53_access_key
-  new_route53_secret_key = var.new_route53_secret_key
-  new_dns_zone           = var.new_dns_zone
+  new_route53_access_key     = var.new_route53_access_key
+  new_route53_secret_key     = var.new_route53_secret_key
+  new_route53_zone_id_filter = var.new_route53_zone_id_filter
+  new_dns_zone               = var.new_dns_zone
 
   email_cert_manager = var.email_cert_manager
 
@@ -76,7 +79,6 @@ module "ewc-vault-init" {
   vault_replicas      = var.vault_replicas
   vault_anti-affinity = var.vault_anti-affinity
   vault_key_treshold  = var.vault_key_treshold
-
 
 }
 
@@ -350,7 +352,7 @@ resource "helm_release" "apisix" {
   values = [
     templatefile("./helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
-      hostname       = "${var.apisix_subdomain}.${var.dns_zone}",
+      hostname       = "${var.apisix_subdomain}.${var.cluster_name}.${var.new_dns_zone}",
       ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
@@ -515,33 +517,33 @@ locals {
   }
 }
 
-# Needed for Apisix Vault integration as the Helm chart apisix.vault.enabled does nothing
-resource "restapi_object" "apsisix_secret_put" {
-  path         = "/apisix/admin/secrets/vault/{id}"
-  id_attribute = "1"
-  object_id    = "1"
-  data         = jsonencode(local.apisix_secret_put_body)
-
-  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
-}
-
-# Enable prometheus and real-ip plugins for APISIX
-# Prometheus for observability and metrics scraping
-# Real-ip plugin to limit the unauthenticated requests based on client IP address
-resource "restapi_object" "apisix_global_rules_config" {
-  path         = "/apisix/admin/global_rules"
-  id_attribute = "1"
-  object_id    = "1"
-  data = jsonencode({
-    id = "1",
-    plugins = {
-      "prometheus" = {}
-      "real-ip" = {
-        source            = "http_x_real_ip",
-        trusted_addresses = var.ingress_nginx_private_subnets
-      }
-    }
-  })
-
-  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
-}
+## Needed for Apisix Vault integration as the Helm chart apisix.vault.enabled does nothing
+#resource "restapi_object" "apsisix_secret_put" {
+#  path         = "/apisix/admin/secrets/vault/{id}"
+#  id_attribute = "1"
+#  object_id    = "1"
+#  data         = jsonencode(local.apisix_secret_put_body)
+#
+#  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
+#}
+#
+## Enable prometheus and real-ip plugins for APISIX
+## Prometheus for observability and metrics scraping
+## Real-ip plugin to limit the unauthenticated requests based on client IP address
+#resource "restapi_object" "apisix_global_rules_config" {
+#  path         = "/apisix/admin/global_rules"
+#  id_attribute = "1"
+#  object_id    = "1"
+#  data = jsonencode({
+#    id = "1",
+#    plugins = {
+#      "prometheus" = {}
+#      "real-ip" = {
+#        source            = "http_x_real_ip",
+#        trusted_addresses = var.ingress_nginx_private_subnets
+#      }
+#    }
+#  })
+#
+#  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
+#}

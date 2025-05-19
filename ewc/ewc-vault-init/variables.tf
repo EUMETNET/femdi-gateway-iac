@@ -31,6 +31,15 @@ variable "kubeconfig_path" {
   }
 }
 
+variable "cluster_name" {
+  description = "Identifier for the cluster"
+  type        = string
+}
+
+variable "apisix_global_subdomain" {
+  description = "Unified subdomain to access any APISIX gateway instance"
+  type        = string
+}
 
 variable "route53_access_key" {
   description = "AWS access key for route53"
@@ -65,6 +74,11 @@ variable "new_route53_secret_key" {
   description = "New AWS secret key for route53"
   type        = string
   sensitive   = true
+}
+
+variable "new_route53_zone_id_filter" {
+  description = "New hosted zone ID in route53"
+  type        = string
 }
 
 variable "new_dns_zone" {

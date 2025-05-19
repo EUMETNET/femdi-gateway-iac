@@ -75,19 +75,25 @@ resource "helm_release" "external-dns" {
 
   set {
     name  = "aws.credentials.accessKey"
-    value = var.route53_access_key
+    value = var.new_route53_access_key
 
   }
 
   set {
     name  = "aws.credentials.secretKey"
-    value = var.route53_secret_key
+    value = var.new_route53_secret_key
 
   }
 
   set_list {
     name  = "zoneIdFilters"
-    value = [var.route53_zone_id_filter]
+    value = [var.new_route53_zone_id_filter]
+  }
+
+  # Global APISIX subdomain handled separately
+  set_list {
+    name  = "excludeDomains"
+    value = ["${var.apisix_global_subdomain}.${var.new_dns_zone}"]
   }
 }
 
@@ -167,21 +173,6 @@ locals {
         }
         "server" = "https://acme-v02.api.letsencrypt.org/directory"
         "solvers" = [
-          {
-            "dns01" = {
-              "route53" = {
-                "accessKeyID" = var.route53_access_key
-                "region"      = "eu-central-1"
-                "secretAccessKeySecretRef" = {
-                  "key"  = "secret-access-key"
-                  "name" = kubernetes_secret.acme-route53-secret.metadata.0.name
-                }
-              }
-            }
-            "selector" = {
-              "dnsZones" = [var.dns_zone]
-            }
-          },
           {
             "dns01" = {
               "route53" = {
@@ -290,7 +281,7 @@ resource "helm_release" "vault" {
   values = [
     templatefile("./helm-values/vault-values-template.yaml", {
       cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
-      hostname                 = "${var.vault_subdomain}.${var.dns_zone}",
+      hostname                 = "${var.vault_subdomain}.${var.cluster_name}.${var.new_dns_zone}",
       ip                       = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
       vault_certificate_secret = local.vault_certificate_secret
       replicas                 = var.vault_replicas
