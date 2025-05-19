@@ -75,25 +75,25 @@ resource "helm_release" "external-dns" {
 
   set {
     name  = "aws.credentials.accessKey"
-    value = var.new_route53_access_key
+    value = var.route53_access_key
 
   }
 
   set {
     name  = "aws.credentials.secretKey"
-    value = var.new_route53_secret_key
+    value = var.route53_secret_key
 
   }
 
   set_list {
     name  = "zoneIdFilters"
-    value = [var.new_route53_zone_id_filter]
+    value = [var.route53_zone_id_filter]
   }
 
   # Global APISIX subdomain handled separately
   set_list {
     name  = "excludeDomains"
-    value = ["${var.apisix_global_subdomain}.${var.new_dns_zone}"]
+    value = ["${var.apisix_global_subdomain}.${var.dns_zone}"]
   }
 }
 
@@ -150,8 +150,7 @@ resource "kubernetes_secret" "acme-route53-secret" {
   }
 
   data = {
-    secret-access-key     = var.route53_secret_key
-    new-secret-access-key = var.new_route53_secret_key
+    secret-access-key = var.route53_secret_key
   }
 
   type = "Opaque"
@@ -176,16 +175,16 @@ locals {
           {
             "dns01" = {
               "route53" = {
-                "accessKeyID" = var.new_route53_access_key
+                "accessKeyID" = var.route53_access_key
                 "region"      = "eu-central-1"
                 "secretAccessKeySecretRef" = {
-                  "key"  = "new-secret-access-key"
+                  "key"  = "secret-access-key"
                   "name" = kubernetes_secret.acme-route53-secret.metadata.0.name
                 }
               }
             }
             "selector" = {
-              "dnsZones" = [var.new_dns_zone]
+              "dnsZones" = [var.dns_zone]
             }
           },
         ]
@@ -281,7 +280,7 @@ resource "helm_release" "vault" {
   values = [
     templatefile("./helm-values/vault-values-template.yaml", {
       cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
-      hostname                 = "${var.vault_subdomain}.${var.cluster_name}.${var.new_dns_zone}",
+      hostname                 = "${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}",
       ip                       = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
       vault_certificate_secret = local.vault_certificate_secret
       replicas                 = var.vault_replicas

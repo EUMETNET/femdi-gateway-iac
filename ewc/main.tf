@@ -23,7 +23,7 @@ provider "rancher2" {
 
 
 provider "vault" {
-  address = "https://${var.vault_subdomain}.${var.cluster_name}.${var.new_dns_zone}"
+  address = "https://${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}"
   token   = var.vault_token
 }
 
@@ -32,7 +32,7 @@ provider "random" {
 
 # Use restapi provider as http does not supprot PUT and Apisix needs PUT
 provider "restapi" {
-  uri                  = "https://admin-${var.apisix_subdomain}.${var.cluster_name}.${var.new_dns_zone}/"
+  uri                  = "https://admin-${var.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}/"
   write_returns_object = true
 
   headers = {
@@ -66,11 +66,6 @@ module "ewc-vault-init" {
   route53_secret_key      = var.route53_secret_key
   route53_zone_id_filter  = var.route53_zone_id_filter
   dns_zone                = var.dns_zone
-
-  new_route53_access_key     = var.new_route53_access_key
-  new_route53_secret_key     = var.new_route53_secret_key
-  new_route53_zone_id_filter = var.new_route53_zone_id_filter
-  new_dns_zone               = var.new_dns_zone
 
   email_cert_manager = var.email_cert_manager
 
@@ -255,8 +250,7 @@ module "dev-portal-init" {
 
   kubeconfig_path = var.kubeconfig_path
 
-  dns_zone     = var.dns_zone
-  new_dns_zone = var.new_dns_zone
+  dns_zone = var.dns_zone
 
   cluster_issuer   = module.ewc-vault-init.cluster_issuer
   load_balancer_ip = module.ewc-vault-init.load_balancer_ip
@@ -303,9 +297,9 @@ module "global_dns" {
 
   source = "./global-dns-records/"
 
-  new_route53_zone_id_filter = var.new_route53_zone_id_filter
-  observations_ip            = var.manage_global_dns_records ? var.observations_ip : ""
-  radar_ip                   = var.manage_global_dns_records ? var.radar_ip : ""
+  route53_zone_id_filter = var.route53_zone_id_filter
+  observations_ip        = var.manage_global_dns_records ? var.observations_ip : ""
+  radar_ip               = var.manage_global_dns_records ? var.radar_ip : ""
 }
 
 ################################################################################
@@ -355,7 +349,7 @@ resource "helm_release" "apisix" {
   values = [
     templatefile("./helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
-      hostname       = "${var.apisix_subdomain}.${var.cluster_name}.${var.new_dns_zone}",
+      hostname       = "${var.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}",
       ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]

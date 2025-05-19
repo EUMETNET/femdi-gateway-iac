@@ -1,4 +1,4 @@
-variable "new_route53_zone_id_filter" {
+variable "route53_zone_id_filter" {
   description = "New hosted zone ID in route53"
   type        = string
 }

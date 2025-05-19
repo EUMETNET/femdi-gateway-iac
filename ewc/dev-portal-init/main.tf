@@ -32,7 +32,7 @@ resource "kubernetes_config_map" "realm-json" {
   data = {
     "realm.json" = templatefile("./keycloak-realm/realm-export.json", {
       dev_portal_api_secret    = jsonencode(random_password.keycloak-dev-portal-secret.result)
-      frontend_url             = "https://${var.dev-portal_subdomain}.${var.new_dns_zone}",
+      frontend_url             = "https://${var.dev-portal_subdomain}.${var.dns_zone}",
       google_idp_client_secret = var.google_idp_client_secret
       github_idp_client_secret = var.github_idp_client_secret
     })
@@ -53,7 +53,7 @@ resource "helm_release" "keycloak" {
   values = [
     templatefile("./helm-values/keycloak-values-template.yaml", {
       cluster_issuer = var.cluster_issuer
-      hostname       = "${var.keycloak_subdomain}.${var.new_dns_zone}",
+      hostname       = "${var.keycloak_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
     })
   ]
@@ -186,7 +186,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
 
       "apisix" = {
         "key_path"           = "$secret://vault/1/"
-        "global_gateway_url" = "https://${var.apisix_global_subdomain}.${var.new_dns_zone}"
+        "global_gateway_url" = "https://${var.apisix_global_subdomain}.${var.dns_zone}"
         "instances" = concat([
           {
             "name"          = "EUMETSAT"
@@ -220,7 +220,7 @@ resource "helm_release" "dev-portal" {
   values = [
     templatefile("./helm-values/dev-portal-values-template.yaml", {
       cluster_issuer = var.cluster_issuer
-      hostname       = "${var.dev-portal_subdomain}.${var.new_dns_zone}",
+      hostname       = "${var.dev-portal_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
     })
   ]
@@ -252,12 +252,12 @@ resource "helm_release" "dev-portal" {
 
   set {
     name  = "frontend.keycloak_logout_url"
-    value = "https://${var.dev-portal_subdomain}.${var.new_dns_zone}"
+    value = "https://${var.dev-portal_subdomain}.${var.dns_zone}"
   }
 
   set {
     name  = "frontend.keycloak_url"
-    value = "https://${var.keycloak_subdomain}.${var.new_dns_zone}"
+    value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
   }
 
 }
