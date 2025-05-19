@@ -170,29 +170,32 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
 
   data = {
     "secrets.yaml" = yamlencode({
-
       "vault" = {
         "base_path"    = "${var.vault_mount_kv_base_path}/consumers"
         "secret_phase" = random_password.dev-portal-password.result
-        "instances" = [
+        "instances" = concat([
           {
             "name"  = "EUMETSAT"
             "token" = var.dev-portal_vault_token
             "url"   = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
           }
-        ]
+          ],
+          var.vault_additional_instances
+        )
       }
 
       "apisix" = {
         "key_path"           = "$secret://vault/1/"
         "global_gateway_url" = "https://${var.apisix_global_subdomain}.${var.new_dns_zone}"
-        "instances" = [
+        "instances" = concat([
           {
             "name"          = "EUMETSAT"
             "admin_url"     = "http://${var.apisix_helm_release_name}-admin.${var.apisix_namespace_name}.svc.cluster.local:9180"
             "admin_api_key" = var.apisix_admin
           }
-        ]
+          ],
+          var.apisix_additional_instances
+        )
       }
       "keycloak" = {
         "url"           = "http://${local.keycloak_helm_release_name}.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"

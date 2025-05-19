@@ -157,6 +157,28 @@ variable "apisix_etcd_replicas" {
   default     = 3
 }
 
+variable "apisix_additional_instances" {
+  description = "Config for additional Apisix instances"
+  type = list(object({
+    name          = string
+    admin_url     = string
+    admin_api_key = string
+  }))
+  default   = []
+  sensitive = true
+}
+
+variable "vault_additional_instances" {
+  description = "Config for additional Apisix instances"
+  type = list(object({
+    name  = string
+    token = string
+    url   = string
+  }))
+  default   = []
+  sensitive = true
+}
+
 variable "keycloak_admin_password" {
   description = "Password for keycloak admin"
   type        = string

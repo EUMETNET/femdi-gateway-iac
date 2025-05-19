@@ -289,6 +289,9 @@ module "dev-portal-init" {
   s3_bucket_access_key = var.s3_bucket_access_key
   s3_bucket_secret_key = var.s3_bucket_secret_key
 
+  apisix_additional_instances = var.apisix_additional_instances
+  vault_additional_instances  = var.vault_additional_instances
+
 }
 
 ################################################################################

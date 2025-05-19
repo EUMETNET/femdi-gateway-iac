@@ -91,6 +91,26 @@ variable "apisix_namespace_name" {
   type        = string
 }
 
+variable "apisix_additional_instances" {
+  description = "Config for additional Apisix instances"
+  type = list(object({
+    name          = string
+    admin_url     = string
+    admin_api_key = string
+  }))
+  default = []
+}
+
+variable "vault_additional_instances" {
+  description = "Config for additional Apisix instances"
+  type = list(object({
+    name  = string
+    token = string
+    url   = string
+  }))
+  default = []
+}
+
 variable "vault_helm_release_name" {
   description = "Name of the Helm release for Vault"
   type        = string
