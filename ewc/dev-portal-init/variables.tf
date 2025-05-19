@@ -10,12 +10,6 @@ variable "kubeconfig_path" {
 variable "dns_zone" {
   description = "DNS zone for cert-manager"
   type        = string
-  default     = "eumetnet-femdi.eumetsat.ewcloud.host"
-}
-
-variable "new_dns_zone" {
-  description = "New DNS zone for cert-manager"
-  type        = string
 }
 
 variable "cluster_issuer" {

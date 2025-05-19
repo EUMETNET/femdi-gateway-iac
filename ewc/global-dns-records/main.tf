@@ -3,7 +3,7 @@
 # when moving to different AWS account these records are not dropped by mistake
 
 resource "aws_route53_record" "observations" {
-  zone_id = var.new_route53_zone_id_filter
+  zone_id = var.route53_zone_id_filter
   type    = "A"
   ttl     = 1800
   name    = "observations"
@@ -13,7 +13,7 @@ resource "aws_route53_record" "observations" {
 }
 
 resource "aws_route53_record" "radar" {
-  zone_id = var.new_route53_zone_id_filter
+  zone_id = var.route53_zone_id_filter
   type    = "A"
   ttl     = 1800
   name    = "radar"

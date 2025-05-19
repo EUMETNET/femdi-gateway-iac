@@ -61,29 +61,6 @@ variable "route53_zone_id_filter" {
 variable "dns_zone" {
   description = "DNS zone for cert-manager"
   type        = string
-  default     = "eumetnet-femdi.eumetsat.ewcloud.host"
-}
-
-variable "new_route53_access_key" {
-  description = "New AWS access key for route53"
-  type        = string
-  sensitive   = true
-}
-
-variable "new_route53_secret_key" {
-  description = "New AWS secret key for route53"
-  type        = string
-  sensitive   = true
-}
-
-variable "new_route53_zone_id_filter" {
-  description = "New hosted zone ID in route53"
-  type        = string
-}
-
-variable "new_dns_zone" {
-  description = "New DNS zone for cert-manager"
-  type        = string
   default     = "meteogate.eu"
 }
 
