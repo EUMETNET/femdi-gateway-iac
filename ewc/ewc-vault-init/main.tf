@@ -89,6 +89,12 @@ resource "helm_release" "external-dns" {
     name  = "zoneIdFilters"
     value = [var.route53_zone_id_filter]
   }
+
+  # Global APISIX subdomain handled separately
+  set_list {
+    name  = "excludeDomains"
+    value = ["${var.apisix_global_subdomain}.${var.dns_zone}"]
+  }
 }
 
 ################################################################################
@@ -274,7 +280,7 @@ resource "helm_release" "vault" {
   values = [
     templatefile("./helm-values/vault-values-template.yaml", {
       cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
-      hostname                 = "${var.vault_subdomain}.${var.dns_zone}",
+      hostname                 = "${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}",
       ip                       = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
       vault_certificate_secret = local.vault_certificate_secret
       replicas                 = var.vault_replicas
