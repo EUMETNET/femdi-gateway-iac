@@ -548,10 +548,6 @@ resource "restapi_object" "apisix_global_rules_config" {
         source            = "http_x_real_ip",
         trusted_addresses = var.ingress_nginx_private_subnets
       }
-      "consumer-restriction" = {
-        type      = "consumer_group_id"
-        blacklist = [local.apisix_test_consumer_group]
-      }
     }
   })
 
