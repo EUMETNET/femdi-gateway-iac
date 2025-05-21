@@ -31,6 +31,15 @@ variable "kubeconfig_path" {
   }
 }
 
+variable "cluster_name" {
+  description = "Identifier for the cluster"
+  type        = string
+}
+
+variable "ingress_nginx_private_subnets" {
+  description = "Ingress NGINX subnets"
+  type        = list(string)
+}
 
 variable "route53_access_key" {
   description = "AWS access key for route53"
@@ -52,7 +61,23 @@ variable "route53_zone_id_filter" {
 variable "dns_zone" {
   description = "DNS zone for cert-manager"
   type        = string
-  default     = "eumetnet-femdi.eumetsat.ewcloud.host"
+  default     = "meteogate.eu"
+}
+
+variable "manage_global_dns_records" {
+  description = "Should this cluster manage global DNS records"
+  type        = bool
+  default     = false
+}
+
+variable "observations_ip" {
+  description = "IP address for observations A record"
+  type        = string
+}
+
+variable "radar_ip" {
+  description = "IP address for radar A record"
+  type        = string
 }
 
 variable "email_cert_manager" {
@@ -78,6 +103,12 @@ variable "apisix_subdomain" {
   default     = "gateway"
 }
 
+variable "apisix_global_subdomain" {
+  description = "Unified subdomain to access any APISIX gateway instance"
+  type        = string
+  default     = "api"
+}
+
 variable "apisix_ip_list" {
   description = "Restrict Admin API Access by IP CIDR"
   type        = list(string)
@@ -101,6 +132,28 @@ variable "apisix_etcd_replicas" {
   description = "Amount of etcd replicas for APISIX"
   type        = number
   default     = 3
+}
+
+variable "apisix_additional_instances" {
+  description = "Config for additional Apisix instances"
+  type = list(object({
+    name          = string
+    admin_url     = string
+    admin_api_key = string
+  }))
+  default   = []
+  sensitive = true
+}
+
+variable "vault_additional_instances" {
+  description = "Config for additional Apisix instances"
+  type = list(object({
+    name  = string
+    token = string
+    url   = string
+  }))
+  default   = []
+  sensitive = true
 }
 
 variable "keycloak_admin_password" {

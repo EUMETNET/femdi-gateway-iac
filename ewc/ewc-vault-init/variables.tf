@@ -31,6 +31,15 @@ variable "kubeconfig_path" {
   }
 }
 
+variable "cluster_name" {
+  description = "Identifier for the cluster"
+  type        = string
+}
+
+variable "apisix_global_subdomain" {
+  description = "Unified subdomain to access any APISIX gateway instance"
+  type        = string
+}
 
 variable "route53_access_key" {
   description = "AWS access key for route53"
@@ -52,7 +61,6 @@ variable "route53_zone_id_filter" {
 variable "dns_zone" {
   description = "DNS zone for cert-manager"
   type        = string
-  default     = "eumetnet-femdi.eumetsat.ewcloud.host"
 }
 
 variable "email_cert_manager" {

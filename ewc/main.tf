@@ -23,7 +23,7 @@ provider "rancher2" {
 
 
 provider "vault" {
-  address = "https://${var.vault_subdomain}.${var.dns_zone}"
+  address = "https://${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}"
   token   = var.vault_token
 }
 
@@ -32,7 +32,7 @@ provider "random" {
 
 # Use restapi provider as http does not supprot PUT and Apisix needs PUT
 provider "restapi" {
-  uri                  = "https://admin-${var.apisix_subdomain}.${var.dns_zone}/"
+  uri                  = "https://admin-${var.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}/"
   write_returns_object = true
 
   headers = {
@@ -42,6 +42,10 @@ provider "restapi" {
 
   create_method = "PUT"
   update_method = "PUT"
+}
+
+provider "aws" {
+  profile = "ewc"
 }
 
 ################################################################################
@@ -55,11 +59,13 @@ module "ewc-vault-init" {
   rancher_token      = var.rancher_token
   rancher_cluster_id = var.rancher_cluster_id
   kubeconfig_path    = var.kubeconfig_path
+  cluster_name       = var.cluster_name
 
-  route53_access_key     = var.route53_access_key
-  route53_secret_key     = var.route53_secret_key
-  route53_zone_id_filter = var.route53_zone_id_filter
-  dns_zone               = var.dns_zone
+  apisix_global_subdomain = var.apisix_global_subdomain
+  route53_access_key      = var.route53_access_key
+  route53_secret_key      = var.route53_secret_key
+  route53_zone_id_filter  = var.route53_zone_id_filter
+  dns_zone                = var.dns_zone
 
   email_cert_manager = var.email_cert_manager
 
@@ -68,7 +74,6 @@ module "ewc-vault-init" {
   vault_replicas      = var.vault_replicas
   vault_anti-affinity = var.vault_anti-affinity
   vault_key_treshold  = var.vault_key_treshold
-
 
 }
 
@@ -147,8 +152,9 @@ resource "vault_policy" "api-management-tool-gha" {
   name = "api-management-tool-gha"
 
   policy = <<EOT
-path "${local.vault_mount_kv_base_path}/apikeys/*" { capabilities = ["read"] } 
-path "${local.vault_mount_kv_base_path}/urls/*" { capabilities = ["read"] } 
+path "${local.vault_mount_kv_base_path}/apikeys/*" { capabilities = ["read"] }
+path "${local.vault_mount_kv_base_path}/urls" { capabilities = ["read"] }
+path "${local.vault_mount_kv_base_path}/urls/*" { capabilities = ["read"] }
 path "${local.vault_mount_kv_base_path}/admin/*" { capabilities = ["read"] }
 EOT
 
@@ -261,6 +267,7 @@ module "dev-portal-init" {
   dev-portal_vault_token       = vault_token.dev-portal-global.client_token
 
   apisix_subdomain         = var.apisix_subdomain
+  apisix_global_subdomain  = var.apisix_global_subdomain
   apisix_admin             = var.apisix_admin
   apisix_helm_release_name = local.apisix_helm_release_name
   apisix_namespace_name    = kubernetes_namespace.apisix.metadata.0.name
@@ -276,6 +283,23 @@ module "dev-portal-init" {
   s3_bucket_access_key = var.s3_bucket_access_key
   s3_bucket_secret_key = var.s3_bucket_secret_key
 
+  apisix_additional_instances = var.apisix_additional_instances
+  vault_additional_instances  = var.vault_additional_instances
+
+}
+
+################################################################################
+
+# Misc global DNS records
+################################################################################
+module "global_dns" {
+  count = var.manage_global_dns_records ? 1 : 0
+
+  source = "./global-dns-records/"
+
+  route53_zone_id_filter = var.route53_zone_id_filter
+  observations_ip        = var.manage_global_dns_records ? var.observations_ip : ""
+  radar_ip               = var.manage_global_dns_records ? var.radar_ip : ""
 }
 
 ################################################################################
@@ -325,7 +349,7 @@ resource "helm_release" "apisix" {
   values = [
     templatefile("./helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
-      hostname       = "${var.apisix_subdomain}.${var.dns_zone}",
+      hostname       = "${var.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}",
       ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
@@ -490,13 +514,33 @@ locals {
   }
 }
 
-# Needed for Apisix Vault integration as the Helm chart apisix.vault.enabled does nothing
-resource "restapi_object" "apsisix_secret_put" {
-  path         = "/apisix/admin/secrets/vault/{id}"
-  id_attribute = "1"
-  object_id    = "1"
-  data         = jsonencode(local.apisix_secret_put_body)
-
-  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
-}
-
+## Needed for Apisix Vault integration as the Helm chart apisix.vault.enabled does nothing
+#resource "restapi_object" "apsisix_secret_put" {
+#  path         = "/apisix/admin/secrets/vault/{id}"
+#  id_attribute = "1"
+#  object_id    = "1"
+#  data         = jsonencode(local.apisix_secret_put_body)
+#
+#  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
+#}
+#
+## Enable prometheus and real-ip plugins for APISIX
+## Prometheus for observability and metrics scraping
+## Real-ip plugin to limit the unauthenticated requests based on client IP address
+#resource "restapi_object" "apisix_global_rules_config" {
+#  path         = "/apisix/admin/global_rules"
+#  id_attribute = "1"
+#  object_id    = "1"
+#  data = jsonencode({
+#    id = "1",
+#    plugins = {
+#      "prometheus" = {}
+#      "real-ip" = {
+#        source            = "http_x_real_ip",
+#        trusted_addresses = var.ingress_nginx_private_subnets
+#      }
+#    }
+#  })
+#
+#  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
+#}

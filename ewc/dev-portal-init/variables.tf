@@ -10,7 +10,6 @@ variable "kubeconfig_path" {
 variable "dns_zone" {
   description = "DNS zone for cert-manager"
   type        = string
-  default     = "eumetnet-femdi.eumetsat.ewcloud.host"
 }
 
 variable "cluster_issuer" {
@@ -65,6 +64,11 @@ variable "apisix_subdomain" {
   type        = string
 }
 
+variable "apisix_global_subdomain" {
+  description = "Unified subdomain to access any APISIX gateway instance"
+  type        = string
+}
+
 variable "apisix_admin" {
   description = "Admin credentials for Apisix"
   type        = string
@@ -79,6 +83,26 @@ variable "apisix_helm_release_name" {
 variable "apisix_namespace_name" {
   description = "Name of the namespace where Apisix is running"
   type        = string
+}
+
+variable "apisix_additional_instances" {
+  description = "Config for additional Apisix instances"
+  type = list(object({
+    name          = string
+    admin_url     = string
+    admin_api_key = string
+  }))
+  default = []
+}
+
+variable "vault_additional_instances" {
+  description = "Config for additional Apisix instances"
+  type = list(object({
+    name  = string
+    token = string
+    url   = string
+  }))
+  default = []
 }
 
 variable "vault_helm_release_name" {
