@@ -78,7 +78,8 @@ module "ewc-vault-init" {
 }
 
 locals {
-  vault_mount_kv_base_path = "apisix"
+  vault_mount_kv_base_path   = "apisix"
+  apisix_test_consumer_group = "TEST_USER"
 }
 
 # Vault configurations after initialization and bootsrap
@@ -156,6 +157,7 @@ path "${local.vault_mount_kv_base_path}/apikeys/*" { capabilities = ["read"] }
 path "${local.vault_mount_kv_base_path}/urls" { capabilities = ["read"] }
 path "${local.vault_mount_kv_base_path}/urls/*" { capabilities = ["read"] }
 path "${local.vault_mount_kv_base_path}/admin/*" { capabilities = ["read"] }
+path "${local.vault_mount_kv_base_path}/consumer_groups/*" { capabilities = ["read"] }
 EOT
 
   depends_on = [module.ewc-vault-init]
@@ -226,6 +228,13 @@ resource "vault_token" "dev-portal-global" {
   no_parent = true
 
   depends_on = [module.ewc-vault-init]
+}
+
+resource "vault_kv_secret" "apisix_test_consumer_group" {
+  path = "${local.vault_mount_kv_base_path}/consumer_groups/${local.apisix_test_consumer_group}"
+  data_json = jsonencode({
+    name = local.apisix_test_consumer_group
+  })
 }
 
 
@@ -514,33 +523,49 @@ locals {
   }
 }
 
-## Needed for Apisix Vault integration as the Helm chart apisix.vault.enabled does nothing
-#resource "restapi_object" "apsisix_secret_put" {
-#  path         = "/apisix/admin/secrets/vault/{id}"
-#  id_attribute = "1"
-#  object_id    = "1"
-#  data         = jsonencode(local.apisix_secret_put_body)
-#
-#  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
-#}
-#
-## Enable prometheus and real-ip plugins for APISIX
-## Prometheus for observability and metrics scraping
-## Real-ip plugin to limit the unauthenticated requests based on client IP address
-#resource "restapi_object" "apisix_global_rules_config" {
-#  path         = "/apisix/admin/global_rules"
-#  id_attribute = "1"
-#  object_id    = "1"
-#  data = jsonencode({
-#    id = "1",
-#    plugins = {
-#      "prometheus" = {}
-#      "real-ip" = {
-#        source            = "http_x_real_ip",
-#        trusted_addresses = var.ingress_nginx_private_subnets
-#      }
-#    }
-#  })
-#
-#  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
-#}
+# Needed for Apisix Vault integration as the Helm chart apisix.vault.enabled does nothing
+resource "restapi_object" "apsisix_secret_put" {
+  path         = "/apisix/admin/secrets/vault/{id}"
+  id_attribute = "1"
+  object_id    = "1"
+  data         = jsonencode(local.apisix_secret_put_body)
+
+  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
+}
+
+# Enable prometheus and real-ip plugins for APISIX
+# Prometheus for observability and metrics scraping
+# Real-ip plugin to limit the unauthenticated requests based on client IP address
+resource "restapi_object" "apisix_global_rules_config" {
+  path         = "/apisix/admin/global_rules"
+  id_attribute = "1"
+  object_id    = "1"
+  data = jsonencode({
+    id = "1",
+    plugins = {
+      "prometheus" = {}
+      "real-ip" = {
+        source            = "http_x_real_ip",
+        trusted_addresses = var.ingress_nginx_private_subnets
+      }
+      "consumer_restriction" = {
+        type      = "consumer_group"
+        blacklist = [local.apisix_test_consumer_group]
+      }
+    }
+  })
+
+  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
+}
+
+# Create a consumer group for the test users
+resource "restapi_object" "apsisix_consumer_group_put" {
+  path         = "/apisix/admin/consumer_groups"
+  id_attribute = "1"
+  object_id    = "1"
+  data = jsonencode({
+    id = local.apisix_test_consumer_group,
+  })
+
+  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
+}
