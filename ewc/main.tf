@@ -548,8 +548,8 @@ resource "restapi_object" "apisix_global_rules_config" {
         source            = "http_x_real_ip",
         trusted_addresses = var.ingress_nginx_private_subnets
       }
-      "consumer_restriction" = {
-        type      = "consumer_group"
+      "consumer-restriction" = {
+        type      = "consumer_group_id"
         blacklist = [local.apisix_test_consumer_group]
       }
     }
@@ -565,6 +565,7 @@ resource "restapi_object" "apsisix_consumer_group_put" {
   object_id    = "1"
   data = jsonencode({
     id = local.apisix_test_consumer_group,
+    plugins = {}
   })
 
   depends_on = [time_sleep.wait_apisix, helm_release.apisix]
