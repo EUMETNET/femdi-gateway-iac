@@ -87,8 +87,16 @@ vault_pod_ready_statuses_before_init = [
 ```bash
 terraform output dev-portal_keycloak_secret
 ```
+## APISIX Auto Scaling
 
-## Vault token renewals
+TODO: the triggers for current auto scaling [there is a related ticket](https://app.zenhub.com/workspaces/rodeo-wp2---femdi-641aeac88a26d61ff17fc730/issues/gh/eumetnet/femdi-test/141).
+
+APISIX uses the [limit-req](https://apisix.apache.org/docs/apisix/3.11/plugins/limit-req/) and [limit-count](https://apisix.apache.org/docs/apisix/3.11/plugins/limit-count/) plugins to limit user access. The internal counters for these plugins are not stored in any centralized place by default. When auto scaling occurs, each individual APISIX instance has its own counters, which allow users to exceed the intended rate limits. Also, DNS-level routing makes it possible (in theory at least) for users to have twice the limits available.
+
+> [!IMPORTANT] 
+> The currently supported solution by APISIX for sharing counters between APISIX instances and across different K8s clusters is to use Redis (cluster). The decision not to implement a Redis cluster at this point was made by the FEMDI expert team.
+
+## Vault Token Renewals
 
 APISIX and the Dev Portal use service tokens to communicate with Vault. These tokens have a maximum TTL of 768 hours (32 days). To prevent token revocation, a cron job is scheduled to run on the 1st and 15th of each month to reset the token period.
 
