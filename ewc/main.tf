@@ -564,7 +564,7 @@ resource "restapi_object" "apsisix_consumer_group_put" {
   id_attribute = "1"
   object_id    = "1"
   data = jsonencode({
-    id = local.apisix_test_consumer_group,
+    id      = local.apisix_test_consumer_group,
     plugins = {}
   })
 
