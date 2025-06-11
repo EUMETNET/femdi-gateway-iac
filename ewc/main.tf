@@ -78,8 +78,7 @@ module "ewc-vault-init" {
 }
 
 locals {
-  vault_mount_kv_base_path   = "apisix"
-  apisix_test_consumer_group = "TEST_USER"
+  vault_mount_kv_base_path = "apisix"
 }
 
 # Vault configurations after initialization and bootsrap
@@ -229,14 +228,6 @@ resource "vault_token" "dev-portal-global" {
 
   depends_on = [module.ewc-vault-init]
 }
-
-resource "vault_kv_secret" "apisix_test_consumer_group" {
-  path = "${local.vault_mount_kv_base_path}/consumer_groups/${local.apisix_test_consumer_group}"
-  data_json = jsonencode({
-    name = local.apisix_test_consumer_group
-  })
-}
-
 
 ################################################################################
 # Install gateway apps
@@ -549,19 +540,6 @@ resource "restapi_object" "apisix_global_rules_config" {
         trusted_addresses = var.ingress_nginx_private_subnets
       }
     }
-  })
-
-  depends_on = [time_sleep.wait_apisix, helm_release.apisix]
-}
-
-# Create a consumer group for the test users
-resource "restapi_object" "apsisix_consumer_group_put" {
-  path         = "/apisix/admin/consumer_groups"
-  id_attribute = "1"
-  object_id    = "1"
-  data = jsonencode({
-    id      = local.apisix_test_consumer_group,
-    plugins = {}
   })
 
   depends_on = [time_sleep.wait_apisix, helm_release.apisix]

@@ -67,9 +67,4 @@ femdi-gateway-iac
 │   ├── terraform.tf
 │   └── variables.tf
 └── scripts # Misc scripts
-    └── test-users # Test user management scripts and files
-        ├── generate_test_users.py
-        ├── manage_users.sh
-        ├── README.md
-        └── requirements.txt
 ```
