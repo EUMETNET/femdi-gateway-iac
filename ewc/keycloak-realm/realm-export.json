@@ -437,6 +437,15 @@
       "attributes": {},
       "realmRoles": [],
       "clientRoles": {}
+    },
+    {
+      "id": "5f894c3f-979a-4a57-85a9-4ee007eade86",
+      "name": "User",
+      "path": "/User",
+      "subGroups": [],
+      "attributes": {},
+      "realmRoles": [],
+      "clientRoles": {}
     }
   ],
   "defaultRole": {
@@ -448,7 +457,8 @@
     "containerId": "42f99bdf-9cf1-420b-ae74-594e4f96faad"
   },
   "defaultGroups": [
-    "/USER"
+    "/USER",
+    "/User"
   ],
   "requiredCredentials": [
     "password"
@@ -819,10 +829,12 @@
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "${frontend_url}"
+        "${frontend_url}",
+        "https://explorer.meteogate.eu/code"
       ],
       "webOrigins": [
-        "${frontend_url}"
+        "${frontend_url}",
+        "https://explorer.meteogate.eu"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -838,7 +850,7 @@
         "oidc.ciba.grant.enabled": "false",
         "client.secret.creation.time": "1713171613",
         "backchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "${frontend_url}",
+        "post.logout.redirect.uris": "${frontend_url}##https://explorer.meteogate.eu",
         "oauth2.device.authorization.grant.enabled": "false",
         "display.on.consent.screen": "false",
         "backchannel.logout.revoke.offline.tokens": "false"
@@ -869,7 +881,9 @@
         "profile",
         "roles"
       ],
-      "optionalClientScopes": []
+      "optionalClientScopes": [
+        "email"
+      ]
     },
     {
       "id": "ca6e9fba-3869-44a3-9ce8-2479d9b95f3a",
