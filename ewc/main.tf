@@ -260,6 +260,7 @@ module "dev-portal-init" {
   keycloak_subdomain      = var.keycloak_subdomain
   keycloak_admin_password = var.keycloak_admin_password
   keycloak_replicas       = var.keycloak_replicas
+  keycloak_realm_name     = var.keycloak_realm_name
   backup_bucket_base_path = var.backup_bucket_base_path
 
   dev-portal_subdomain         = var.dev-portal_subdomain
@@ -300,6 +301,7 @@ module "global_dns" {
   route53_zone_id_filter = var.route53_zone_id_filter
   observations_ip        = var.manage_global_dns_records ? var.observations_ip : ""
   radar_ip               = var.manage_global_dns_records ? var.radar_ip : ""
+  root_ip                = var.manage_global_dns_records ? var.root_ip : ""
 }
 
 ################################################################################

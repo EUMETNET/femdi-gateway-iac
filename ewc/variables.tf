@@ -80,6 +80,11 @@ variable "radar_ip" {
   type        = string
 }
 
+variable "root_ip" {
+  description = "IP address for root A record in hosted zone"
+  type        = string
+}
+
 variable "email_cert_manager" {
   description = "email for Let's encrypt cert-manager"
   type        = string
@@ -172,6 +177,12 @@ variable "keycloak_replicas" {
   description = "Amount of keycloak replicas"
   type        = number
   default     = 1
+}
+
+variable "keycloak_realm_name" {
+  description = "Name of the keycloak realm"
+  type        = string
+  default     = "test"
 }
 
 variable "vault_subdomain" {
@@ -286,4 +297,10 @@ variable "alert_smtp_host" {
   description = "SMTP host for alertmanager"
   type        = string
   default     = "smtp.gmail.com:587"
+}
+
+variable "geoweb_subdomain" {
+  description = "subdomain where Geoweb will be hosted"
+  type        = string
+  default     = "explorer"
 }

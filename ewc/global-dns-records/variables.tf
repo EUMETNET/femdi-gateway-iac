@@ -12,3 +12,8 @@ variable "radar_ip" {
   description = "IP address for radar A record"
   type        = string
 }
+
+variable "root_ip" {
+  description = "IP address for radar A record"
+  type        = string
+}

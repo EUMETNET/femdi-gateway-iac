@@ -42,6 +42,11 @@ variable "keycloak_replicas" {
   type        = number
 }
 
+variable "keycloak_realm_name" {
+  description = "Name of the keycloak realm"
+  type        = string
+}
+
 variable "dev-portal_subdomain" {
   description = "subdomain where devportal will be hosted"
   type        = string

@@ -199,7 +199,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
       }
       "keycloak" = {
         "url"           = "http://${local.keycloak_helm_release_name}.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
-        "realm"         = "test"
+        "realm"         = "${var.keycloak_realm_name}"
         "client_id"     = "dev-portal-api"
         "client_secret" = random_password.keycloak-dev-portal-secret.result
       }
