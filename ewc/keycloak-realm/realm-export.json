@@ -408,8 +408,8 @@
   "groups": [
     {
       "id": "16a285ae-aefe-465d-8bbc-9ac3024b9bff",
-      "name": "ADMIN",
-      "path": "/ADMIN",
+      "name": "Admin",
+      "path": "/Admin",
       "subGroups": [],
       "attributes": {},
       "realmRoles": [],
@@ -422,8 +422,8 @@
     },
     {
       "id": "29221ddc-b859-4fe2-8aab-587f5b3f7ac7",
-      "name": "EUMETNET_USER",
-      "path": "/EUMETNET_USER",
+      "name": "EumetnetUser",
+      "path": "/EumetnetUser",
       "subGroups": [],
       "attributes": {},
       "realmRoles": [],
@@ -431,15 +431,6 @@
     },
     {
       "id": "343cfdfa-8264-488c-b63f-a376c1fe3604",
-      "name": "USER",
-      "path": "/USER",
-      "subGroups": [],
-      "attributes": {},
-      "realmRoles": [],
-      "clientRoles": {}
-    },
-    {
-      "id": "5f894c3f-979a-4a57-85a9-4ee007eade86",
       "name": "User",
       "path": "/User",
       "subGroups": [],
@@ -457,7 +448,6 @@
     "containerId": "42f99bdf-9cf1-420b-ae74-594e4f96faad"
   },
   "defaultGroups": [
-    "/USER",
     "/User"
   ],
   "requiredCredentials": [
