@@ -64,6 +64,11 @@ resource "helm_release" "geoweb-frontend" {
   }
 
   set {
+    name  = "frontend.env.GW_AUTH_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
+    value = "ADMIN"
+  }
+
+  set {
     name  = "frontend.env.GW_FEATURE_APP_TITLE"
     value = "MeteoGate Data Explorer"
   }
@@ -142,15 +147,16 @@ resource "helm_release" "geoweb-presets-backend" {
     value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}"
   }
 
-  #set {
-  #  name  = "presets.nginx.OAUTH2_USERINFO"
-  #  value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}/protocol/openid-connect/userinfo"
-  #}
+  set {
+    name  = "presets.nginx.GEOWEB_ROLE_CLAIM_NAME"
+    value = "groups"
+  }
 
-  #set {
-  #  name  = "presets.nginx.GEOWEB_ROLE_CLAIM_NAME"
-  #  value = "groups"
-  #}
+  set {
+    name  = "presets.nginx.GEOWEB_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
+    value = "ADMIN"
+  }
+  
 
   depends_on = [module.ewc-vault-init]
 
