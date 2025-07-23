@@ -65,7 +65,7 @@ resource "helm_release" "geoweb-frontend" {
 
   set {
     name  = "frontend.env.GW_AUTH_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
-    value = "ADMIN"
+    value = "Admin"
   }
 
   set {
@@ -154,7 +154,7 @@ resource "helm_release" "geoweb-presets-backend" {
 
   set {
     name  = "presets.nginx.GEOWEB_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
-    value = "ADMIN"
+    value = "Admin"
   }
   
 

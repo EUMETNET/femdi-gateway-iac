@@ -213,7 +213,7 @@ resource "helm_release" "dev-portal" {
   name             = "dev-portal"
   repository       = "https://eumetnet.github.io/Dev-portal/"
   chart            = "dev-portal"
-  version          = "1.12.0"
+  version          = "1.13.0"
   namespace        = kubernetes_namespace.dev-portal.metadata.0.name
   create_namespace = false
 
@@ -237,7 +237,7 @@ resource "helm_release" "dev-portal" {
 
   set {
     name  = "backend.image.tag"
-    value = "sha-9f9429f"
+    value = "sha-171e5fb"
   }
 
   set {
