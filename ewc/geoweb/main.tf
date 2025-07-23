@@ -1,7 +1,7 @@
 resource "kubernetes_namespace" "geoweb" {
   metadata {
     annotations = {
-      "field.cattle.io/projectId" = rancher2_project.gateway.id
+      "field.cattle.io/projectId" = var.rancher_project_id
     }
 
     name = "geoweb"
@@ -22,9 +22,9 @@ resource "helm_release" "geoweb-frontend" {
 
   values = [
     templatefile("./helm-values/geoweb-frontend-values-template.yaml", {
-      cluster_issuer = module.ewc-vault-init.cluster_issuer,
+      cluster_issuer = var.cluster_issuer,
       hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
-      ip             = module.ewc-vault-init.load_balancer_ip
+      ip             = var.load_balancer_ip
     })
   ]
 
@@ -87,8 +87,6 @@ resource "helm_release" "geoweb-frontend" {
     name  = "frontend.env.GW_DATAEXPLORER_CONFIGURATION_FILENAME"
     value = "dataexplorerPresets.json"
   }
-
-  depends_on = [module.ewc-vault-init]
 }
 
 ################################################################################
@@ -105,9 +103,9 @@ resource "helm_release" "geoweb-presets-backend" {
 
   values = [
     templatefile("./helm-values/geoweb-frontend-values-template.yaml", {
-      cluster_issuer = module.ewc-vault-init.cluster_issuer,
+      cluster_issuer = var.cluster_issuer,
       hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
-      ip             = module.ewc-vault-init.load_balancer_ip
+      ip             = var.load_balancer_ip
     })
   ]
 
@@ -156,8 +154,4 @@ resource "helm_release" "geoweb-presets-backend" {
     name  = "presets.nginx.GEOWEB_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
     value = "Admin"
   }
-  
-
-  depends_on = [module.ewc-vault-init]
-
 }

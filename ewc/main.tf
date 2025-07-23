@@ -287,8 +287,30 @@ module "dev-portal-init" {
   apisix_additional_instances = var.apisix_additional_instances
   vault_additional_instances  = var.vault_additional_instances
 
+  geoweb_subdomain = var.geoweb_subdomain
+
 }
 
+################################################################################
+
+# Install Geoweb
+################################################################################
+
+module "geoweb" {
+  count = var.install_geoweb ? 1 : 0
+  source = "./geoweb/"
+
+  dns_zone        = var.dns_zone
+
+  cluster_issuer   = module.ewc-vault-init.cluster_issuer
+  load_balancer_ip = module.ewc-vault-init.load_balancer_ip
+
+  rancher_project_id = rancher2_project.gateway.id
+
+  geoweb_subdomain = var.geoweb_subdomain
+  keycloak_subdomain = var.keycloak_subdomain
+  keycloak_realm_name = var.keycloak_realm_name
+}
 ################################################################################
 
 # Misc global DNS records

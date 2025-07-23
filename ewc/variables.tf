@@ -299,6 +299,12 @@ variable "alert_smtp_host" {
   default     = "smtp.gmail.com:587"
 }
 
+variable "install_geoweb" {
+  description = "Should Geoweb be installed"
+  type        = bool
+  default     = true
+}
+
 variable "geoweb_subdomain" {
   description = "subdomain where Geoweb will be hosted"
   type        = string

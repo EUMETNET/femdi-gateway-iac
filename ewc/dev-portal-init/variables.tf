@@ -153,3 +153,8 @@ variable "backup_bucket_base_path" {
   description = "AWS S3 bucket base path for Keycloak backup files"
   type        = string
 }
+
+variable "geoweb_subdomain" {
+  description = "Subdomain where Geoweb will be hosted"
+  type        = string
+}
