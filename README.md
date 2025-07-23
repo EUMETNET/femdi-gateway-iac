@@ -34,6 +34,10 @@ femdi-gateway-iac
 │   │   ├── variables.tf
 │   │   └── vault-init
 │   │       └── vault-init.sh
+│   ├── geoweb # Deploys and Initializes Geoweb related apps
+│   │   ├── main.tf
+│   │   ├── terraform.tf
+│   │   ├── variables.tf
 │   ├── global-dns-records # Deploys global DNS records that are related to domain but not gateway itself
 │   │   ├── main.tf
 │   │   ├── variables.tf

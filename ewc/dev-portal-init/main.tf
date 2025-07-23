@@ -32,9 +32,17 @@ resource "kubernetes_config_map" "realm-json" {
   data = {
     "realm.json" = templatefile("./keycloak-realm/realm-export.json", {
       dev_portal_api_secret    = jsonencode(random_password.keycloak-dev-portal-secret.result)
-      frontend_url             = "https://${var.dev-portal_subdomain}.${var.dns_zone}",
       google_idp_client_secret = var.google_idp_client_secret
       github_idp_client_secret = var.github_idp_client_secret
+      redirect_uris          = [
+        "https://${var.dev-portal_subdomain}.${var.dns_zone}",
+        "https://${var.geoweb_subdomain}.${var.dns_zone}/code"
+      ]
+      web_origins = [
+        "https://${var.dev-portal_subdomain}.${var.dns_zone}",
+        "https://${var.geoweb_subdomain}.${var.dns_zone}"
+      ]
+      post_logout_redirect_uris = "https://${var.dev-portal_subdomain}.${var.dns_zone}##https://${var.geoweb_subdomain}.${var.dns_zone}"
     })
   }
 }
@@ -199,7 +207,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
       }
       "keycloak" = {
         "url"           = "http://${local.keycloak_helm_release_name}.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
-        "realm"         = "test"
+        "realm"         = "${var.keycloak_realm_name}"
         "client_id"     = "dev-portal-api"
         "client_secret" = random_password.keycloak-dev-portal-secret.result
       }
@@ -213,7 +221,7 @@ resource "helm_release" "dev-portal" {
   name             = "dev-portal"
   repository       = "https://eumetnet.github.io/Dev-portal/"
   chart            = "dev-portal"
-  version          = "1.12.0"
+  version          = "1.13.0"
   namespace        = kubernetes_namespace.dev-portal.metadata.0.name
   create_namespace = false
 
@@ -237,7 +245,7 @@ resource "helm_release" "dev-portal" {
 
   set {
     name  = "backend.image.tag"
-    value = "sha-9f9429f"
+    value = "sha-171e5fb"
   }
 
   set {

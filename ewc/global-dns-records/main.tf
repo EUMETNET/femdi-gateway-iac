@@ -21,3 +21,13 @@ resource "aws_route53_record" "radar" {
   records = [var.radar_ip]
 
 }
+
+resource "aws_route53_record" "root" {
+  zone_id = var.route53_zone_id_filter
+  type    = "A"
+  ttl     = 1800
+  name    = "" # Empty name for root domain
+
+  records = [var.root_ip]
+
+}

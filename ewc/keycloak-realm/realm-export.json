@@ -408,8 +408,8 @@
   "groups": [
     {
       "id": "16a285ae-aefe-465d-8bbc-9ac3024b9bff",
-      "name": "ADMIN",
-      "path": "/ADMIN",
+      "name": "Admin",
+      "path": "/Admin",
       "subGroups": [],
       "attributes": {},
       "realmRoles": [],
@@ -422,8 +422,8 @@
     },
     {
       "id": "29221ddc-b859-4fe2-8aab-587f5b3f7ac7",
-      "name": "EUMETNET_USER",
-      "path": "/EUMETNET_USER",
+      "name": "EumetnetUser",
+      "path": "/EumetnetUser",
       "subGroups": [],
       "attributes": {},
       "realmRoles": [],
@@ -431,8 +431,8 @@
     },
     {
       "id": "343cfdfa-8264-488c-b63f-a376c1fe3604",
-      "name": "USER",
-      "path": "/USER",
+      "name": "User",
+      "path": "/User",
       "subGroups": [],
       "attributes": {},
       "realmRoles": [],
@@ -448,7 +448,7 @@
     "containerId": "42f99bdf-9cf1-420b-ae74-594e4f96faad"
   },
   "defaultGroups": [
-    "/USER"
+    "/User"
   ],
   "requiredCredentials": [
     "password"
@@ -818,12 +818,8 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": [
-        "${frontend_url}"
-      ],
-      "webOrigins": [
-        "${frontend_url}"
-      ],
+      "redirectUris": "${jsonencode(redirect_uris)}",
+      "webOrigins": "${jsonencode(web_origins)}",
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
@@ -838,7 +834,7 @@
         "oidc.ciba.grant.enabled": "false",
         "client.secret.creation.time": "1713171613",
         "backchannel.logout.session.required": "true",
-        "post.logout.redirect.uris": "${frontend_url}",
+        "post.logout.redirect.uris": "${post_logout_redirect_uris}",
         "oauth2.device.authorization.grant.enabled": "false",
         "display.on.consent.screen": "false",
         "backchannel.logout.revoke.offline.tokens": "false"
@@ -869,7 +865,9 @@
         "profile",
         "roles"
       ],
-      "optionalClientScopes": []
+      "optionalClientScopes": [
+        "email"
+      ]
     },
     {
       "id": "ca6e9fba-3869-44a3-9ce8-2479d9b95f3a",

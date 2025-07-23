@@ -260,6 +260,7 @@ module "dev-portal-init" {
   keycloak_subdomain      = var.keycloak_subdomain
   keycloak_admin_password = var.keycloak_admin_password
   keycloak_replicas       = var.keycloak_replicas
+  keycloak_realm_name     = var.keycloak_realm_name
   backup_bucket_base_path = var.backup_bucket_base_path
 
   dev-portal_subdomain         = var.dev-portal_subdomain
@@ -286,8 +287,30 @@ module "dev-portal-init" {
   apisix_additional_instances = var.apisix_additional_instances
   vault_additional_instances  = var.vault_additional_instances
 
+  geoweb_subdomain = var.geoweb_subdomain
+
 }
 
+################################################################################
+
+# Install Geoweb
+################################################################################
+
+module "geoweb" {
+  count = var.install_geoweb ? 1 : 0
+  source = "./geoweb/"
+
+  dns_zone        = var.dns_zone
+
+  cluster_issuer   = module.ewc-vault-init.cluster_issuer
+  load_balancer_ip = module.ewc-vault-init.load_balancer_ip
+
+  rancher_project_id = rancher2_project.gateway.id
+
+  geoweb_subdomain = var.geoweb_subdomain
+  keycloak_subdomain = var.keycloak_subdomain
+  keycloak_realm_name = var.keycloak_realm_name
+}
 ################################################################################
 
 # Misc global DNS records
@@ -300,6 +323,7 @@ module "global_dns" {
   route53_zone_id_filter = var.route53_zone_id_filter
   observations_ip        = var.manage_global_dns_records ? var.observations_ip : ""
   radar_ip               = var.manage_global_dns_records ? var.radar_ip : ""
+  root_ip                = var.manage_global_dns_records ? var.root_ip : ""
 }
 
 ################################################################################

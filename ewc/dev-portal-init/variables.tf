@@ -42,6 +42,11 @@ variable "keycloak_replicas" {
   type        = number
 }
 
+variable "keycloak_realm_name" {
+  description = "Name of the keycloak realm"
+  type        = string
+}
+
 variable "dev-portal_subdomain" {
   description = "subdomain where devportal will be hosted"
   type        = string
@@ -146,5 +151,10 @@ variable "s3_bucket_secret_key" {
 
 variable "backup_bucket_base_path" {
   description = "AWS S3 bucket base path for Keycloak backup files"
+  type        = string
+}
+
+variable "geoweb_subdomain" {
+  description = "Subdomain where Geoweb will be hosted"
   type        = string
 }
