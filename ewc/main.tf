@@ -297,18 +297,18 @@ module "dev-portal-init" {
 ################################################################################
 
 module "geoweb" {
-  count = var.install_geoweb ? 1 : 0
+  count  = var.install_geoweb ? 1 : 0
   source = "./geoweb/"
 
-  dns_zone        = var.dns_zone
+  dns_zone = var.dns_zone
 
   cluster_issuer   = module.ewc-vault-init.cluster_issuer
   load_balancer_ip = module.ewc-vault-init.load_balancer_ip
 
   rancher_project_id = rancher2_project.gateway.id
 
-  geoweb_subdomain = var.geoweb_subdomain
-  keycloak_subdomain = var.keycloak_subdomain
+  geoweb_subdomain    = var.geoweb_subdomain
+  keycloak_subdomain  = var.keycloak_subdomain
   keycloak_realm_name = var.keycloak_realm_name
 }
 ################################################################################
@@ -353,6 +353,17 @@ resource "kubernetes_config_map" "custom_error_pages" {
     "apisix_error_403.html" = templatefile("../apisix/error_pages/apisix_error_403.html", {
       devportal_address = "${var.dev-portal_subdomain}.${var.dns_zone}"
     })
+  }
+}
+
+resource "kubernetes_config_map" "apisix_custom_plugins" {
+  metadata {
+    name      = "custom-plugins"
+    namespace = kubernetes_namespace.apisix.metadata[0].name
+  }
+
+  data = {
+    "dynamic-response-rewrite.lua" = file("./plugins/dynamic-response-rewrite.lua")
   }
 }
 
@@ -511,6 +522,42 @@ resource "helm_release" "apisix" {
     name  = "apisix.nginx.configurationSnippet.httpEnd"
     value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
 
+  }
+
+  # Custom plugins
+  set_list {
+    name  = "apisix.plugins"
+    value = ["prometheus", "real-ip", "key-auth", "cors", "proxy-rewrite", "consumer-restriction", "response-rewrite", "limit-req", "limit-count", "serverless-pre-function"]
+  }
+
+  set {
+    name  = "apisix.customPlugins.enabled"
+    value = true
+  }
+
+  set {
+    name  = "apisix.customPlugins.luaPath"
+    value = "/opt/custom_plugins/?.lua;/opt/custom_plugins/apisix/plugins/?.lua"
+  }
+
+  set {
+    name  = "apisix.customPlugins.plugins[0].name"
+    value = "dynamic-response-rewrite"
+  }
+
+  set {
+    name  = "apisix.customPlugins.plugins[0].configMap.name"
+    value = kubernetes_config_map.apisix_custom_plugins.metadata[0].name
+  }
+
+  set {
+    name  = "apisix.customPlugins.plugins[0].configMap.mounts[0].key"
+    value = "dynamic-response-rewrite.lua"
+  }
+
+  set {
+    name  = "apisix.customPlugins.plugins[0].configMap.mounts[0].path"
+    value = "/opt/custom_plugins/apisix/plugins/dynamic-response-rewrite.lua"
   }
 
   # etcd config
