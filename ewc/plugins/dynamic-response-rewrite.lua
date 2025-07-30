@@ -173,27 +173,25 @@ function _M.body_filter(conf, ctx)
         end
 
         for _, filter in ipairs(conf.filters) do
-            -- Only append apikey to URLs matched by the regex
-            local function append_apikey_to_url(url)
+            -- Rewrite domain, preserve path/query/fragment, and append apikey
+            local function rewrite_url(m)
+                -- m[0] is the full match, m[1] is the captured path/query/fragment
+                local new_url = filter.replace .. (m[1] or "")
                 if ctx.apikey and ctx.apikey ~= "" then
-                    if url:find("?", 1, true) then
-                        return url .. "&apikey=" .. ctx.apikey
+                    if new_url:find("?", 1, true) then
+                        new_url = new_url .. "&apikey=" .. ctx.apikey
                     else
-                        return url .. "?apikey=" .. ctx.apikey
+                        new_url = new_url .. "?apikey=" .. ctx.apikey
                     end
                 end
-                return url
+                return new_url
             end
 
             local new_body, n, err
             if filter.scope == "once" then
-                new_body, n, err = re_sub(body, filter.regex, function(m)
-                    return append_apikey_to_url(m[0])
-                end, filter.options)
+                new_body, n, err = re_sub(body, filter.regex, rewrite_url, filter.options)
             else
-                new_body, n, err = re_gsub(body, filter.regex, function(m)
-                    return append_apikey_to_url(m[0])
-                end, filter.options)
+                new_body, n, err = re_gsub(body, filter.regex, rewrite_url, filter.options)
             end
 
             if err then
