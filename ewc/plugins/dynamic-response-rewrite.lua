@@ -14,6 +14,17 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 --
+
+-- This plugin is based on the official APISIX response-rewrite plugin.
+-- The core logic for response header and body modification is reused from the original implementation.
+-- Additional functionality has been added to support dynamic appending of an API key to URLs in the response body.
+-- Specifically, the plugin:
+--   - Extracts the API key from the request query string in the access phase.
+--   - Rewrites matched URLs in the response body to append the API key as a query parameter,
+--     ensuring no duplicate apikey parameters are present.
+-- All other response-rewrite features (headers, body, status code, filters) remain unchanged.
+-- Original source: https://github.com/apache/apisix/blob/master/apisix/plugins/response-rewrite.lua
+-- License: Apache License, Version 2.0
 local core        = require("apisix.core")
 local expr        = require("resty.expr.v1")
 local re_compile  = require("resty.core.regex").re_match_compile
@@ -33,7 +44,119 @@ local lrucache = core.lrucache.new({
 })
 
 local schema = {
-    -- your original schema here, unchanged for brevity
+    type = "object",
+    properties = {
+        headers = {
+            description = "new headers for response",
+            anyOf = {
+                {
+                    type = "object",
+                    minProperties = 1,
+                    patternProperties = {
+                        ["^[^:]+$"] = {
+                            oneOf = {
+                                {type = "string"},
+                                {type = "number"},
+                            }
+                        }
+                    },
+                },
+                {
+                    properties = {
+                        add = {
+                            type = "array",
+                            minItems = 1,
+                            items = {
+                                type = "string",
+                                -- "Set-Cookie: <cookie-name>=<cookie-value>; Max-Age=<number>"
+                                pattern = "^[^:]+:[^:]*[^/]$"
+                            }
+                        },
+                        set = {
+                            type = "object",
+                            minProperties = 1,
+                            patternProperties = {
+                                ["^[^:]+$"] = {
+                                    oneOf = {
+                                        {type = "string"},
+                                        {type = "number"},
+                                    }
+                                }
+                            },
+                        },
+                        remove = {
+                            type = "array",
+                            minItems = 1,
+                            items = {
+                                type = "string",
+                                -- "Set-Cookie"
+                                pattern = "^[^:]+$"
+                            }
+                        },
+                    },
+                }
+            }
+        },
+        body = {
+            description = "new body for response",
+            type = "string",
+        },
+        body_base64 = {
+            description = "whether new body for response need base64 decode before return",
+            type = "boolean",
+            default = false,
+        },
+        status_code = {
+            description = "new status code for response",
+            type = "integer",
+            minimum = 200,
+            maximum = 598,
+        },
+        vars = {
+            type = "array",
+        },
+        filters = {
+            description = "a group of filters that modify response body" ..
+                          "by replacing one specified string by another",
+            type = "array",
+            minItems = 1,
+            items = {
+                description = "filter that modifies response body",
+                type = "object",
+                required = {"regex", "replace"},
+                properties = {
+                    regex = {
+                        description = "match pattern on response body",
+                        type = "string",
+                        minLength = 1,
+                    },
+                    scope = {
+                        description = "regex substitution range",
+                        type = "string",
+                        enum = {"once", "global"},
+                        default = "once",
+                    },
+                    replace = {
+                        description = "regex substitution content",
+                        type = "string",
+                    },
+                    options = {
+                        description = "regex options",
+                        type = "string",
+                        default = "jo",
+                    }
+                },
+            },
+        },
+    },
+    dependencies = {
+        body = {
+            ["not"] = {required = {"filters"}}
+        },
+        filters = {
+            ["not"] = {required = {"body"}}
+        }
+    }
 }
 
 local _M = {
@@ -58,13 +181,10 @@ local function vars_matched(conf, ctx)
     return match_result
 end
 
--- Extract apikey query param in access phase
+-- Extract apikey query param in access phase (before proxied to upstream)
 function _M.access(conf, ctx)
     local args = ngx.req.get_uri_args()
-    core.log.warn("dynamic-response-rewrite: ngx.req.get_uri_args() table: ", core.json.encode(args))
     ctx.apikey = args.apikey or ""
-    core.log.warn("dynamic-response-rewrite: extracted apikey from query in access phase: ", ctx.apikey)
-
 end
 
 function _M.header_filter(conf, ctx)
@@ -150,8 +270,6 @@ function _M.body_filter(conf, ctx)
         return
     end
 
-    core.log.warn("dynamic-response-rewrite: ctx.apikey in body_filter: ", ctx.apikey)
-
     if conf.filters then
         local body = core.response.hold_body_chunk(ctx)
         if not body then
@@ -176,7 +294,20 @@ function _M.body_filter(conf, ctx)
             -- Rewrite domain, preserve path/query/fragment, and append apikey
             local function rewrite_url(m)
                 -- m[0] is the full match, m[1] is the captured path/query/fragment
-                local new_url = filter.replace .. (m[1] or "")
+                local rest = m[1] or ""
+                -- Remove any existing apikey from query string
+                rest = rest:gsub("([?&])apikey=[^&#]*(&?)", function(sep, nextsep)
+                    if sep == "?" and nextsep == "&" then
+                        return "?"
+                    elseif sep == "&" and nextsep == "&" then
+                        return "&"
+                    else
+                        return sep == "?" and "?" or ""
+                    end
+                end)
+                -- Remove trailing ? or & if left after removal
+                rest = rest:gsub("[?&]$", "")
+                local new_url = filter.replace .. rest
                 if ctx.apikey and ctx.apikey ~= "" then
                     if new_url:find("?", 1, true) then
                         new_url = new_url .. "&apikey=" .. ctx.apikey
