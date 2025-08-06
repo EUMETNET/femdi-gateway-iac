@@ -363,7 +363,7 @@ resource "kubernetes_config_map" "apisix_custom_plugins" {
   }
 
   data = {
-    "dynamic-response-rewrite.lua" = file("./plugins/dynamic-response-rewrite.lua")
+    "dynamic-response-rewrite.lua" = file("./apisix-plugins/dynamic-response-rewrite.lua")
   }
 }
 
