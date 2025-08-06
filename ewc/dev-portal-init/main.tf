@@ -34,7 +34,7 @@ resource "kubernetes_config_map" "realm-json" {
       dev_portal_api_secret    = jsonencode(random_password.keycloak-dev-portal-secret.result)
       google_idp_client_secret = var.google_idp_client_secret
       github_idp_client_secret = var.github_idp_client_secret
-      redirect_uris          = [
+      redirect_uris = [
         "https://${var.dev-portal_subdomain}.${var.dns_zone}",
         "https://${var.geoweb_subdomain}.${var.dns_zone}/code"
       ]
