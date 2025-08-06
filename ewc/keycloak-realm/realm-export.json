@@ -914,13 +914,13 @@
       "clientId": "security-admin-console",
       "name": "$${client_security-admin-console}",
       "rootUrl": "$${authAdminUrl}",
-      "baseUrl": "/admin/test/console/",
+      "baseUrl": "/admin/meteogate/console/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/admin/test/console/*"
+        "/admin/meteogate/console/*"
       ],
       "webOrigins": [
         "+"
