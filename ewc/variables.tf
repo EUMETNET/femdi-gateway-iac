@@ -182,7 +182,7 @@ variable "keycloak_replicas" {
 variable "keycloak_realm_name" {
   description = "Name of the keycloak realm"
   type        = string
-  default     = "test"
+  default     = "meteogate"
 }
 
 variable "vault_subdomain" {
