@@ -35,7 +35,7 @@ resource "helm_release" "geoweb-frontend" {
 
   set {
     name  = "versions.frontend"
-    value = "2025-08-04_10-42_0be59ed4"
+    value = "2025-08-11_10-01_8686a987"
   }
 
   set {
@@ -102,6 +102,11 @@ resource "helm_release" "geoweb-frontend" {
   set {
     name  = "frontend.env.GW_LOCATION_BASE_URL"
     value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.location_backend_base_path}"
+  }
+
+  set {
+    name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
+    value = "a0a3a296-76ab-11f0-aca7-123d7660ed3b"
   }
 }
 
