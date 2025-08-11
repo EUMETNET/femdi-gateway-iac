@@ -132,7 +132,7 @@ resource "helm_release" "geoweb-presets-backend" {
 
   set {
     name  = "presets.path"
-    value = "${local.presets_backend_base_path}/(.*)"
+    value = local.presets_backend_base_path
   }
 
   set {
@@ -199,6 +199,6 @@ resource "helm_release" "geoweb-location-backend" {
 
   set {
     name  = "location.path"
-    value = "${local.location_backend_base_path}/(.*)"
+    value = local.location_backend_base_path
   }
 }
