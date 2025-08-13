@@ -363,7 +363,7 @@ resource "kubernetes_config_map" "apisix_custom_plugins" {
   }
 
   data = {
-    "dynamic-response-rewrite.lua" = file("./apisix-plugins/dynamic-response-rewrite.lua")
+    "dynamic-response-rewrite.lua" = file("../apisix/custom-plugins/dynamic-response-rewrite.lua")
   }
 }
 
@@ -537,7 +537,7 @@ resource "helm_release" "apisix" {
 
   set {
     name  = "apisix.customPlugins.luaPath"
-    value = "/opt/custom_plugins/?.lua;/opt/custom_plugins/apisix/plugins/?.lua"
+    value = "/opt/custom-plugins/?.lua;/opt/custom-plugins/apisix/plugins/?.lua"
   }
 
   set {
@@ -557,7 +557,7 @@ resource "helm_release" "apisix" {
 
   set {
     name  = "apisix.customPlugins.plugins[0].configMap.mounts[0].path"
-    value = "/opt/custom_plugins/apisix/plugins/dynamic-response-rewrite.lua"
+    value = "/opt/custom-plugins/apisix/plugins/dynamic-response-rewrite.lua"
   }
 
   # etcd config
