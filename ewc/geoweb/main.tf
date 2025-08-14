@@ -106,7 +106,7 @@ resource "helm_release" "geoweb-frontend" {
 
   set {
     name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
-    value = "a0a3a296-76ab-11f0-aca7-123d7660ed3b"
+    value = "dcd0eb6a-78dc-11f0-84ba-7ebf8d5f94ed"
   }
 }
 
@@ -139,6 +139,21 @@ resource "helm_release" "geoweb-presets-backend" {
     name  = "presets.path"
     value = local.presets_backend_base_path
   }
+
+  #set {
+  #  name  = "presets.useCustomWorkspacePresets"
+  #  value = true
+  #}
+  #
+  #set {
+  #  name  = "presets.customConfigurationFolderPath"
+  #  value = "local"
+  #}
+  #
+  #set {
+  #  name  = "presets.customPresetsS3bucketName"
+  #  value = "explorer-custom-presets"
+  #}
 
   set {
     name  = "presets.nginx.ALLOW_ANONYMOUS_ACCESS"
