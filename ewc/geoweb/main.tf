@@ -35,7 +35,7 @@ resource "helm_release" "geoweb-frontend" {
 
   set {
     name  = "versions.frontend"
-    value = "2025-08-11_10-01_8686a987"
+    value = "2025-08-20_09-06_51b2c096"
   }
 
   set {
