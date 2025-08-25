@@ -307,7 +307,15 @@ function _M.body_filter(conf, ctx)
                 end)
                 -- Remove trailing ? or & if left after removal
                 rest = rest:gsub("[?&]$", "")
-                local new_url = filter.replace .. rest
+
+                -- Split rest at # to handle fragment
+                local main_part, fragment = rest:match("^(.-)(#.*)$")
+                if not main_part then
+                    main_part = rest
+                    fragment = ""
+                end
+
+                local new_url = filter.replace .. main_part
                 if ctx.apikey and ctx.apikey ~= "" then
                     if new_url:find("?", 1, true) then
                         new_url = new_url .. "&apikey=" .. ctx.apikey
@@ -315,6 +323,7 @@ function _M.body_filter(conf, ctx)
                         new_url = new_url .. "?apikey=" .. ctx.apikey
                     end
                 end
+                new_url = new_url .. fragment
                 return new_url
             end
 

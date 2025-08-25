@@ -10,7 +10,3 @@ ingress:
   - hosts:
     - ${hostname}
     secretName: ${hostname}-certificate
-
-#presets:
-#  nginx:
-#    ALLOW_ANONYMOUS_ACCESS: "TRUE"

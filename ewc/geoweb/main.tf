@@ -8,6 +8,11 @@ resource "kubernetes_namespace" "geoweb" {
   }
 }
 
+locals {
+  presets_backend_base_path  = "/presets"
+  location_backend_base_path = "/location-backend"
+}
+
 ################################################################################
 
 # Frontend application
@@ -21,7 +26,7 @@ resource "helm_release" "geoweb-frontend" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/geoweb-frontend-values-template.yaml", {
+    templatefile("./helm-values/geoweb-values-template.yaml", {
       cluster_issuer = var.cluster_issuer,
       hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
@@ -30,7 +35,7 @@ resource "helm_release" "geoweb-frontend" {
 
   set {
     name  = "versions.frontend"
-    value = "2025-06-11_09-09_5af33cf3"
+    value = "2025-08-20_09-06_51b2c096"
   }
 
   set {
@@ -80,12 +85,28 @@ resource "helm_release" "geoweb-frontend" {
 
   set {
     name  = "frontend.env.GW_PRESET_BACKEND_URL"
-    value = "https://${var.geoweb_subdomain}.${var.dns_zone}/presets"
+    value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.presets_backend_base_path}"
   }
 
   set {
     name  = "frontend.env.GW_DATAEXPLORER_CONFIGURATION_FILENAME"
     value = "dataexplorerPresets.json"
+  }
+
+  set {
+    name  = "frontend.env.GW_DATAEXPLORER_BUTTON_ON_MAP"
+    value = "true"
+    type  = "string"
+  }
+
+  set {
+    name  = "frontend.env.GW_LOCATION_BASE_URL"
+    value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.location_backend_base_path}"
+  }
+
+  set {
+    name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
+    value = "dcd0eb6a-78dc-11f0-84ba-7ebf8d5f94ed"
   }
 }
 
@@ -102,7 +123,7 @@ resource "helm_release" "geoweb-presets-backend" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/geoweb-frontend-values-template.yaml", {
+    templatefile("./helm-values/geoweb-values-template.yaml", {
       cluster_issuer = var.cluster_issuer,
       hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
@@ -116,8 +137,23 @@ resource "helm_release" "geoweb-presets-backend" {
 
   set {
     name  = "presets.path"
-    value = "/presets"
+    value = local.presets_backend_base_path
   }
+
+  #set {
+  #  name  = "presets.useCustomWorkspacePresets"
+  #  value = true
+  #}
+  #
+  #set {
+  #  name  = "presets.customConfigurationFolderPath"
+  #  value = "local"
+  #}
+  #
+  #set {
+  #  name  = "presets.customPresetsS3bucketName"
+  #  value = "explorer-custom-presets"
+  #}
 
   set {
     name  = "presets.nginx.ALLOW_ANONYMOUS_ACCESS"
@@ -153,5 +189,36 @@ resource "helm_release" "geoweb-presets-backend" {
   set {
     name  = "presets.nginx.GEOWEB_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
     value = "Admin"
+  }
+}
+
+################################################################################
+
+# Location backend service
+################################################################################
+resource "helm_release" "geoweb-location-backend" {
+  name             = "geoweb-location-backend"
+  repository       = "https://fmidev.github.io/helm-charts/"
+  chart            = "geoweb-location-backend"
+  version          = "1.1.0"
+  namespace        = kubernetes_namespace.geoweb.metadata.0.name
+  create_namespace = false
+
+  values = [
+    templatefile("./helm-values/geoweb-values-template.yaml", {
+      cluster_issuer = var.cluster_issuer,
+      hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
+      ip             = var.load_balancer_ip
+    })
+  ]
+
+  set {
+    name  = "location.url"
+    value = "${var.geoweb_subdomain}.${var.dns_zone}"
+  }
+
+  set {
+    name  = "location.path"
+    value = local.location_backend_base_path
   }
 }
