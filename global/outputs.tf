@@ -14,3 +14,15 @@ output "certmgr_extdns_aws_secret_access_key" {
   value     = aws_iam_access_key.certmgr_extdns.secret
   sensitive = true
 }
+
+output "backups_aws_access_key_id" {
+  description = "AWS access key for backups"
+  value     = aws_iam_access_key.backups.id
+  sensitive = true
+}
+
+output "backups_aws_secret_access_key" {
+  description = "AWS secret access key for backups"
+  value     = aws_iam_access_key.certmgr_extdns.secret
+  sensitive = true
+}
