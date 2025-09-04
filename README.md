@@ -70,5 +70,13 @@ femdi-gateway-iac
 │   ├── README.md
 │   ├── terraform.tf
 │   └── variables.tf
+├── global # Contains global AWS account related configurations
+│   ├── backend.tf
+│   ├── iam.tf
+│   ├── output.tf
+│   ├── provider.tf
+│   ├── route53.tf
+│   ├── s3.tf
+│   └── variables.tf
 └── scripts # Misc scripts
 ```
