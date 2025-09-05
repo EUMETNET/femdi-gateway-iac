@@ -15,14 +15,19 @@ output "certmgr_extdns_aws_secret_access_key" {
   sensitive = true
 }
 
-output "backups_aws_access_key_id" {
+output "backup_bucket_name" {
+  description = "Name of the S3 bucket used for backups"
+  value       = aws_s3_bucket.backups.bucket
+}
+
+output "backup_aws_access_key_id" {
   description = "AWS access key for backups"
   value     = aws_iam_access_key.backups.id
   sensitive = true
 }
 
-output "backups_aws_secret_access_key" {
+output "backup_aws_secret_access_key" {
   description = "AWS secret access key for backups"
-  value     = aws_iam_access_key.certmgr_extdns.secret
+  value     = aws_iam_access_key.backups.secret
   sensitive = true
 }

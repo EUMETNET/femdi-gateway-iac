@@ -245,24 +245,6 @@ variable "github_idp_client_secret" {
   sensitive   = true
 }
 
-variable "s3_bucket_access_key" {
-  description = "AWS access key for S3 bucket for backups"
-  type        = string
-  sensitive   = true
-}
-
-variable "s3_bucket_secret_key" {
-  description = "AWS secret key for S3 bucket for backups"
-  type        = string
-  sensitive   = true
-}
-
-variable "backup_bucket_base_path" {
-  description = "AWS S3 backup bucket base path"
-  type        = string
-  default     = "dev-rodeo-backups/ewc"
-}
-
 variable "alert_email_recipients" {
   description = "Email addresses to receive alerts"
   type        = list(string)

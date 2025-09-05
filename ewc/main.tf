@@ -229,6 +229,17 @@ resource "vault_token" "dev-portal-global" {
   depends_on = [module.ewc-vault-init]
 }
 
+# Reference outputs from global project to get global AWS related values
+data "terraform_remote_state" "global" {
+  backend = "s3"
+  config = {
+    bucket  = "meteogate-iac-terraform-states"
+    key     = "global/terraform.tfstate"
+    region  = "eu-north-1"
+    profile = "fmi_meteogate"
+  }
+}
+
 ################################################################################
 # Install gateway apps
 ################################################################################
@@ -257,11 +268,12 @@ module "dev-portal-init" {
 
   rancher_project_id = rancher2_project.gateway.id
 
+  cluster_name = var.cluster_name
+
   keycloak_subdomain      = var.keycloak_subdomain
   keycloak_admin_password = var.keycloak_admin_password
   keycloak_replicas       = var.keycloak_replicas
   keycloak_realm_name     = var.keycloak_realm_name
-  backup_bucket_base_path = var.backup_bucket_base_path
 
   dev-portal_subdomain         = var.dev-portal_subdomain
   dev-portal_registry_password = var.dev-portal_registry_password
@@ -281,8 +293,9 @@ module "dev-portal-init" {
   google_idp_client_secret = var.google_idp_client_secret
   github_idp_client_secret = var.github_idp_client_secret
 
-  s3_bucket_access_key = var.s3_bucket_access_key
-  s3_bucket_secret_key = var.s3_bucket_secret_key
+  backup_bucket_name = data.terraform_remote_state.global.outputs.backup_bucket_name
+  backup_bucket_access_key = data.terraform_remote_state.global.outputs.backup_aws_access_key_id
+  backup_bucket_secret_key = data.terraform_remote_state.global.outputs.backup_aws_secret_access_key
 
   apisix_additional_instances = var.apisix_additional_instances
   vault_additional_instances  = var.vault_additional_instances

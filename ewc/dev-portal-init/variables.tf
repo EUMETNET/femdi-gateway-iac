@@ -26,6 +26,11 @@ variable "rancher_project_id" {
   type        = string
 }
 
+variable "cluster_name" {
+  description = "Identifier for the cluster"
+  type        = string
+}
+
 variable "keycloak_admin_password" {
   description = "Password for keycloak admin"
   type        = string
@@ -137,20 +142,20 @@ variable "github_idp_client_secret" {
   sensitive   = true
 }
 
-variable "s3_bucket_access_key" {
+variable "backup_bucket_access_key" {
   description = "AWS access key for S3 bucket for backups"
   type        = string
   sensitive   = true
 }
 
-variable "s3_bucket_secret_key" {
+variable "backup_bucket_secret_key" {
   description = "AWS secret key for S3 bucket for backups"
   type        = string
   sensitive   = true
 }
 
-variable "backup_bucket_base_path" {
-  description = "AWS S3 bucket base path for Keycloak backup files"
+variable "backup_bucket_name" {
+  description = "AWS S3 bucket name for backups"
   type        = string
 }
 

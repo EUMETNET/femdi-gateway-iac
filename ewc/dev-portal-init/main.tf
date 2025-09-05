@@ -183,7 +183,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         "secret_phase" = random_password.dev-portal-password.result
         "instances" = concat([
           {
-            "name"  = "EUMETSAT"
+            "name"  = upper(var.cluster_name)
             "token" = var.dev-portal_vault_token
             "url"   = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
           }
@@ -197,7 +197,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         "global_gateway_url" = "https://${var.apisix_global_subdomain}.${var.dns_zone}"
         "instances" = concat([
           {
-            "name"          = "EUMETSAT"
+            "name"          = upper(var.cluster_name)
             "admin_url"     = "http://${var.apisix_helm_release_name}-admin.${var.apisix_namespace_name}.svc.cluster.local:9180"
             "admin_api_key" = var.apisix_admin
           }
