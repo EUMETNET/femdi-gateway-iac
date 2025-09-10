@@ -1,7 +1,7 @@
 variable "hosted_zone_names" {
   description = "List of hosted zone names"
   type        = list(string)
-  default     = ["meteogate.eu"]
+  default     = ["meteogate.eu", "meteogate.org", "meteogate.net"]
 }
 
 variable "observations_ip" {
