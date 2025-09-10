@@ -1,3 +1,6 @@
+# Will be removed once the cluster projects are using same aws creds
+# Then those should fetch these from SSM directly
+
 output "hosted_zone_ids" {
   description = "Map of Route 53 zone IDs by domain name"
   value       = { for k, z in aws_route53_zone.hosted_zones : k => z.id }

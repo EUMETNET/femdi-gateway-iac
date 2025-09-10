@@ -1,17 +1,8 @@
 resource "aws_route53_zone" "hosted_zones" {
-  for_each = toset(var.hosted_zone_names)
+  # Need to mark as nonsensitive since Terraform treats SSM parameter values as sensitive by default
+  for_each = toset(split(",", nonsensitive(data.aws_ssm_parameter.hosted_zone_names.value)))
   name     = each.value
 }
-
-# Uncomment following zones once the "main" zone is moved to new AWS account
-
-#resource "aws_route53_zone" "meteogate_org" {
-#  name = "meteogate.org"
-#}
-#
-#resource "aws_route53_zone" "meteogate_net" {
-#  name = "meteogate.net"
-#}
 
 resource "aws_route53_record" "observations" {
   for_each = aws_route53_zone.hosted_zones
@@ -19,7 +10,7 @@ resource "aws_route53_record" "observations" {
   type     = "A"
   ttl      = 1800
   name     = "observations"
-  records  = [var.observations_ip]
+  records  = [data.aws_ssm_parameter.observations_ip.value]
 
 }
 
@@ -30,7 +21,7 @@ resource "aws_route53_record" "radar" {
   ttl      = 1800
   name     = "radar"
 
-  records = [var.radar_ip]
+  records = [data.aws_ssm_parameter.radar_ip.value]
 }
 
 resource "aws_route53_record" "root" {
@@ -40,5 +31,5 @@ resource "aws_route53_record" "root" {
   ttl      = 1800
   name     = "" # Empty name for root domain
 
-  records = [var.root_ip]
+  records = [data.aws_ssm_parameter.root_ip.value]
 }
