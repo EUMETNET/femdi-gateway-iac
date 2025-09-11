@@ -14,6 +14,10 @@ locals {
     for cluster_name, param in data.aws_ssm_parameter.external_apisix_admin_api_keys :
     cluster_name => param.value
   }
+  external_vault_tokens = {
+    for cluster_name, param in data.aws_ssm_parameter.external_vault_tokens :
+    cluster_name => param.value
+  }
 
   keycloak_admin_password = aws_ssm_parameter.keycloak_admin_password.value
 

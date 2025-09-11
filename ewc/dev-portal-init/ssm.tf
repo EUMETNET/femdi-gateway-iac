@@ -16,6 +16,11 @@ data "aws_ssm_parameter" "external_apisix_admin_api_keys" {
   name     = "/${each.key}/apisix/admin_api_key"
 }
 
+data "aws_ssm_parameter" "external_vault_tokens" {
+  for_each = local.external_cluster_names
+  name     = "/vault/${each.key}/root_token"
+}
+
 
 ##############################################################
 # Keycloak

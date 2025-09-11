@@ -1,8 +1,3 @@
-variable "rancher_api_url" {
-  description = "Rancher instance URL"
-  type        = string
-}
-
 variable "rancher_token" {
   description = "Rancher instance access key"
   type        = string
@@ -13,12 +8,6 @@ variable "rancher_insecure" {
   description = "Is Rancher instance insecure"
   type        = bool
   default     = false
-}
-
-variable "rancher_cluster_id" {
-  description = "ID of your Rancher cluster"
-  type        = string
-
 }
 
 variable "kubeconfig_path" {
@@ -34,11 +23,6 @@ variable "kubeconfig_path" {
 variable "cluster_name" {
   description = "Identifier for the cluster"
   type        = string
-}
-
-variable "ingress_nginx_private_subnets" {
-  description = "Ingress NGINX subnets"
-  type        = list(string)
 }
 
 variable "route53_access_key" {
@@ -85,48 +69,6 @@ variable "root_ip" {
   type        = string
 }
 
-variable "email_cert_manager" {
-  description = "email for Let's encrypt cert-manager"
-  type        = string
-}
-
-variable "apisix_admin" {
-  description = "Admin API key to control access to the APISIX Admin API endpoints"
-  type        = string
-  sensitive   = true
-}
-
-variable "apisix_reader" {
-  description = "Reader API key to control access to the APISIX Admin API endpoints"
-  type        = string
-  sensitive   = true
-}
-
-variable "apisix_subdomain" {
-  description = "subdomain where apisix will be hosted"
-  type        = string
-  default     = "gateway"
-}
-
-variable "apisix_global_subdomain" {
-  description = "Unified subdomain to access any APISIX gateway instance"
-  type        = string
-  default     = "api"
-}
-
-variable "apisix_ip_list" {
-  description = "Restrict Admin API Access by IP CIDR"
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
-  validation {
-    condition = alltrue([
-      for i in var.apisix_ip_list :
-      can(cidrnetmask(i))
-    ])
-    error_message = "Not a valid list of CIDR-blocks"
-  }
-}
-
 variable "apisix_replicas" {
   description = "Amount of minimum replicas for APISIX"
   type        = number
@@ -139,40 +81,6 @@ variable "apisix_etcd_replicas" {
   default     = 3
 }
 
-variable "apisix_additional_instances" {
-  description = "Config for additional Apisix instances"
-  type = list(object({
-    name          = string
-    admin_url     = string
-    admin_api_key = string
-  }))
-  default   = []
-  sensitive = true
-}
-
-variable "vault_additional_instances" {
-  description = "Config for additional Apisix instances"
-  type = list(object({
-    name  = string
-    token = string
-    url   = string
-  }))
-  default   = []
-  sensitive = true
-}
-
-variable "keycloak_admin_password" {
-  description = "Password for keycloak admin"
-  type        = string
-  sensitive   = true
-}
-
-variable "keycloak_subdomain" {
-  description = "subdomain where keycloak will be hosted"
-  type        = string
-  default     = "keycloak"
-}
-
 variable "keycloak_replicas" {
   description = "Amount of keycloak replicas"
   type        = number
@@ -183,12 +91,6 @@ variable "keycloak_realm_name" {
   description = "Name of the keycloak realm"
   type        = string
   default     = "meteogate"
-}
-
-variable "vault_subdomain" {
-  description = "subdomain where vault will be hosted"
-  type        = string
-  default     = "vault"
 }
 
 variable "vault_replicas" {
@@ -209,82 +111,16 @@ variable "vault_key_treshold" {
   default     = 3
 }
 
-variable "vault_token" {
-  description = "Token for Vault if it is already initialized"
-  type        = string
-  sensitive   = true
-}
-
 variable "install_dev-portal" {
   description = "Should Dev-portal be installed"
   type        = bool
-  default     = true
-}
-
-variable "dev-portal_subdomain" {
-  description = "subdomain where devportal will be hosted"
-  type        = string
-  default     = "devportal"
-}
-
-variable "dev-portal_registry_password" {
-  description = "Container registry password for dev-portal"
-  type        = string
-  sensitive   = true
-}
-
-variable "google_idp_client_secret" {
-  description = "Secret to use Google idp"
-  type        = string
-  sensitive   = true
-}
-
-variable "github_idp_client_secret" {
-  description = "Secret to use Github idp"
-  type        = string
-  sensitive   = true
-}
-
-variable "alert_email_recipients" {
-  description = "Email addresses to receive alerts"
-  type        = list(string)
-  default     = []
-}
-
-variable "alert_email_sender" {
-  description = "Email address to send alerts"
-  type        = string
-}
-
-variable "alert_smtp_auth_username" {
-  description = <<-EOF
-SMTP username for alertmanager.
-Leave empty if not available yet. 
-Note: Leaving empty will skip the creation of the default Alertmanager Config
-EOF
-  type        = string
-}
-
-variable "alert_smtp_auth_password" {
-  description = <<-EOF
-SMTP password for alertmanager.
-Leave empty if not available yet. 
-Note: Leaving empty will skip the creation of the default Alertmanager Config
-EOF
-  type        = string
-  sensitive   = true
-}
-
-variable "alert_smtp_host" {
-  description = "SMTP host for alertmanager"
-  type        = string
-  default     = "smtp.gmail.com:587"
+  default     = false
 }
 
 variable "install_geoweb" {
   description = "Should Geoweb be installed"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "geoweb_subdomain" {

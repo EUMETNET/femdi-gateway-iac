@@ -293,6 +293,7 @@ module "dev-portal-init" {
   apisix_helm_release_name = local.apisix_helm_release_name
   apisix_namespace_name    = kubernetes_namespace.apisix.metadata.0.name
 
+  vault_subdomain         = local.vault_subdomain
   vault_helm_release_name = module.ewc-vault-init.vault_helm_release_name
   vault_namespace_name    = module.ewc-vault-init.vault_namespace_name
 
@@ -301,8 +302,6 @@ module "dev-portal-init" {
   backup_bucket_name       = data.terraform_remote_state.global.outputs.backup_bucket_name
   backup_bucket_access_key = data.terraform_remote_state.global.outputs.backup_aws_access_key_id
   backup_bucket_secret_key = data.terraform_remote_state.global.outputs.backup_aws_secret_access_key
-
-  vault_additional_instances = var.vault_additional_instances
 
   geoweb_subdomain = var.geoweb_subdomain
 

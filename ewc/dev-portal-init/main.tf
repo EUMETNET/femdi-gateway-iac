@@ -188,7 +188,11 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
             "url"   = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
           }
           ],
-          var.vault_additional_instances
+          [for cluster in local.external_cluster_names : {
+            "name"  = upper(cluster)
+            "token" = local.external_vault_tokens[cluster]
+            "url"   = "https://${var.vault_subdomain}.${cluster}.${var.dns_zone}"
+          }]
         )
       }
 
