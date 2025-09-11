@@ -13,6 +13,10 @@ terraform {
       source  = "hashicorp/random"
       version = "3.6.3"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.5"
+    }
   }
 
   required_version = "~> 1.3"

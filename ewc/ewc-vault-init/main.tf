@@ -166,7 +166,7 @@ locals {
     }
     "spec" = {
       "acme" = {
-        "email" = var.email_cert_manager
+        "email" = local.cert_manager_email
         "privateKeySecretRef" = {
           "name" = "letsencrypt-prod"
         }

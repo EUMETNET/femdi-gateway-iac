@@ -26,15 +26,6 @@ data "aws_ssm_parameter" "kubeconfig_file" {
 }
 
 ##############################################################
-# Cert-manager
-##############################################################
-
-data "aws_ssm_parameter" "cert_manager_email" {
-  provider = aws.fmi
-  name     = "/cert_manager/email_address"
-}
-
-##############################################################
 # APISIX
 ##############################################################
 
@@ -81,6 +72,39 @@ data "aws_ssm_parameter" "apisix_admin_api_ip_list" {
 data "aws_ssm_parameter" "ingress_nginx_private_subnets" {
   provider = aws.fmi
   name     = "/${var.cluster_name}/apisix/ingress_nginx_private_subnets"
+}
+
+##############################################################
+# Dev Portal
+##############################################################
+
+data "aws_ssm_parameter" "dev_portal_subdomain" {
+  provider = aws.fmi
+  name     = "/dev_portal/subdomain"
+}
+
+##############################################################
+# Keycloak
+##############################################################
+
+data "aws_ssm_parameter" "keycloak_subdomain" {
+  provider = aws.fmi
+  name     = "/keycloak/subdomain"
+}
+
+##############################################################
+# Vault
+##############################################################
+
+data "aws_ssm_parameter" "vault_root_token" {
+  provider        = aws.fmi
+  name            = "/vault/${var.cluster_name}/root_token"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "vault_subdomain" {
+  provider = aws.fmi
+  name     = "/vault/subdomain"
 }
 
 ##############################################################

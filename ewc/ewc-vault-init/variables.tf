@@ -63,12 +63,6 @@ variable "dns_zone" {
   type        = string
 }
 
-variable "email_cert_manager" {
-  description = "email for Let's encrypt cert-manager"
-  type        = string
-}
-
-
 variable "vault_project_id" {
   description = "Rancher project where vault namespace will be created"
   type        = string

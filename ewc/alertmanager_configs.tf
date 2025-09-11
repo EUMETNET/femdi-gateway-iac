@@ -5,7 +5,7 @@ resource "kubernetes_secret" "alertmanager_default_smtp_password" {
   }
 
   data = {
-    password = data.aws_ssm_parameter.alert_smtp_auth_password.value
+    password = local.alert_manager_smtp_auth_password
   }
 
   type = "Opaque"
@@ -19,7 +19,7 @@ resource "kubectl_manifest" "alertmanager_default_config" {
 
   # Only create the config if the SMTP username and password are set
   # So that we don't block the creation of other resources and can create the config later
-  count = data.aws_ssm_parameter.alert_smtp_auth_username.value != "" && data.aws_ssm_parameter.alert_smtp_auth_password.value != "" ? 1 : 0
+  count = local.alert_manager_smtp_auth_username != "" && local.alert_manager_smtp_auth_password != "" ? 1 : 0
 
   yaml_body = yamlencode({
     apiVersion = "monitoring.coreos.com/v1alpha1"
@@ -33,16 +33,16 @@ resource "kubectl_manifest" "alertmanager_default_config" {
         {
           name = "default-receiver"
           emailConfigs = [
-            for email in split(",", data.aws_ssm_parameter.alert_email_recipients.value) : {
+            for email in split(",", local.alert_manager_email_recipients) : {
               authPassword = {
                 name = "${kubernetes_secret.alertmanager_default_smtp_password.metadata.0.name}"
                 key  = "password"
               }
-              authUsername = "${data.aws_ssm_parameter.alert_smtp_auth_username.value}"
-              from         = "${data.aws_ssm_parameter.alert_email_sender.value}"
+              authUsername = "${local.alert_manager_smtp_auth_username}"
+              from         = "${local.alert_manager_email_sender}"
               requireTLS   = true
               sendResolved = true
-              smarthost    = "${data.aws_ssm_parameter.alert_smtp_host.value}"
+              smarthost    = "${local.alert_manager_smtp_host}"
               to           = email
               tlsConfig    = {}
             }

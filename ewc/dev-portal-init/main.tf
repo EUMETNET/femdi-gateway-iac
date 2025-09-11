@@ -32,17 +32,17 @@ resource "kubernetes_config_map" "realm-json" {
   data = {
     "realm.json" = templatefile("./keycloak-realm/realm-export.json", {
       dev_portal_api_secret    = jsonencode(random_password.keycloak-dev-portal-secret.result)
-      google_idp_client_secret = var.google_idp_client_secret
-      github_idp_client_secret = var.github_idp_client_secret
+      google_idp_client_secret = local.google_idp_client_secret
+      github_idp_client_secret = local.github_idp_client_secret
       redirect_uris = [
-        "https://${var.dev-portal_subdomain}.${var.dns_zone}",
+        "https://${var.dev_portal_subdomain}.${var.dns_zone}",
         "https://${var.geoweb_subdomain}.${var.dns_zone}/code"
       ]
       web_origins = [
-        "https://${var.dev-portal_subdomain}.${var.dns_zone}",
+        "https://${var.dev_portal_subdomain}.${var.dns_zone}",
         "https://${var.geoweb_subdomain}.${var.dns_zone}"
       ]
-      post_logout_redirect_uris = "https://${var.dev-portal_subdomain}.${var.dns_zone}##https://${var.geoweb_subdomain}.${var.dns_zone}"
+      post_logout_redirect_uris = "https://${var.dev_portal_subdomain}.${var.dns_zone}##https://${var.geoweb_subdomain}.${var.dns_zone}"
     })
   }
 }
@@ -80,7 +80,7 @@ resource "helm_release" "keycloak" {
 
   set_sensitive {
     name  = "auth.adminPassword"
-    value = var.keycloak_admin_password
+    value = local.keycloak_admin_password
   }
 
   set {
@@ -202,7 +202,11 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
             "admin_api_key" = var.apisix_admin_api_key
           }
           ],
-          var.apisix_additional_instances
+          [for cluster in local.external_cluster_names : {
+            "name"          = upper(cluster)
+            "admin_url"     = "https://admin-${var.apisix_subdomain}.${cluster}.${var.dns_zone}"
+            "admin_api_key" = local.external_apisix_admin_api_keys[cluster]
+          }]
         )
       }
       "keycloak" = {
@@ -228,7 +232,7 @@ resource "helm_release" "dev-portal" {
   values = [
     templatefile("./helm-values/dev-portal-values-template.yaml", {
       cluster_issuer = var.cluster_issuer
-      hostname       = "${var.dev-portal_subdomain}.${var.dns_zone}",
+      hostname       = "${var.dev_portal_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
     })
   ]
@@ -240,7 +244,7 @@ resource "helm_release" "dev-portal" {
 
   set_sensitive {
     name  = "imageCredentials.password"
-    value = var.dev-portal_registry_password
+    value = local.dev_portal_registry_password
   }
 
   set {
@@ -260,7 +264,7 @@ resource "helm_release" "dev-portal" {
 
   set {
     name  = "frontend.keycloak_logout_url"
-    value = "https://${var.dev-portal_subdomain}.${var.dns_zone}"
+    value = "https://${var.dev_portal_subdomain}.${var.dns_zone}"
   }
 
   set {

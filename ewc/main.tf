@@ -16,15 +16,15 @@ provider "kubectl" {
 }
 
 provider "rancher2" {
-  api_url   = data.aws_ssm_parameter.rancher_api_url.value
+  api_url   = local.rancher_api_url
   token_key = var.rancher_token
   insecure  = var.rancher_insecure
 }
 
 
 provider "vault" {
-  address = "https://${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}"
-  token   = var.vault_token
+  address = "https://${local.vault_subdomain}.${var.cluster_name}.${var.dns_zone}"
+  token   = local.vault_token
 }
 
 provider "random" {
@@ -32,11 +32,11 @@ provider "random" {
 
 # Use restapi provider as http does not supprot PUT and Apisix needs PUT
 provider "restapi" {
-  uri                  = "https://admin-${data.aws_ssm_parameter.apisix_subdomain.value}.${var.cluster_name}.${var.dns_zone}/"
+  uri                  = "https://admin-${local.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}/"
   write_returns_object = true
 
   headers = {
-    "X-API-KEY"    = aws_ssm_parameter.apisix_admin_api_key.value
+    "X-API-KEY"    = local.apisix_admin_api_key
     "Content-Type" = "application/json"
   }
 
@@ -60,22 +60,24 @@ provider "aws" {
 module "ewc-vault-init" {
   source = "./ewc-vault-init/"
 
-  rancher_api_url    = data.aws_ssm_parameter.rancher_api_url.value
+  providers = {
+    aws = aws.fmi
+  }
+
+  rancher_api_url    = local.rancher_api_url
   rancher_token      = var.rancher_token
-  rancher_cluster_id = data.aws_ssm_parameter.rancher_cluster_id.value
+  rancher_cluster_id = local.rancher_cluster_id
   kubeconfig_path    = var.kubeconfig_path
   cluster_name       = var.cluster_name
 
-  apisix_subdomain       = data.aws_ssm_parameter.apisix_subdomain.value
+  apisix_subdomain       = local.apisix_subdomain
   route53_access_key     = var.route53_access_key
   route53_secret_key     = var.route53_secret_key
   route53_zone_id_filter = var.route53_zone_id_filter
   dns_zone               = var.dns_zone
 
-  email_cert_manager = data.aws_ssm_parameter.cert_manager_email.value
-
   vault_project_id    = rancher2_project.gateway.id
-  vault_subdomain     = var.vault_subdomain
+  vault_subdomain     = local.vault_subdomain
   vault_replicas      = var.vault_replicas
   vault_anti-affinity = var.vault_anti-affinity
   vault_key_treshold  = var.vault_key_treshold
@@ -251,7 +253,7 @@ data "terraform_remote_state" "global" {
 # Create project for gateway
 resource "rancher2_project" "gateway" {
   name       = "gateway"
-  cluster_id = data.aws_ssm_parameter.rancher_cluster_id.value
+  cluster_id = local.rancher_cluster_id
 }
 
 ################################################################################
@@ -264,6 +266,10 @@ module "dev-portal-init" {
 
   source = "./dev-portal-init/"
 
+  providers = {
+    aws = aws.fmi
+  }
+
   kubeconfig_path = var.kubeconfig_path
 
   dns_zone = var.dns_zone
@@ -275,17 +281,15 @@ module "dev-portal-init" {
 
   cluster_name = var.cluster_name
 
-  keycloak_subdomain      = var.keycloak_subdomain
-  keycloak_admin_password = var.keycloak_admin_password
-  keycloak_replicas       = var.keycloak_replicas
-  keycloak_realm_name     = var.keycloak_realm_name
+  keycloak_subdomain  = local.keycloak_subdomain
+  keycloak_replicas   = var.keycloak_replicas
+  keycloak_realm_name = var.keycloak_realm_name
 
-  dev-portal_subdomain         = var.dev-portal_subdomain
-  dev-portal_registry_password = var.dev-portal_registry_password
-  dev-portal_vault_token       = vault_token.dev-portal-global.client_token
+  dev_portal_subdomain   = local.dev_portal_subdomain
+  dev-portal_vault_token = vault_token.dev-portal-global.client_token
 
-  apisix_subdomain         = data.aws_ssm_parameter.apisix_subdomain.value
-  apisix_admin_api_key     = aws_ssm_parameter.apisix_admin_api_key.value
+  apisix_subdomain         = local.apisix_subdomain
+  apisix_admin_api_key     = local.apisix_admin_api_key
   apisix_helm_release_name = local.apisix_helm_release_name
   apisix_namespace_name    = kubernetes_namespace.apisix.metadata.0.name
 
@@ -294,15 +298,11 @@ module "dev-portal-init" {
 
   vault_mount_kv_base_path = local.vault_mount_kv_base_path
 
-  google_idp_client_secret = var.google_idp_client_secret
-  github_idp_client_secret = var.github_idp_client_secret
-
   backup_bucket_name       = data.terraform_remote_state.global.outputs.backup_bucket_name
   backup_bucket_access_key = data.terraform_remote_state.global.outputs.backup_aws_access_key_id
   backup_bucket_secret_key = data.terraform_remote_state.global.outputs.backup_aws_secret_access_key
 
-  apisix_additional_instances = var.apisix_additional_instances
-  vault_additional_instances  = var.vault_additional_instances
+  vault_additional_instances = var.vault_additional_instances
 
   geoweb_subdomain = var.geoweb_subdomain
 
@@ -325,7 +325,7 @@ module "geoweb" {
   rancher_project_id = rancher2_project.gateway.id
 
   geoweb_subdomain    = var.geoweb_subdomain
-  keycloak_subdomain  = var.keycloak_subdomain
+  keycloak_subdomain  = local.keycloak_subdomain
   keycloak_realm_name = var.keycloak_realm_name
 }
 ################################################################################
@@ -365,10 +365,10 @@ resource "kubernetes_config_map" "custom_error_pages" {
   }
   data = {
     "apisix_error_429.html" = templatefile("../apisix/error_pages/apisix_error_429.html", {
-      devportal_address = "${var.dev-portal_subdomain}.${var.dns_zone}"
+      devportal_address = "${local.dev_portal_subdomain}.${var.dns_zone}"
     })
     "apisix_error_403.html" = templatefile("../apisix/error_pages/apisix_error_403.html", {
-      devportal_address = "${var.dev-portal_subdomain}.${var.dns_zone}"
+      devportal_address = "${local.dev_portal_subdomain}.${var.dns_zone}"
     })
   }
 }
@@ -401,24 +401,24 @@ resource "helm_release" "apisix" {
   values = [
     templatefile("./helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
-      hostname       = "${data.aws_ssm_parameter.apisix_subdomain.value}.${var.cluster_name}.${var.dns_zone}",
+      hostname       = "${local.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}",
       ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
 
   set_sensitive {
     name  = "apisix.admin.credentials.admin"
-    value = aws_ssm_parameter.apisix_admin_api_key.value
+    value = local.apisix_admin_api_key
   }
 
   set_sensitive {
     name  = "apisix.admin.credentials.viewer"
-    value = aws_ssm_parameter.apisix_admin_reader_api_key.value
+    value = local.apisix_admin_reader_api_key
   }
 
   set_list {
     name  = "apisix.admin.allow.ipList"
-    value = split(",", data.aws_ssm_parameter.apisix_admin_api_ip_list.value)
+    value = split(",", local.apisix_admin_api_ip_list)
   }
 
   # Autoscaling
@@ -586,7 +586,7 @@ resource "helm_release" "apisix" {
   lifecycle {
     precondition {
       condition = alltrue([
-        for i in split(",", data.aws_ssm_parameter.apisix_admin_api_ip_list.value) :
+        for i in split(",", local.apisix_admin_api_ip_list) :
         can(cidrnetmask(i))
       ])
       error_message = "Given APISIX admin API IP list is not a valid list of CIDR-blocks"
@@ -635,7 +635,7 @@ resource "restapi_object" "apisix_global_rules_config" {
       "prometheus" = {}
       "real-ip" = {
         source            = "http_x_real_ip",
-        trusted_addresses = split(",", data.aws_ssm_parameter.ingress_nginx_private_subnets.value)
+        trusted_addresses = split(",", local.ingress_nginx_private_subnets)
       }
     }
   })

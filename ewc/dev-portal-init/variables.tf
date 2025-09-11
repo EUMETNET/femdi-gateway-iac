@@ -31,11 +31,11 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "keycloak_admin_password" {
-  description = "Password for keycloak admin"
-  type        = string
-  sensitive   = true
-}
+#variable "keycloak_admin_password" {
+#  description = "Password for keycloak admin"
+#  type        = string
+#  sensitive   = true
+#}
 
 variable "keycloak_subdomain" {
   description = "subdomain where keycloak will be hosted"
@@ -52,15 +52,9 @@ variable "keycloak_realm_name" {
   type        = string
 }
 
-variable "dev-portal_subdomain" {
+variable "dev_portal_subdomain" {
   description = "subdomain where devportal will be hosted"
   type        = string
-}
-
-variable "dev-portal_registry_password" {
-  description = "Container registry password for dev-portal"
-  type        = string
-  sensitive   = true
 }
 
 variable "dev-portal_vault_token" {
@@ -123,18 +117,6 @@ variable "vault_namespace_name" {
 variable "vault_mount_kv_base_path" {
   description = "Base path for KV secrets engine in Vault"
   type        = string
-}
-
-variable "google_idp_client_secret" {
-  description = "Secret to use Google idp"
-  type        = string
-  sensitive   = true
-}
-
-variable "github_idp_client_secret" {
-  description = "Secret to use Github idp"
-  type        = string
-  sensitive   = true
 }
 
 variable "backup_bucket_access_key" {
