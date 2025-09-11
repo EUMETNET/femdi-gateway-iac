@@ -194,12 +194,12 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
 
       "apisix" = {
         "key_path"           = "$secret://vault/1/"
-        "global_gateway_url" = "https://${var.apisix_global_subdomain}.${var.dns_zone}"
+        "global_gateway_url" = "https://${var.apisix_subdomain}.${var.dns_zone}"
         "instances" = concat([
           {
             "name"          = upper(var.cluster_name)
             "admin_url"     = "http://${var.apisix_helm_release_name}-admin.${var.apisix_namespace_name}.svc.cluster.local:9180"
-            "admin_api_key" = var.apisix_admin
+            "admin_api_key" = var.apisix_admin_api_key
           }
           ],
           var.apisix_additional_instances

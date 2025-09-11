@@ -93,7 +93,7 @@ resource "helm_release" "external-dns" {
   # Global APISIX subdomain handled separately
   set_list {
     name  = "excludeDomains"
-    value = ["${var.apisix_global_subdomain}.${var.dns_zone}"]
+    value = ["${var.apisix_subdomain}.${var.dns_zone}"]
   }
 }
 

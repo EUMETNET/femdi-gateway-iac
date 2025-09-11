@@ -36,8 +36,8 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "apisix_global_subdomain" {
-  description = "Unified subdomain to access any APISIX gateway instance"
+variable "apisix_subdomain" {
+  description = "Subdomain for APISIX"
   type        = string
 }
 

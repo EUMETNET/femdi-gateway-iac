@@ -74,12 +74,7 @@ variable "apisix_subdomain" {
   type        = string
 }
 
-variable "apisix_global_subdomain" {
-  description = "Unified subdomain to access any APISIX gateway instance"
-  type        = string
-}
-
-variable "apisix_admin" {
+variable "apisix_admin_api_key" {
   description = "Admin credentials for Apisix"
   type        = string
   sensitive   = true

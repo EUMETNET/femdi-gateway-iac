@@ -16,7 +16,7 @@ provider "kubectl" {
 }
 
 provider "rancher2" {
-  api_url   = var.rancher_api_url
+  api_url   = data.aws_ssm_parameter.rancher_api_url.value
   token_key = var.rancher_token
   insecure  = var.rancher_insecure
 }
@@ -32,11 +32,11 @@ provider "random" {
 
 # Use restapi provider as http does not supprot PUT and Apisix needs PUT
 provider "restapi" {
-  uri                  = "https://admin-${var.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}/"
+  uri                  = "https://admin-${data.aws_ssm_parameter.apisix_subdomain.value}.${var.cluster_name}.${var.dns_zone}/"
   write_returns_object = true
 
   headers = {
-    "X-API-KEY"    = var.apisix_admin
+    "X-API-KEY"    = aws_ssm_parameter.apisix_admin_api_key.value
     "Content-Type" = "application/json"
   }
 
@@ -48,6 +48,11 @@ provider "aws" {
   profile = "ewc"
 }
 
+provider "aws" {
+  alias   = "fmi"
+  profile = "fmi_meteogate"
+}
+
 ################################################################################
 # Install Vault and it's policies and tokens
 ################################################################################
@@ -55,19 +60,19 @@ provider "aws" {
 module "ewc-vault-init" {
   source = "./ewc-vault-init/"
 
-  rancher_api_url    = var.rancher_api_url
+  rancher_api_url    = data.aws_ssm_parameter.rancher_api_url.value
   rancher_token      = var.rancher_token
-  rancher_cluster_id = var.rancher_cluster_id
+  rancher_cluster_id = data.aws_ssm_parameter.rancher_cluster_id.value
   kubeconfig_path    = var.kubeconfig_path
   cluster_name       = var.cluster_name
 
-  apisix_global_subdomain = var.apisix_global_subdomain
-  route53_access_key      = var.route53_access_key
-  route53_secret_key      = var.route53_secret_key
-  route53_zone_id_filter  = var.route53_zone_id_filter
-  dns_zone                = var.dns_zone
+  apisix_subdomain       = data.aws_ssm_parameter.apisix_subdomain.value
+  route53_access_key     = var.route53_access_key
+  route53_secret_key     = var.route53_secret_key
+  route53_zone_id_filter = var.route53_zone_id_filter
+  dns_zone               = var.dns_zone
 
-  email_cert_manager = var.email_cert_manager
+  email_cert_manager = data.aws_ssm_parameter.cert_manager_email.value
 
   vault_project_id    = rancher2_project.gateway.id
   vault_subdomain     = var.vault_subdomain
@@ -246,7 +251,7 @@ data "terraform_remote_state" "global" {
 # Create project for gateway
 resource "rancher2_project" "gateway" {
   name       = "gateway"
-  cluster_id = var.rancher_cluster_id
+  cluster_id = data.aws_ssm_parameter.rancher_cluster_id.value
 }
 
 ################################################################################
@@ -279,9 +284,8 @@ module "dev-portal-init" {
   dev-portal_registry_password = var.dev-portal_registry_password
   dev-portal_vault_token       = vault_token.dev-portal-global.client_token
 
-  apisix_subdomain         = var.apisix_subdomain
-  apisix_global_subdomain  = var.apisix_global_subdomain
-  apisix_admin             = var.apisix_admin
+  apisix_subdomain         = data.aws_ssm_parameter.apisix_subdomain.value
+  apisix_admin_api_key     = aws_ssm_parameter.apisix_admin_api_key.value
   apisix_helm_release_name = local.apisix_helm_release_name
   apisix_namespace_name    = kubernetes_namespace.apisix.metadata.0.name
 
@@ -293,7 +297,7 @@ module "dev-portal-init" {
   google_idp_client_secret = var.google_idp_client_secret
   github_idp_client_secret = var.github_idp_client_secret
 
-  backup_bucket_name = data.terraform_remote_state.global.outputs.backup_bucket_name
+  backup_bucket_name       = data.terraform_remote_state.global.outputs.backup_bucket_name
   backup_bucket_access_key = data.terraform_remote_state.global.outputs.backup_aws_access_key_id
   backup_bucket_secret_key = data.terraform_remote_state.global.outputs.backup_aws_secret_access_key
 
@@ -397,24 +401,24 @@ resource "helm_release" "apisix" {
   values = [
     templatefile("./helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
-      hostname       = "${var.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}",
+      hostname       = "${data.aws_ssm_parameter.apisix_subdomain.value}.${var.cluster_name}.${var.dns_zone}",
       ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
 
   set_sensitive {
     name  = "apisix.admin.credentials.admin"
-    value = var.apisix_admin
+    value = aws_ssm_parameter.apisix_admin_api_key.value
   }
 
   set_sensitive {
     name  = "apisix.admin.credentials.viewer"
-    value = var.apisix_reader
+    value = aws_ssm_parameter.apisix_admin_reader_api_key.value
   }
 
   set_list {
     name  = "apisix.admin.allow.ipList"
-    value = var.apisix_ip_list
+    value = split(",", data.aws_ssm_parameter.apisix_admin_api_ip_list.value)
   }
 
   # Autoscaling
@@ -579,6 +583,16 @@ resource "helm_release" "apisix" {
     value = var.apisix_etcd_replicas
   }
 
+  lifecycle {
+    precondition {
+      condition = alltrue([
+        for i in split(",", data.aws_ssm_parameter.apisix_admin_api_ip_list.value) :
+        can(cidrnetmask(i))
+      ])
+      error_message = "Given APISIX admin API IP list is not a valid list of CIDR-blocks"
+    }
+  }
+
   # Need connection to vault and Installs ServiceMonitor for scraping metrics
   depends_on = [module.ewc-vault-init, rancher2_app_v2.rancher-monitoring]
 
@@ -621,7 +635,7 @@ resource "restapi_object" "apisix_global_rules_config" {
       "prometheus" = {}
       "real-ip" = {
         source            = "http_x_real_ip",
-        trusted_addresses = var.ingress_nginx_private_subnets
+        trusted_addresses = split(",", data.aws_ssm_parameter.ingress_nginx_private_subnets.value)
       }
     }
   })

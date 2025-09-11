@@ -5,7 +5,7 @@
 # The routing policy is set to latency based routing policy
 
 locals {
-  apisix_global_dns_name = "${var.apisix_global_subdomain}.${var.dns_zone}"
+  apisix_global_dns_name = "${data.aws_ssm_parameter.apisix_subdomain.value}.${var.dns_zone}"
   cluster_region_map = {
     "eumetsat" = "eu-central-1" # Frankfurt
     "ecmwf"    = "eu-south-1"   # Milan
@@ -26,7 +26,7 @@ resource "aws_route53_record" "apisix" {
   zone_id = var.route53_zone_id_filter
   type    = "A"
   ttl     = 60
-  name    = var.apisix_global_subdomain
+  name    = data.aws_ssm_parameter.apisix_subdomain.value
 
   records = [module.ewc-vault-init.load_balancer_ip]
 
