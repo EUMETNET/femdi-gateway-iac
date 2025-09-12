@@ -26,6 +26,28 @@ data "aws_ssm_parameter" "kubeconfig_file" {
 }
 
 ##############################################################
+# Global AWS
+##############################################################
+
+data "aws_ssm_parameter" "backups_aws_access_key_id" {
+  provider        = aws.fmi
+  name            = "/iam/backups/access_key"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "backups_aws_secret_access_key" {
+  provider        = aws.fmi
+  name            = "/iam/backups/secret_access_key"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "backups_bucket_name" {
+  provider = aws.fmi
+  name     = "/s3/backups/bucket_name"
+}
+
+
+##############################################################
 # APISIX
 ##############################################################
 

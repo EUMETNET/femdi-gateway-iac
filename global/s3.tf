@@ -7,7 +7,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "backups_lifecycle_rules" {
   bucket = aws_s3_bucket.backups.id
 
   rule {
-    id = "delete-old-backups"
+    id     = "delete-old-backups"
     status = "Enabled"
 
     filter {

@@ -136,8 +136,8 @@ resource "kubernetes_secret" "vault_jobs_secrets" {
   }
 
   data = {
-    AWS_ACCESS_KEY_ID     = data.terraform_remote_state.global.outputs.backup_aws_access_key_id
-    AWS_SECRET_ACCESS_KEY = data.terraform_remote_state.global.outputs.backup_aws_secret_access_key
+    AWS_ACCESS_KEY_ID     = local.backup_aws_access_key_id
+    AWS_SECRET_ACCESS_KEY = local.backup_aws_secret_access_key
     TOKENS_TO_RENEW       = "${join("\n", [vault_token.apisix-global.client_token, vault_token.dev-portal-global.client_token, vault_token.prometheus.client_token])}"
   }
 
@@ -180,7 +180,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
 
               env {
                 name  = "S3_BUCKET_BASE_PATH"
-                value = "${data.terraform_remote_state.global.outputs.backup_bucket_name}/${var.cluster_name}/${module.ewc-vault-init.vault_namespace_name}/"
+                value = "${local.backup_bucket_name}/${var.cluster_name}/${module.ewc-vault-init.vault_namespace_name}/"
               }
 
               env {
@@ -246,7 +246,7 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = "${data.terraform_remote_state.global.outputs.backup_bucket_name}/${var.cluster_name}/${module.ewc-vault-init.vault_namespace_name}/"
+                  value = "${local.backup_bucket_name}/${var.cluster_name}/${module.ewc-vault-init.vault_namespace_name}/"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"
@@ -322,8 +322,8 @@ resource "kubernetes_secret" "apisix_jobs_secrets" {
   }
 
   data = {
-    AWS_ACCESS_KEY_ID     = data.terraform_remote_state.global.outputs.backup_aws_access_key_id
-    AWS_SECRET_ACCESS_KEY = data.terraform_remote_state.global.outputs.backup_aws_secret_access_key
+    AWS_ACCESS_KEY_ID     = local.backup_aws_access_key_id
+    AWS_SECRET_ACCESS_KEY = local.backup_aws_secret_access_key
   }
 
   type = "Opaque"
@@ -364,7 +364,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
 
               env {
                 name  = "S3_BUCKET_BASE_PATH"
-                value = "${data.terraform_remote_state.global.outputs.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.apisix.metadata.0.name}/"
+                value = "${local.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.apisix.metadata.0.name}/"
               }
 
               env {
@@ -511,7 +511,7 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = "${data.terraform_remote_state.global.outputs.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.apisix.metadata.0.name}/"
+                  value = "${local.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.apisix.metadata.0.name}/"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"

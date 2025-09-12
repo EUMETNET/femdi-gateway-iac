@@ -8,6 +8,10 @@ locals {
   rancher_api_url    = data.aws_ssm_parameter.rancher_api_url.value
   rancher_cluster_id = data.aws_ssm_parameter.rancher_cluster_id.value
 
+  backup_aws_access_key_id     = data.aws_ssm_parameter.backups_aws_access_key_id.value
+  backup_aws_secret_access_key = data.aws_ssm_parameter.backups_aws_secret_access_key.value
+  backup_bucket_name           = data.aws_ssm_parameter.backups_bucket_name.value
+
   apisix_admin_api_key          = aws_ssm_parameter.apisix_admin_api_key.value
   apisix_admin_reader_api_key   = aws_ssm_parameter.apisix_admin_reader_api_key.value
   apisix_admin_api_ip_list      = data.aws_ssm_parameter.apisix_admin_api_ip_list.value

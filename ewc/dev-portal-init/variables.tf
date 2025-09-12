@@ -31,12 +31,6 @@ variable "cluster_name" {
   type        = string
 }
 
-#variable "keycloak_admin_password" {
-#  description = "Password for keycloak admin"
-#  type        = string
-#  sensitive   = true
-#}
-
 variable "keycloak_subdomain" {
   description = "subdomain where keycloak will be hosted"
   type        = string

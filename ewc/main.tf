@@ -236,17 +236,6 @@ resource "vault_token" "dev-portal-global" {
   depends_on = [module.ewc-vault-init]
 }
 
-# Reference outputs from global project to get global AWS related values
-data "terraform_remote_state" "global" {
-  backend = "s3"
-  config = {
-    bucket  = "meteogate-iac-terraform-states"
-    key     = "global/terraform.tfstate"
-    region  = "eu-north-1"
-    profile = "fmi_meteogate"
-  }
-}
-
 ################################################################################
 # Install gateway apps
 ################################################################################
@@ -299,9 +288,9 @@ module "dev-portal-init" {
 
   vault_mount_kv_base_path = local.vault_mount_kv_base_path
 
-  backup_bucket_name       = data.terraform_remote_state.global.outputs.backup_bucket_name
-  backup_bucket_access_key = data.terraform_remote_state.global.outputs.backup_aws_access_key_id
-  backup_bucket_secret_key = data.terraform_remote_state.global.outputs.backup_aws_secret_access_key
+  backup_bucket_name       = local.backup_bucket_name
+  backup_bucket_access_key = local.backup_aws_access_key_id
+  backup_bucket_secret_key = local.backup_aws_secret_access_key
 
   geoweb_subdomain = var.geoweb_subdomain
 
