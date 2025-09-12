@@ -236,7 +236,7 @@ locals {
                 },
                 {
                   name  = "REPLICA_COUNT"
-                  value = format("%s", var.keycloak_replicas)
+                  value = format("%s", local.keycloak_replica_count)
                 },
                 {
                   name  = "KEYCLOAK_HELM_RELEASE_NAME"

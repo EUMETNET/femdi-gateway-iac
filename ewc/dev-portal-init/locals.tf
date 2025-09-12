@@ -20,6 +20,7 @@ locals {
   }
 
   keycloak_admin_password = aws_ssm_parameter.keycloak_admin_password.value
+  keycloak_replica_count  = tonumber(data.aws_ssm_parameter.keycloak_replica_count.value)
 
   google_idp_client_secret = data.aws_ssm_parameter.keycloak_google_idp_client_secret.value
   github_idp_client_secret = data.aws_ssm_parameter.keycloak_github_idp_client_secret.value

@@ -36,11 +36,6 @@ variable "keycloak_subdomain" {
   type        = string
 }
 
-variable "keycloak_replicas" {
-  description = "Amount of keycloak replicas"
-  type        = number
-}
-
 variable "keycloak_realm_name" {
   description = "Name of the keycloak realm"
   type        = string

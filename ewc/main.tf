@@ -78,9 +78,8 @@ module "ewc-vault-init" {
 
   vault_project_id    = rancher2_project.gateway.id
   vault_subdomain     = local.vault_subdomain
-  vault_replicas      = var.vault_replicas
   vault_anti-affinity = var.vault_anti-affinity
-  vault_key_treshold  = var.vault_key_treshold
+  vault_key_treshold  = local.vault_key_treshold
 
 }
 
@@ -271,8 +270,7 @@ module "dev-portal-init" {
   cluster_name = var.cluster_name
 
   keycloak_subdomain  = local.keycloak_subdomain
-  keycloak_replicas   = var.keycloak_replicas
-  keycloak_realm_name = var.keycloak_realm_name
+  keycloak_realm_name = local.keycloak_realm_name
 
   dev_portal_subdomain   = local.dev_portal_subdomain
   dev-portal_vault_token = vault_token.dev-portal-global.client_token
@@ -292,7 +290,7 @@ module "dev-portal-init" {
   backup_bucket_access_key = local.backup_aws_access_key_id
   backup_bucket_secret_key = local.backup_aws_secret_access_key
 
-  geoweb_subdomain = var.geoweb_subdomain
+  geoweb_subdomain = local.geoweb_subdomain
 
 }
 
@@ -312,9 +310,9 @@ module "geoweb" {
 
   rancher_project_id = rancher2_project.gateway.id
 
-  geoweb_subdomain    = var.geoweb_subdomain
+  geoweb_subdomain    = local.geoweb_subdomain
   keycloak_subdomain  = local.keycloak_subdomain
-  keycloak_realm_name = var.keycloak_realm_name
+  keycloak_realm_name = local.keycloak_realm_name
 }
 ################################################################################
 
@@ -418,7 +416,7 @@ resource "helm_release" "apisix" {
 
   set {
     name  = "autoscaling.minReplicas"
-    value = var.apisix_replicas
+    value = local.apisix_replica_count
 
   }
 
@@ -568,7 +566,7 @@ resource "helm_release" "apisix" {
   # etcd config
   set {
     name  = "etcd.replicaCount"
-    value = var.apisix_etcd_replicas
+    value = local.apisix_etcd_replica_count
   }
 
   lifecycle {

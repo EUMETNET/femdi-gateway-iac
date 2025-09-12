@@ -12,6 +12,8 @@ locals {
   backup_aws_secret_access_key = data.aws_ssm_parameter.backups_aws_secret_access_key.value
   backup_bucket_name           = data.aws_ssm_parameter.backups_bucket_name.value
 
+  apisix_replica_count          = tonumber(data.aws_ssm_parameter.apisix_replica_count.value)
+  apisix_etcd_replica_count     = tonumber(data.aws_ssm_parameter.apisix_etcd_replica_count.value)
   apisix_admin_api_key          = aws_ssm_parameter.apisix_admin_api_key.value
   apisix_admin_reader_api_key   = aws_ssm_parameter.apisix_admin_reader_api_key.value
   apisix_admin_api_ip_list      = data.aws_ssm_parameter.apisix_admin_api_ip_list.value
@@ -20,10 +22,14 @@ locals {
 
   dev_portal_subdomain = data.aws_ssm_parameter.dev_portal_subdomain.value
 
-  keycloak_subdomain = data.aws_ssm_parameter.keycloak_subdomain.value
+  keycloak_subdomain  = data.aws_ssm_parameter.keycloak_subdomain.value
+  keycloak_realm_name = data.aws_ssm_parameter.keycloak_realm_name.value
 
-  vault_token     = data.aws_ssm_parameter.vault_root_token.value
-  vault_subdomain = data.aws_ssm_parameter.vault_subdomain.value
+  vault_token        = data.aws_ssm_parameter.vault_root_token.value
+  vault_subdomain    = data.aws_ssm_parameter.vault_subdomain.value
+  vault_key_treshold = tonumber(data.aws_ssm_parameter.vault_key_treshold.value)
+
+  geoweb_subdomain = data.aws_ssm_parameter.geoweb_subdomain.value
 
   alert_manager_email_sender       = data.aws_ssm_parameter.alert_email_sender.value
   alert_manager_email_recipients   = data.aws_ssm_parameter.alert_email_recipients.value

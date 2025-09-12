@@ -96,6 +96,16 @@ data "aws_ssm_parameter" "ingress_nginx_private_subnets" {
   name     = "/${var.cluster_name}/apisix/ingress_nginx_private_subnets"
 }
 
+data "aws_ssm_parameter" "apisix_replica_count" {
+  provider = aws.fmi
+  name     = "/apisix/replica_count"
+}
+
+data "aws_ssm_parameter" "apisix_etcd_replica_count" {
+  provider = aws.fmi
+  name     = "/apisix/etcd/replica_count"
+}
+
 ##############################################################
 # Dev Portal
 ##############################################################
@@ -114,6 +124,11 @@ data "aws_ssm_parameter" "keycloak_subdomain" {
   name     = "/keycloak/subdomain"
 }
 
+data "aws_ssm_parameter" "keycloak_realm_name" {
+  provider = aws.fmi
+  name     = "/keycloak/realm_name"
+}
+
 ##############################################################
 # Vault
 ##############################################################
@@ -127,6 +142,20 @@ data "aws_ssm_parameter" "vault_root_token" {
 data "aws_ssm_parameter" "vault_subdomain" {
   provider = aws.fmi
   name     = "/vault/subdomain"
+}
+
+data "aws_ssm_parameter" "vault_key_treshold" {
+  provider = aws.fmi
+  name     = "/vault/key_threshold"
+}
+
+##############################################################
+# Geoweb
+##############################################################
+
+data "aws_ssm_parameter" "geoweb_subdomain" {
+  provider = aws.fmi
+  name     = "/geoweb/subdomain"
 }
 
 ##############################################################

@@ -276,7 +276,7 @@ locals {
                 },
                 {
                   name  = "KEY_THRESHOLD"
-                  value = format("%s", var.vault_key_treshold)
+                  value = format("%s", local.vault_key_treshold)
                 },
                 {
                   name  = "UNSEAL_KEYS"
@@ -537,7 +537,7 @@ locals {
                 },
                 {
                   name  = "REPLICA_COUNT"
-                  value = format("%s", var.apisix_etcd_replicas)
+                  value = format("%s", local.apisix_etcd_replica_count)
                 },
                 {
                   name  = "APISIX_HELM_RELEASE_NAME"
@@ -545,7 +545,7 @@ locals {
                 },
               ]
               volumeMounts = [
-                for i in range(var.apisix_etcd_replicas) : {
+                for i in range(local.apisix_etcd_replica_count) : {
                   name      = "data-${local.apisix_helm_release_name}-etcd-${i}"
                   mountPath = "/etcd-volumes/data-${local.apisix_helm_release_name}-etcd-${i}"
                 }
@@ -553,7 +553,7 @@ locals {
             }
           ],
           volumes = [
-            for i in range(var.apisix_etcd_replicas) : {
+            for i in range(local.apisix_etcd_replica_count) : {
               name = "data-${local.apisix_helm_release_name}-etcd-${i}"
               persistentVolumeClaim = {
                 claimName = "data-${local.apisix_helm_release_name}-etcd-${i}"
@@ -588,7 +588,7 @@ locals {
                 <<-EOF
                 set -e
                 echo "Scaling up the etcd StatefulSet back to its original replica count..";
-                kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=${var.apisix_etcd_replicas} -n ${kubernetes_namespace.apisix.metadata.0.name};
+                kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=${local.apisix_etcd_replica_count} -n ${kubernetes_namespace.apisix.metadata.0.name};
 
                 echo "Waiting for StatefulSet pods to scale up...";
                 kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=${local.apisix_helm_release_name},app.kubernetes.io/name=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s

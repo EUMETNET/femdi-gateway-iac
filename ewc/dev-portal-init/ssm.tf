@@ -47,3 +47,7 @@ data "aws_ssm_parameter" "keycloak_google_idp_client_secret" {
   name            = "/keycloak/google_idp_client_secret"
   with_decryption = true
 }
+
+data "aws_ssm_parameter" "keycloak_replica_count" {
+  name = "/keycloak/replica_count"
+}

@@ -69,46 +69,10 @@ variable "root_ip" {
   type        = string
 }
 
-variable "apisix_replicas" {
-  description = "Amount of minimum replicas for APISIX"
-  type        = number
-  default     = 1
-}
-
-variable "apisix_etcd_replicas" {
-  description = "Amount of etcd replicas for APISIX"
-  type        = number
-  default     = 3
-}
-
-variable "keycloak_replicas" {
-  description = "Amount of keycloak replicas"
-  type        = number
-  default     = 1
-}
-
-variable "keycloak_realm_name" {
-  description = "Name of the keycloak realm"
-  type        = string
-  default     = "meteogate"
-}
-
-variable "vault_replicas" {
-  description = "Amount of vault replicas"
-  type        = number
-  default     = 3
-}
-
 variable "vault_anti-affinity" {
   description = "Do you want to use Vault anti-affinity"
   type        = bool
   default     = true
-}
-
-variable "vault_key_treshold" {
-  description = "Treshold to unseal Vault"
-  type        = number
-  default     = 3
 }
 
 variable "install_dev-portal" {
@@ -121,10 +85,4 @@ variable "install_geoweb" {
   description = "Should Geoweb be installed"
   type        = bool
   default     = false
-}
-
-variable "geoweb_subdomain" {
-  description = "subdomain where Geoweb will be hosted"
-  type        = string
-  default     = "explorer"
 }

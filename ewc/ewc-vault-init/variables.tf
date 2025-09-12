@@ -74,12 +74,6 @@ variable "vault_subdomain" {
   default     = "vault"
 }
 
-variable "vault_replicas" {
-  description = "Amount of vault replicas"
-  type        = number
-  default     = 3
-}
-
 variable "vault_anti-affinity" {
   description = "Do you want to use Vault anti-affinity"
   type        = bool

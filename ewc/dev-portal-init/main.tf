@@ -146,7 +146,7 @@ resource "helm_release" "keycloak" {
   # Statefulset params
   set {
     name  = "replicaCount"
-    value = var.keycloak_replicas
+    value = local.keycloak_replica_count
   }
 
 }
