@@ -45,7 +45,6 @@ provider "restapi" {
 }
 
 provider "aws" {
-  alias   = "fmi"
   profile = "fmi_meteogate"
 }
 
@@ -57,7 +56,7 @@ module "ewc-vault-init" {
   source = "./ewc-vault-init/"
 
   providers = {
-    aws = aws.fmi
+    aws = aws
   }
 
   rancher_api_url    = local.rancher_api_url
@@ -251,7 +250,7 @@ module "dev-portal-init" {
   source = "./dev-portal-init/"
 
   providers = {
-    aws = aws.fmi
+    aws = aws
   }
 
   kubeconfig_path = var.kubeconfig_path
