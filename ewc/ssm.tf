@@ -46,6 +46,23 @@ data "aws_ssm_parameter" "backups_bucket_name" {
   name     = "/s3/backups/bucket_name"
 }
 
+data "aws_ssm_parameter" "certmgr_extdns_aws_access_key" {
+  provider        = aws.fmi
+  name            = "/iam/certmgr_extdns/access_key"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "certmgr_extdns_aws_secret_access_key" {
+  provider        = aws.fmi
+  name            = "/iam/certmgr_extdns/secret_access_key"
+  with_decryption = true
+}
+
+data "aws_ssm_parameter" "route53_hosted_zone_id" {
+  provider = aws.fmi
+  name     = "/route53/hosted_zone_id/${var.dns_zone}"
+}
+
 
 ##############################################################
 # APISIX

@@ -25,23 +25,6 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "route53_access_key" {
-  description = "AWS access key for route53"
-  type        = string
-  sensitive   = true
-}
-
-variable "route53_secret_key" {
-  description = "AWS secret key for route53"
-  type        = string
-  sensitive   = true
-}
-
-variable "route53_zone_id_filter" {
-  description = "ZoneIdFilter for route53"
-  type        = string
-}
-
 variable "dns_zone" {
   description = "DNS zone for cert-manager"
   type        = string

@@ -45,10 +45,6 @@ provider "restapi" {
 }
 
 provider "aws" {
-  profile = "ewc"
-}
-
-provider "aws" {
   alias   = "fmi"
   profile = "fmi_meteogate"
 }
@@ -71,9 +67,9 @@ module "ewc-vault-init" {
   cluster_name       = var.cluster_name
 
   apisix_subdomain       = local.apisix_subdomain
-  route53_access_key     = var.route53_access_key
-  route53_secret_key     = var.route53_secret_key
-  route53_zone_id_filter = var.route53_zone_id_filter
+  route53_access_key     = local.route53_aws_access_key
+  route53_secret_key     = local.route53_aws_secret_access_key
+  route53_zone_id_filter = local.route53_hosted_zone_id
   dns_zone               = var.dns_zone
 
   vault_project_id    = rancher2_project.gateway.id

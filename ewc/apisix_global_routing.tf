@@ -13,6 +13,7 @@ locals {
 }
 
 resource "aws_route53_health_check" "apisix_health" {
+  provider          = aws.fmi
   fqdn              = local.apisix_global_dns_name
   type              = "HTTPS"
   port              = 443
@@ -23,10 +24,11 @@ resource "aws_route53_health_check" "apisix_health" {
 }
 
 resource "aws_route53_record" "apisix" {
-  zone_id = var.route53_zone_id_filter
-  type    = "A"
-  ttl     = 60
-  name    = local.apisix_subdomain
+  provider = aws.fmi
+  zone_id  = local.route53_hosted_zone_id
+  type     = "A"
+  ttl      = 60
+  name     = local.apisix_subdomain
 
   records = [module.ewc-vault-init.load_balancer_ip]
 
