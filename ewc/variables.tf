@@ -48,27 +48,6 @@ variable "dns_zone" {
   default     = "meteogate.eu"
 }
 
-variable "manage_global_dns_records" {
-  description = "Should this cluster manage global DNS records"
-  type        = bool
-  default     = false
-}
-
-variable "observations_ip" {
-  description = "IP address for observations A record"
-  type        = string
-}
-
-variable "radar_ip" {
-  description = "IP address for radar A record"
-  type        = string
-}
-
-variable "root_ip" {
-  description = "IP address for root A record in hosted zone"
-  type        = string
-}
-
 variable "vault_anti-affinity" {
   description = "Do you want to use Vault anti-affinity"
   type        = bool

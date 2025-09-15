@@ -314,20 +314,6 @@ module "geoweb" {
   keycloak_subdomain  = local.keycloak_subdomain
   keycloak_realm_name = local.keycloak_realm_name
 }
-################################################################################
-
-# Misc global DNS records
-################################################################################
-module "global_dns" {
-  count = var.manage_global_dns_records ? 1 : 0
-
-  source = "./global-dns-records/"
-
-  route53_zone_id_filter = var.route53_zone_id_filter
-  observations_ip        = var.manage_global_dns_records ? var.observations_ip : ""
-  radar_ip               = var.manage_global_dns_records ? var.radar_ip : ""
-  root_ip                = var.manage_global_dns_records ? var.root_ip : ""
-}
 
 ################################################################################
 

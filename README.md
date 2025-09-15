@@ -38,9 +38,6 @@ femdi-gateway-iac
 │   │   ├── main.tf
 │   │   ├── terraform.tf
 │   │   ├── variables.tf
-│   ├── global-dns-records # Deploys global DNS records that are related to domain but not gateway itself
-│   │   ├── main.tf
-│   │   ├── variables.tf
 │   ├── grafana-dashboards
 │   │   ├── apisix-dashboard.json
 │   │   ├── ingress-nginx-dashboard.json
