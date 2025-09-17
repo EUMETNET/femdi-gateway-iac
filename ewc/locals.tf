@@ -66,6 +66,7 @@ locals {
   #                                NOTE: Can be added when other clusters are set up.
 
   dev_portal_subdomain = data.aws_ssm_parameter.dev_portal_subdomain.value
+  install_dev_portal   = lower(data.aws_ssm_parameter.install_dev_portal.value) == "true" ? true : false
 
   keycloak_subdomain  = data.aws_ssm_parameter.keycloak_subdomain.value
   keycloak_realm_name = data.aws_ssm_parameter.keycloak_realm_name.value
@@ -91,6 +92,7 @@ locals {
 
 
   geoweb_subdomain = data.aws_ssm_parameter.geoweb_subdomain.value
+  install_geoweb   = lower(data.aws_ssm_parameter.install_geoweb.value) == "true" ? true : false
 
   ##############################################################
   # Alert manager

@@ -8,4 +8,6 @@ locals {
   cert_manager_email = data.aws_ssm_parameter.cert_manager_email.value
 
   vault_replica_count = tonumber(data.aws_ssm_parameter.vault_replica_count.value)
+
+  vault_anti_affinity = lower(data.aws_ssm_parameter.vault_anti_affinity.value) == "true" ? true : false
 }

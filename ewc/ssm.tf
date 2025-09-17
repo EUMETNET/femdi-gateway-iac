@@ -103,6 +103,10 @@ data "aws_ssm_parameter" "dev_portal_subdomain" {
   name = "/dev_portal/subdomain"
 }
 
+data "aws_ssm_parameter" "install_dev_portal" {
+  name = "/${var.cluster_name}/install_dev_portal"
+}
+
 ##############################################################
 # Keycloak
 ##############################################################
@@ -120,7 +124,7 @@ data "aws_ssm_parameter" "keycloak_realm_name" {
 ##############################################################
 
 data "aws_ssm_parameter" "vault_root_token" {
-  name            = "/vault/${var.cluster_name}/root_token"
+  name            = "/${var.cluster_name}/vault/root_token"
   with_decryption = true
 }
 
@@ -138,6 +142,10 @@ data "aws_ssm_parameter" "vault_key_treshold" {
 
 data "aws_ssm_parameter" "geoweb_subdomain" {
   name = "/geoweb/subdomain"
+}
+
+data "aws_ssm_parameter" "install_geoweb" {
+  name = "/${var.cluster_name}/install_geoweb"
 }
 
 ##############################################################

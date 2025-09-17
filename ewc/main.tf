@@ -71,11 +71,9 @@ module "ewc-vault-init" {
   route53_zone_id_filter = local.route53_hosted_zone_id
   dns_zone               = var.dns_zone
 
-  vault_project_id    = rancher2_project.gateway.id
-  vault_subdomain     = local.vault_subdomain
-  vault_anti-affinity = var.vault_anti-affinity
-  vault_key_treshold  = local.vault_key_treshold
-
+  vault_project_id   = rancher2_project.gateway.id
+  vault_subdomain    = local.vault_subdomain
+  vault_key_treshold = local.vault_key_treshold
 }
 
 locals {
@@ -245,7 +243,7 @@ resource "rancher2_project" "gateway" {
 ################################################################################
 
 module "dev-portal-init" {
-  count = var.install_dev-portal ? 1 : 0
+  count = local.install_dev_portal ? 1 : 0
 
   source = "./dev-portal-init/"
 
@@ -295,7 +293,7 @@ module "dev-portal-init" {
 ################################################################################
 
 module "geoweb" {
-  count  = var.install_geoweb ? 1 : 0
+  count  = local.install_geoweb ? 1 : 0
   source = "./geoweb/"
 
   dns_zone = var.dns_zone

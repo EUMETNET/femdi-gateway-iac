@@ -30,21 +30,3 @@ variable "dns_zone" {
   type        = string
   default     = "meteogate.eu"
 }
-
-variable "vault_anti-affinity" {
-  description = "Do you want to use Vault anti-affinity"
-  type        = bool
-  default     = true
-}
-
-variable "install_dev-portal" {
-  description = "Should Dev-portal be installed"
-  type        = bool
-  default     = false
-}
-
-variable "install_geoweb" {
-  description = "Should Geoweb be installed"
-  type        = bool
-  default     = false
-}

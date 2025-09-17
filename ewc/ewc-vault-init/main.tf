@@ -285,7 +285,7 @@ resource "helm_release" "vault" {
       vault_certificate_secret = local.vault_certificate_secret
       replicas                 = local.vault_replica_count
       replicas_iterator        = range(local.vault_replica_count)
-      anti-affinity            = var.vault_anti-affinity
+      anti-affinity            = local.vault_anti_affinity
       release_name             = local.vault_helm_release_name
     })
   ]

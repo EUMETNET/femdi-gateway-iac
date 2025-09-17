@@ -74,11 +74,6 @@ variable "vault_subdomain" {
   default     = "vault"
 }
 
-variable "vault_anti-affinity" {
-  description = "Do you want to use Vault anti-affinity"
-  type        = bool
-  default     = true
-}
 variable "vault_key_treshold" {
   description = "Treshold to unseal Vault"
   type        = number
