@@ -23,13 +23,17 @@ femdi-gateway-iac
 │   ├── apisix_global_routing.tf 
 │   ├── dev-portal-init # Deploys dev-portal and its dependencies
 │   │   ├── jobs.tf
+│   │   ├── locals.tf
 │   │   ├── main.tf
 │   │   ├── outuputs.tf
+│   │   ├── ssm.tf
 │   │   ├── terraform.tf
 │   │   └── variables.tf
 │   ├── ewc-vault-init # Deploys and Initializes Hashicorps Vaults
+│   │   ├── locals.tf
 │   │   ├── main.tf
 │   │   ├── outuputs.tf
+│   │   ├── ssm.tf
 │   │   ├── terraform.tf
 │   │   ├── variables.tf
 │   │   └── vault-init
@@ -61,10 +65,12 @@ femdi-gateway-iac
 │   ├── jobs.tf
 │   ├── keycloak-realm # Keycloak Realm default settings
 │   │   └── realm-export.json
+│   ├── locals.tf
 │   ├── main.tf
 │   ├── monitoring.tf
 │   ├── outuputs.tf
 │   ├── README.md
+│   ├── locals.tf
 │   ├── terraform.tf
 │   └── variables.tf
 ├── global # Contains global AWS account related configurations
@@ -74,6 +80,7 @@ femdi-gateway-iac
 │   ├── provider.tf
 │   ├── route53.tf
 │   ├── s3.tf
+│   ├── ssm.tf
 │   └── variables.tf
 └── scripts # Misc scripts
 ```
