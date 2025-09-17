@@ -17,7 +17,14 @@ locals {
 
   ##############################################################
   # Global AWS
-  ############################################################## 
+  ##############################################################
+
+  # backup_aws_access_key_id      : AWS access key ID for the backup/restore IAM user.
+  # backup_aws_secret_access_key  : AWS secret access key for the backup/restore IAM user.
+  # backup_bucket_name            : Name of the S3 bucket used for storing/restoring backups.
+  # route53_aws_access_key        : AWS access key ID for the Route 53
+  # route53_aws_secret_access_key : AWS secret access key for the Route 53
+  # route53_hosted_zone_id        : The ID of the Route 53 hosted zone associated with the specified DNS zone.
 
   backup_aws_access_key_id      = data.aws_ssm_parameter.backups_aws_access_key_id.value
   backup_aws_secret_access_key  = data.aws_ssm_parameter.backups_aws_secret_access_key.value
@@ -32,41 +39,37 @@ locals {
 
   # apisix_subdomain:                 Specifies the subdomain to be used for APISIX gateway.
   #                                   NOTE: Service specific domain also contains the cluster name (<service-subdomain>.<cluster_name>.domain.com). 
-  # apisix_admin:                     Admin authentication token for APISIX management operations.
-  # apisix_reader:                    Reader authentication token for APISIX read-only operations.
-  # apisix_ip_list:                   List of allowed IP ranges for accessing APISIX Admin API.
+  # apisix_admin_api_key:             Admin authentication token for APISIX management operations.
+  # apisix_admin_reader_api_key:      Reader authentication token for APISIX read-only operations.
+  # apisix_admin_api_ip_list:         List of allowed IP ranges for accessing APISIX Admin API.
   # ingress_nginx_private_subnets:    Specifies the private subnet(s) used by the cluster's ingress-nginx controller. Determines the trusted addresses for real-ip plugin.
   #                                   For now queried with kubectl describe svc ingress-nginx-controller -n kube-system
   #                                   and determined from the Endpoints
+  # apisix_replica_count:             Number of APISIX replicas to deploy.
+  # apisix_etcd_replica_count:        Number of etcd replicas to deploy for APISIX.
 
-  apisix_replica_count          = tonumber(data.aws_ssm_parameter.apisix_replica_count.value)
-  apisix_etcd_replica_count     = tonumber(data.aws_ssm_parameter.apisix_etcd_replica_count.value)
+  apisix_subdomain              = data.aws_ssm_parameter.apisix_subdomain.value
   apisix_admin_api_key          = aws_ssm_parameter.apisix_admin_api_key.value
   apisix_admin_reader_api_key   = aws_ssm_parameter.apisix_admin_reader_api_key.value
   apisix_admin_api_ip_list      = data.aws_ssm_parameter.apisix_admin_api_ip_list.value
-  apisix_subdomain              = data.aws_ssm_parameter.apisix_subdomain.value
   ingress_nginx_private_subnets = data.aws_ssm_parameter.ingress_nginx_private_subnets.value
+  apisix_replica_count          = tonumber(data.aws_ssm_parameter.apisix_replica_count.value)
+  apisix_etcd_replica_count     = tonumber(data.aws_ssm_parameter.apisix_etcd_replica_count.value)
 
   ##############################################################
   # Dev Portal & Keycloak
   ##############################################################
 
-  # keycloak_admin_password:       Admin password for Keycloak.
-  # keycloak_subdomain:            Subdomain for accessing Keycloak.
-  #                                NOTE: Service specific domain does NOT contain the cluster name (<service-subdomain>.domain.com) because this is global service. 
+
   # install_dev-portal:            Whether to install the Dev Portal application.
   # dev-portal_subdomain:          Subdomain for accessing the Dev Portal.
-  #                                NOTE: Service specific domain does NOT contain the cluster name (<service-subdomain>.domain.com) because this is global service. 
-  # dev-portal_registry_password:  Password for accessing the private container registry hosting the Dev Portal image.
-  # google_idp_client_secret:      OAuth2 client secret for Google identity provider in Keycloak.
-  # github_idp_client_secret:      OAuth2 client secret for GitHub identity provider in Keycloak.
-  # apisix_additional_instances:   List of additional APISIX instances to configure in Dev Portal.
-  #                                NOTE: Can be added when other clusters are set up.
-  # vault_additional_instances:    List of additional Vault instances to configure in Dev Portal.
-  #                                NOTE: Can be added when other clusters are set up.
+  #                                NOTE: Service specific domain does NOT contain the cluster name (<service-subdomain>.domain.com) because this is global service.
+  # keycloak_subdomain:            Subdomain for accessing Keycloak.
+  #                                NOTE: Service specific domain does NOT contain the cluster name (<service-subdomain>.domain.com) because this is global service.
+  # keycloak_realm_name:           Name of the Keycloak realm to be created/used.
 
-  dev_portal_subdomain = data.aws_ssm_parameter.dev_portal_subdomain.value
   install_dev_portal   = lower(data.aws_ssm_parameter.install_dev_portal.value) == "true" ? true : false
+  dev_portal_subdomain = data.aws_ssm_parameter.dev_portal_subdomain.value
 
   keycloak_subdomain  = data.aws_ssm_parameter.keycloak_subdomain.value
   keycloak_realm_name = data.aws_ssm_parameter.keycloak_realm_name.value
@@ -78,6 +81,7 @@ locals {
   # vault_token:          Authentication token for accessing Vault generated by the ewc-vault-init module.
   # vault_subdomain:      Subdomain used to construct the Vault service endpoint.
   #                       Note: Service-specific domains include the cluster name in the format <service-subdomain>.<cluster_name>.domain.com.
+  # vault_key_treshold:   Number of key shares required to unseal Vault.
 
   vault_token        = data.aws_ssm_parameter.vault_root_token.value
   vault_subdomain    = data.aws_ssm_parameter.vault_subdomain.value
@@ -89,6 +93,7 @@ locals {
 
   # geoweb_subdomain:   Subdomain for accessing Geoweb.
   #                     NOTE: Service specific domain does NOT contain the cluster name (<service-subdomain>.domain.com) because this is global service.
+  # install_geoweb:     Whether to install the Geoweb application.
 
 
   geoweb_subdomain = data.aws_ssm_parameter.geoweb_subdomain.value
