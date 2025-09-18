@@ -87,7 +87,7 @@ resource "helm_release" "external-dns" {
 
   set_list {
     name  = "zoneIdFilters"
-    value = [var.route53_zone_id_filter]
+    value = var.route53_hosted_zone_ids
   }
 
   # Global APISIX subdomain handled separately
@@ -184,7 +184,7 @@ locals {
               }
             }
             "selector" = {
-              "dnsZones" = [var.dns_zone]
+              "dnsZones" = var.hosted_zone_names
             }
           },
         ]

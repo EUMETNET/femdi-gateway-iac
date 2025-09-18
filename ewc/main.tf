@@ -23,7 +23,7 @@ provider "rancher2" {
 
 
 provider "vault" {
-  address = "https://${local.vault_subdomain}.${var.cluster_name}.${var.dns_zone}"
+  address = "https://${local.vault_subdomain}.${var.cluster_name}.${local.dns_zone}"
   token   = local.vault_token
 }
 
@@ -32,7 +32,7 @@ provider "random" {
 
 # Use restapi provider as http does not supprot PUT and Apisix needs PUT
 provider "restapi" {
-  uri                  = "https://admin-${local.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}/"
+  uri                  = "https://admin-${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}/"
   write_returns_object = true
 
   headers = {
@@ -65,11 +65,12 @@ module "ewc-vault-init" {
   kubeconfig_path    = var.kubeconfig_path
   cluster_name       = var.cluster_name
 
-  apisix_subdomain       = local.apisix_subdomain
-  route53_access_key     = local.route53_aws_access_key
-  route53_secret_key     = local.route53_aws_secret_access_key
-  route53_zone_id_filter = local.route53_hosted_zone_id
-  dns_zone               = var.dns_zone
+  apisix_subdomain        = local.apisix_subdomain
+  route53_access_key      = local.route53_aws_access_key
+  route53_secret_key      = local.route53_aws_secret_access_key
+  route53_hosted_zone_ids = local.route53_hosted_zone_ids
+  hosted_zone_names       = local.hosted_zone_names
+  dns_zone                = local.dns_zone
 
   vault_project_id   = rancher2_project.gateway.id
   vault_subdomain    = local.vault_subdomain
@@ -253,7 +254,7 @@ module "dev-portal-init" {
 
   kubeconfig_path = var.kubeconfig_path
 
-  dns_zone = var.dns_zone
+  dns_zone = local.dns_zone
 
   cluster_issuer   = module.ewc-vault-init.cluster_issuer
   load_balancer_ip = module.ewc-vault-init.load_balancer_ip
@@ -296,7 +297,7 @@ module "geoweb" {
   count  = local.install_geoweb ? 1 : 0
   source = "./geoweb/"
 
-  dns_zone = var.dns_zone
+  dns_zone = local.dns_zone
 
   cluster_issuer   = module.ewc-vault-init.cluster_issuer
   load_balancer_ip = module.ewc-vault-init.load_balancer_ip
@@ -330,10 +331,10 @@ resource "kubernetes_config_map" "custom_error_pages" {
   }
   data = {
     "apisix_error_429.html" = templatefile("../apisix/error_pages/apisix_error_429.html", {
-      devportal_address = "${local.dev_portal_subdomain}.${var.dns_zone}"
+      devportal_address = "${local.dev_portal_subdomain}.${local.dns_zone}"
     })
     "apisix_error_403.html" = templatefile("../apisix/error_pages/apisix_error_403.html", {
-      devportal_address = "${local.dev_portal_subdomain}.${var.dns_zone}"
+      devportal_address = "${local.dev_portal_subdomain}.${local.dns_zone}"
     })
   }
 }
@@ -366,7 +367,7 @@ resource "helm_release" "apisix" {
   values = [
     templatefile("./helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
-      hostname       = "${local.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}",
+      hostname       = "${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}",
       ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
@@ -561,6 +562,56 @@ resource "helm_release" "apisix" {
   # Need connection to vault and Installs ServiceMonitor for scraping metrics
   depends_on = [module.ewc-vault-init, rancher2_app_v2.rancher-monitoring]
 
+}
+
+resource "kubectl_manifest" "cluster-apisix-redirect" {
+  yaml_body = yamlencode({
+    "apiVersion" = "networking.k8s.io/v1"
+    "kind"       = "Ingress"
+    "metadata" = {
+      "name"      = "apisix-permanent-redirect"
+      "namespace" = "${kubernetes_namespace.apisix.metadata.0.name}"
+      "annotations" = {
+        "cert-manager.io/cluster-issuer"                 = "${module.ewc-vault-init.cluster_issuer}"
+        "external-dns.alpha.kubernetes.io/hostname"      = join(",", [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${var.cluster_name}.${name}"])
+        "external-dns.alpha.kubernetes.io/target"        = "${module.ewc-vault-init.load_balancer_ip}"
+        "kubernetes.io/tls-acme"                         = "true"
+        "nginx.ingress.kubernetes.io/permanent-redirect" = "https://${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}$request_uri"
+      }
+    }
+    "spec" = {
+      "rules" = [
+        for domain in local.alternative_hosted_zone_names : {
+          "host" = "${local.apisix_subdomain}.${var.cluster_name}.${domain}"
+          "http" = {
+            "paths" = [
+              {
+                "path"     = "/"
+                "pathType" = "Prefix"
+                # dummy backend, never actually used because redirect handles requests
+                "backend" = {
+                  "service" = {
+                    "name" = "default-http-backend"
+                    "port" = {
+                      "number" = 80
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+      "tls" = [
+        {
+          "hosts"      = [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${var.cluster_name}.${name}"]
+          "secretName" = "redirect-${local.apisix_subdomain}.${var.cluster_name}-certificate"
+        }
+      ]
+    }
+  })
+
+  depends_on = [helm_release.apisix]
 }
 
 # Wait for Apisix before doing a PUT-request

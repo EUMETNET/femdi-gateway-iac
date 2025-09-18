@@ -53,9 +53,14 @@ variable "route53_secret_key" {
   sensitive   = true
 }
 
-variable "route53_zone_id_filter" {
-  description = "ZoneIdFilter for route53"
-  type        = string
+variable "route53_hosted_zone_ids" {
+  description = "List of Route 53 hosted zone IDs"
+  type        = list(string)
+}
+
+variable "hosted_zone_names" {
+  description = "List of Route 53 hosted zone names"
+  type        = list(string)
 }
 
 variable "dns_zone" {

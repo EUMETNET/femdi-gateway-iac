@@ -5,7 +5,6 @@
 # The routing policy is set to latency based routing policy
 
 locals {
-  apisix_global_dns_name = "${local.apisix_subdomain}.${var.dns_zone}"
   cluster_region_map = {
     "eumetsat" = "eu-central-1" # Frankfurt
     "ecmwf"    = "eu-south-1"   # Milan
@@ -13,7 +12,7 @@ locals {
 }
 
 resource "aws_route53_health_check" "apisix_health" {
-  fqdn              = local.apisix_global_dns_name
+  fqdn              = "${local.apisix_subdomain}.${local.dns_zone}"
   type              = "HTTPS"
   port              = 443
   resource_path     = "/health"
@@ -23,10 +22,11 @@ resource "aws_route53_health_check" "apisix_health" {
 }
 
 resource "aws_route53_record" "apisix" {
-  zone_id = local.route53_hosted_zone_id
-  type    = "A"
-  ttl     = 60
-  name    = local.apisix_subdomain
+  for_each = nonsensitive(local.route53_hosted_zone_ids)
+  zone_id  = each.value
+  type     = "A"
+  ttl      = 60
+  name     = local.apisix_subdomain
 
   records = [module.ewc-vault-init.load_balancer_ip]
 
@@ -57,7 +57,7 @@ resource "kubectl_manifest" "apisix_global_ingress" {
       "ingressClassName" = "nginx"
       "rules" = [
         {
-          "host" = "${local.apisix_global_dns_name}"
+          "host" = "${local.apisix_subdomain}.${local.dns_zone}"
           "http" = {
             "paths" = [
               {
@@ -78,11 +78,59 @@ resource "kubectl_manifest" "apisix_global_ingress" {
       ]
       "tls" = [
         {
-          "hosts"      = ["${local.apisix_global_dns_name}"]
-          "secretName" = "${local.apisix_global_dns_name}-certificate"
+          "hosts"      = ["${local.apisix_subdomain}.${local.dns_zone}"]
+          "secretName" = "${local.apisix_subdomain}.${local.dns_zone}-certificate"
         }
       ]
     }
   })
+  depends_on = [helm_release.apisix]
+}
+
+resource "kubectl_manifest" "apisix-global-redirect" {
+  yaml_body = yamlencode({
+    "apiVersion" = "networking.k8s.io/v1"
+    "kind"       = "Ingress"
+    "metadata" = {
+      "name"      = "apisix-permanent-redirect"
+      "namespace" = "${kubernetes_namespace.apisix.metadata.0.name}"
+      "annotations" = {
+        "cert-manager.io/cluster-issuer"                 = "${module.ewc-vault-init.cluster_issuer}"
+        "app.kubernetes.io/instance"                     = "apisix"
+        "app.kubernetes.io/name"                         = "apisix"
+        "kubernetes.io/tls-acme"                         = "true"
+        "nginx.ingress.kubernetes.io/permanent-redirect" = "https://${local.apisix_subdomain}.${local.dns_zone}$request_uri"
+      }
+    }
+    "spec" = {
+      "rules" = [
+        for domain in local.alternative_hosted_zone_names : {
+          "host" = "${local.apisix_subdomain}.${domain}"
+          "http" = {
+            "paths" = [
+              {
+                "path"     = "/"
+                "pathType" = "Prefix"
+                # dummy backend, never actually used because redirect handles requests
+                "backend" = {
+                  "service" = {
+                    "name" = "default-http-backend"
+                    "port" = { "number" = 80 }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+      "tls" = [
+        {
+          "hosts"      = [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${name}"]
+          "secretName" = "redirect-${local.apisix_subdomain}-certificate"
+        }
+      ]
+    }
+  })
+
   depends_on = [helm_release.apisix]
 }

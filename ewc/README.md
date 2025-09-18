@@ -1,5 +1,8 @@
 # EWC
 
+## TODO
+
+Will update the contents as part of the tickets: "Test the whole IaC setup process#124" and "Document the K8s prerequisities needed by femdi-gateway-iac#123".
 
 ## Dependencies
 The `EWC` module requires `Bash`, [jq](https://github.com/jqlang/jq) and [kubectl](https://kubernetes.io/docs/reference/kubectl/)
