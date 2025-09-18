@@ -29,6 +29,11 @@ terraform {
       source  = "hashicorp/time"
       version = "0.12.0"
     }
+
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.5"
+    }
   }
 
   required_version = "~> 1.3"

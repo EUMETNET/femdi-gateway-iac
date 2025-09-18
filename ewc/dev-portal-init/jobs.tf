@@ -11,8 +11,8 @@ resource "kubernetes_secret" "keycloak_jobs_secrets" {
   }
 
   data = {
-    AWS_ACCESS_KEY_ID     = var.s3_bucket_access_key
-    AWS_SECRET_ACCESS_KEY = var.s3_bucket_secret_key
+    AWS_ACCESS_KEY_ID     = var.backup_bucket_access_key
+    AWS_SECRET_ACCESS_KEY = var.backup_bucket_secret_key
   }
 
   type = "Opaque"
@@ -76,7 +76,7 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
 
               env {
                 name  = "S3_BUCKET_BASE_PATH"
-                value = "${var.backup_bucket_base_path}/${kubernetes_namespace.keycloak.metadata.0.name}/"
+                value = "${var.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.keycloak.metadata.0.name}/"
               }
 
               env {
@@ -189,7 +189,7 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = "${var.backup_bucket_base_path}/${kubernetes_namespace.keycloak.metadata.0.name}/"
+                  value = "${var.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.keycloak.metadata.0.name}/"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"
@@ -236,7 +236,7 @@ locals {
                 },
                 {
                   name  = "REPLICA_COUNT"
-                  value = format("%s", var.keycloak_replicas)
+                  value = format("%s", local.keycloak_replica_count)
                 },
                 {
                   name  = "KEYCLOAK_HELM_RELEASE_NAME"

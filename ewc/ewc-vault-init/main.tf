@@ -93,7 +93,7 @@ resource "helm_release" "external-dns" {
   # Global APISIX subdomain handled separately
   set_list {
     name  = "excludeDomains"
-    value = ["${var.apisix_global_subdomain}.${var.dns_zone}"]
+    value = ["${var.apisix_subdomain}.${var.dns_zone}"]
   }
 }
 
@@ -166,7 +166,7 @@ locals {
     }
     "spec" = {
       "acme" = {
-        "email" = var.email_cert_manager
+        "email" = local.cert_manager_email
         "privateKeySecretRef" = {
           "name" = "letsencrypt-prod"
         }
@@ -283,9 +283,9 @@ resource "helm_release" "vault" {
       hostname                 = "${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}",
       ip                       = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
       vault_certificate_secret = local.vault_certificate_secret
-      replicas                 = var.vault_replicas
-      replicas_iterator        = range(var.vault_replicas)
-      anti-affinity            = var.vault_anti-affinity
+      replicas                 = local.vault_replica_count
+      replicas_iterator        = range(local.vault_replica_count)
+      anti-affinity            = local.vault_anti_affinity
       release_name             = local.vault_helm_release_name
     })
   ]
@@ -302,7 +302,7 @@ resource "time_sleep" "wait_vault_before" {
 }
 
 data "kubernetes_resource" "vault-pods-before" {
-  count = var.vault_replicas
+  count = local.vault_replica_count
 
   api_version = "v1"
   kind        = "Pod"
@@ -342,7 +342,7 @@ resource "time_sleep" "wait_vault_after" {
 }
 
 data "kubernetes_resource" "vault-pods-after" {
-  count = var.vault_replicas
+  count = local.vault_replica_count
 
   api_version = "v1"
   kind        = "Pod"

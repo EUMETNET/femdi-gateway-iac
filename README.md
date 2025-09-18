@@ -23,13 +23,17 @@ femdi-gateway-iac
 │   ├── apisix_global_routing.tf 
 │   ├── dev-portal-init # Deploys dev-portal and its dependencies
 │   │   ├── jobs.tf
+│   │   ├── locals.tf
 │   │   ├── main.tf
 │   │   ├── outuputs.tf
+│   │   ├── ssm.tf
 │   │   ├── terraform.tf
 │   │   └── variables.tf
 │   ├── ewc-vault-init # Deploys and Initializes Hashicorps Vaults
+│   │   ├── locals.tf
 │   │   ├── main.tf
 │   │   ├── outuputs.tf
+│   │   ├── ssm.tf
 │   │   ├── terraform.tf
 │   │   ├── variables.tf
 │   │   └── vault-init
@@ -37,9 +41,6 @@ femdi-gateway-iac
 │   ├── geoweb # Deploys and Initializes Geoweb related apps
 │   │   ├── main.tf
 │   │   ├── terraform.tf
-│   │   ├── variables.tf
-│   ├── global-dns-records # Deploys global DNS records that are related to domain but not gateway itself
-│   │   ├── main.tf
 │   │   ├── variables.tf
 │   ├── grafana-dashboards
 │   │   ├── apisix-dashboard.json
@@ -64,11 +65,22 @@ femdi-gateway-iac
 │   ├── jobs.tf
 │   ├── keycloak-realm # Keycloak Realm default settings
 │   │   └── realm-export.json
+│   ├── locals.tf
 │   ├── main.tf
 │   ├── monitoring.tf
 │   ├── outuputs.tf
 │   ├── README.md
+│   ├── locals.tf
 │   ├── terraform.tf
+│   └── variables.tf
+├── global # Contains global AWS account related configurations
+│   ├── backend.tf
+│   ├── iam.tf
+│   ├── output.tf
+│   ├── provider.tf
+│   ├── route53.tf
+│   ├── s3.tf
+│   ├── ssm.tf
 │   └── variables.tf
 └── scripts # Misc scripts
 ```

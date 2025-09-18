@@ -136,8 +136,8 @@ resource "kubernetes_secret" "vault_jobs_secrets" {
   }
 
   data = {
-    AWS_ACCESS_KEY_ID     = var.s3_bucket_access_key
-    AWS_SECRET_ACCESS_KEY = var.s3_bucket_secret_key
+    AWS_ACCESS_KEY_ID     = local.backup_aws_access_key_id
+    AWS_SECRET_ACCESS_KEY = local.backup_aws_secret_access_key
     TOKENS_TO_RENEW       = "${join("\n", [vault_token.apisix-global.client_token, vault_token.dev-portal-global.client_token, vault_token.prometheus.client_token])}"
   }
 
@@ -180,7 +180,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
 
               env {
                 name  = "S3_BUCKET_BASE_PATH"
-                value = "${var.backup_bucket_base_path}/${module.ewc-vault-init.vault_namespace_name}/"
+                value = "${local.backup_bucket_name}/${var.cluster_name}/${module.ewc-vault-init.vault_namespace_name}/"
               }
 
               env {
@@ -246,7 +246,7 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = "${var.backup_bucket_base_path}/${module.ewc-vault-init.vault_namespace_name}/"
+                  value = "${local.backup_bucket_name}/${var.cluster_name}/${module.ewc-vault-init.vault_namespace_name}/"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"
@@ -276,7 +276,7 @@ locals {
                 },
                 {
                   name  = "KEY_THRESHOLD"
-                  value = format("%s", var.vault_key_treshold)
+                  value = format("%s", local.vault_key_treshold)
                 },
                 {
                   name  = "UNSEAL_KEYS"
@@ -322,8 +322,8 @@ resource "kubernetes_secret" "apisix_jobs_secrets" {
   }
 
   data = {
-    AWS_ACCESS_KEY_ID     = var.s3_bucket_access_key
-    AWS_SECRET_ACCESS_KEY = var.s3_bucket_secret_key
+    AWS_ACCESS_KEY_ID     = local.backup_aws_access_key_id
+    AWS_SECRET_ACCESS_KEY = local.backup_aws_secret_access_key
   }
 
   type = "Opaque"
@@ -364,7 +364,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
 
               env {
                 name  = "S3_BUCKET_BASE_PATH"
-                value = "${var.backup_bucket_base_path}/${kubernetes_namespace.apisix.metadata.0.name}/"
+                value = "${local.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.apisix.metadata.0.name}/"
               }
 
               env {
@@ -511,7 +511,7 @@ locals {
                 },
                 {
                   name  = "S3_BUCKET_BASE_PATH"
-                  value = "${var.backup_bucket_base_path}/${kubernetes_namespace.apisix.metadata.0.name}/"
+                  value = "${local.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.apisix.metadata.0.name}/"
                 },
                 {
                   name = "AWS_ACCESS_KEY_ID"
@@ -537,7 +537,7 @@ locals {
                 },
                 {
                   name  = "REPLICA_COUNT"
-                  value = format("%s", var.apisix_etcd_replicas)
+                  value = format("%s", local.apisix_etcd_replica_count)
                 },
                 {
                   name  = "APISIX_HELM_RELEASE_NAME"
@@ -545,7 +545,7 @@ locals {
                 },
               ]
               volumeMounts = [
-                for i in range(var.apisix_etcd_replicas) : {
+                for i in range(local.apisix_etcd_replica_count) : {
                   name      = "data-${local.apisix_helm_release_name}-etcd-${i}"
                   mountPath = "/etcd-volumes/data-${local.apisix_helm_release_name}-etcd-${i}"
                 }
@@ -553,7 +553,7 @@ locals {
             }
           ],
           volumes = [
-            for i in range(var.apisix_etcd_replicas) : {
+            for i in range(local.apisix_etcd_replica_count) : {
               name = "data-${local.apisix_helm_release_name}-etcd-${i}"
               persistentVolumeClaim = {
                 claimName = "data-${local.apisix_helm_release_name}-etcd-${i}"
@@ -588,7 +588,7 @@ locals {
                 <<-EOF
                 set -e
                 echo "Scaling up the etcd StatefulSet back to its original replica count..";
-                kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=${var.apisix_etcd_replicas} -n ${kubernetes_namespace.apisix.metadata.0.name};
+                kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=${local.apisix_etcd_replica_count} -n ${kubernetes_namespace.apisix.metadata.0.name};
 
                 echo "Waiting for StatefulSet pods to scale up...";
                 kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=${local.apisix_helm_release_name},app.kubernetes.io/name=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s
