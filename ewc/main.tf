@@ -564,6 +564,7 @@ resource "helm_release" "apisix" {
 
 }
 
+# For other domains than the "main" redirect to the main domain
 resource "kubectl_manifest" "cluster-apisix-redirect" {
   yaml_body = yamlencode({
     "apiVersion" = "networking.k8s.io/v1"

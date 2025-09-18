@@ -87,6 +87,7 @@ resource "kubectl_manifest" "apisix_global_ingress" {
   depends_on = [helm_release.apisix]
 }
 
+# For other domains than the "main" redirect to the main domain
 resource "kubectl_manifest" "apisix-global-redirect" {
   yaml_body = yamlencode({
     "apiVersion" = "networking.k8s.io/v1"
