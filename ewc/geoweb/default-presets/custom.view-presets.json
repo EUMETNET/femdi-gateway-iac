@@ -1,0 +1,1445 @@
+[
+  {
+    "id": "defaultDataExplorerViewPreset",
+    "title": "Data Explorer",
+    "scope": "system",
+    "abstract": "",
+    "keywords": "",
+    "initialProps": {
+      "mapPreset": {
+        "proj": {
+          "srs": "EPSG:3857",
+          "bbox": {
+            "top": 11520588.9031,
+            "left": 58703.6377,
+            "right": 3967387.5161,
+            "bottom": 6408480.4514
+          }
+        },
+        "layers": [
+          {
+            "id": "layerid_44",
+            "name": "WorldMap_Light_Grey_Canvas",
+            "type": "twms",
+            "status": "default",
+            "enabled": true,
+            "opacity": 1,
+            "layerType": "baseLayer",
+            "dimensions": [],
+            "useLatestReferenceTime": true,
+            "acceptanceTimeInMinutes": 60
+          },
+          {
+            "id": "layerid_43",
+            "name": "countryborders",
+            "format": "image/png",
+            "status": "default",
+            "enabled": true,
+            "opacity": 1,
+            "service": "https://geoservices.knmi.nl/wms?DATASET=baselayers&",
+            "layerType": "overLayer",
+            "dimensions": [],
+            "useLatestReferenceTime": true,
+            "acceptanceTimeInMinutes": 60
+          }
+        ],
+        "displayMapPin": false,
+        "shouldAnimate": false,
+        "showTimeSlider": true,
+        "timeSliderSpan": 86400,
+        "animationPayload": {
+          "speed": 4,
+          "duration": 290,
+          "interval": 60
+        },
+        "shouldAutoUpdate": false,
+        "shouldShowLegend": false,
+        "toggleTimeSpanAuto": true,
+        "toggleTimestepAuto": true,
+        "shouldShowDataExplorer": true,
+        "shouldShowZoomControls": true
+      },
+      "syncGroupsIds": []
+    },
+    "componentType": "Map"
+  },
+  {
+    "id": "emptyMap",
+    "title": "Empty Map",
+    "scope": "system",
+    "keywords": "Empty",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        },
+        "shouldShowLayerManager": true,
+        "dockedLayerManagerSize": "sizeSmall"
+      },
+      "syncGroupsIds": []
+    }
+  },
+  {
+    "id": "radarView",
+    "title": "Radar view",
+    "scope": "system",
+    "keywords": "Radar",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/wms?dataset=RADAR",
+            "name": "RAD_NL25_PCP_CM",
+            "format": "image/png",
+            "style": "radar/nearest",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://openwms.fmi.fi/geoserver/wms?",
+            "name": "Radar:suomi_dbz_eureffin",
+            "format": "image/png",
+            "style": "Radar dbz Summer",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://public-wms.met.no/verportal/verportal.map?SERVICE=WMS&REQUEST=GetCapabilities",
+            "name": "radar_precipitation_intensity_nordic",
+            "format": "image/png",
+            "style": "",
+            "enabled": true,
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        },
+        "activeLayerId": "radar_precipitation_intensity_nordic_id",
+        "toggleTimestepAuto": false,
+        "animationPayload": {
+          "duration": 240,
+          "interval": 5,
+          "speed": 2,
+          "endTime": "NOW+PT2H00M",
+          "shouldEndtimeOverride": true
+        },
+        "dockedLayerManagerSize": "sizeMedium",
+        "shouldAutoUpdate": true,
+        "shouldAnimate": true
+      }
+    }
+  },
+  {
+    "id": "satellite",
+    "title": "Satellite (png)",
+    "componentType": "Map",
+    "scope": "system",
+    "keywords": "Satellite",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:rgb_airmass",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:rgb_eview",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:rgb_ash",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:ir108",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:ir039",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        },
+        "shouldShowLegend": true
+      }
+    }
+  },
+  {
+    "id": "satelliteJpeg",
+    "title": "Satellite (jpeg)",
+    "componentType": "Map",
+    "scope": "system",
+    "keywords": "Satellite",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:rgb_airmass",
+            "format": "image/jpeg",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:rgb_eview",
+            "format": "image/jpeg",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:rgb_ash",
+            "format": "image/jpeg",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:ir108",
+            "format": "image/jpeg",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://view.eumetsat.int/geoserver/wms?",
+            "name": "msg_fes:ir039",
+            "format": "image/jpeg",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        },
+        "shouldShowLegend": true
+      }
+    }
+  },
+  {
+    "id": "sfcObs",
+    "title": "SFC Obs",
+    "scope": "system",
+    "keywords": "Observations",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/T2m_Td2m",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/hc",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/wind",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/gust",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/weathercodesymbol",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://ogcie.iblsoft.com/metocean/wms?",
+            "name": "surface-obs",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": -450651.2255879827,
+            "bottom": 6490531.093143953,
+            "right": 1428345.8183648037,
+            "top": 7438773.776232235
+          },
+          "srs": "EPSG:3857"
+        }
+      }
+    }
+  },
+  {
+    "title": "HARM",
+    "id": "harm",
+    "scope": "system",
+    "keywords": "Harmonie",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "wind_speed_components_hagl",
+            "id": "wind_speed_components_hagl",
+            "format": "image/png",
+            "enabled": true,
+            "style": "windbarbs_kts/barb",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "total_precipitation_rate_hagl",
+            "id": "total_precipitation_rate_hagl",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "air_temperature_hagl",
+            "id": "air_temperature_hagl",
+            "format": "image/png",
+            "enabled": true,
+            "style": "temperature_wow/shaded",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "wind_speed_components_pl",
+            "id": "wind_speed_components_pl",
+            "format": "image/png",
+            "enabled": false,
+            "style": "windbarbs_kts/barb",
+            "layerType": "mapLayer",
+            "dimensions": [
+              {
+                "name": "pressure_level_in_hpa",
+                "currentValue": "700"
+              }
+            ]
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "air_temperature_hagl",
+            "id": "air_temperature_hagl",
+            "format": "image/png",
+            "enabled": false,
+            "style": "temperature_wow/shaded",
+            "layerType": "mapLayer",
+            "dimensions": []
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "geopotential_height_pl",
+            "id": "geopotential_height_pl",
+            "format": "image/png",
+            "enabled": false,
+            "style": "",
+            "layerType": "mapLayer",
+            "dimensions": [
+              {
+                "name": "pressure_level_in_hpa",
+                "currentValue": "850"
+              }
+            ]
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "relative_humidity_pl",
+            "id": "relative_humidity_pl",
+            "format": "image/png",
+            "enabled": false,
+            "style": "",
+            "layerType": "mapLayer",
+            "dimensions": [
+              {
+                "name": "pressure_level_in_hpa",
+                "currentValue": "850"
+              }
+            ]
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "wind_speed_of_gust_01h_hagl",
+            "id": "wind_speed_of_gust_01h_hagl",
+            "format": "image/png",
+            "enabled": false,
+            "style": "",
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": -450651.2255879827,
+            "bottom": 6490531.093143953,
+            "right": 1428345.8183648037,
+            "top": 7438773.776232235
+          },
+          "srs": "EPSG:3857"
+        }
+      }
+    }
+  },
+  {
+    "id": "harmSfcObs",
+    "title": "HARM vs SFC Obs",
+    "scope": "system",
+    "keywords": "Harmonie,Observations",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/ta",
+            "format": "image/png",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=uwcw_ha43_dini_5p5km",
+            "name": "total_precipitation_rate_hagl",
+            "format": "image/png",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=uwcw_ha43_dini_5p5km",
+            "name": "effective_type_cloud_area_fraction_atm",
+            "format": "image/png",
+            "enabled": false,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=uwcw_ha43_dini_5p5km",
+            "name": "wind_speed_components_hagl",
+            "style": "windbarbs_kts/barb",
+            "format": "image/png",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=uwcw_ha43_dini_5p5km",
+            "name": "air_temperature_hagl",
+            "style": "temperature_wow/shaded",
+            "format": "image/png",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=uwcw_ha43_dini_5p5km",
+            "name": "relative_humidity_hagl",
+            "format": "image/png",
+            "enabled": false,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "wind_speed_of_gust_01h_hagl",
+            "id": "wind_speed_of_gust_01h_hagl",
+            "format": "image/png",
+            "enabled": false,
+            "style": "",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/hc",
+            "format": "image/png",
+            "enabled": false,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/wind",
+            "format": "image/png",
+            "enabled": false,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/gust",
+            "format": "image/png",
+            "enabled": false,
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": -450651.2255879827,
+            "bottom": 6490531.093143953,
+            "right": 1428345.8183648037,
+            "top": 7438773.776232235
+          },
+          "srs": "EPSG:3857"
+        }
+      }
+    }
+  },
+  {
+    "id": "harmEcWms",
+    "title": "HARM vs EC (via WMS)",
+    "scope": "system",
+    "keywords": "Harmonie",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "wind_speed_components_hagl",
+            "id": "wind_speed_components_hagl",
+            "format": "image/png",
+            "enabled": true,
+            "style": "windbarbs_kts/barb",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "air_temperature_hagl",
+            "id": "air_temperature_hagl",
+            "format": "image/png",
+            "enabled": true,
+            "style": "temperature_wow/shaded",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=uwcw_ha43_dini_5p5km",
+            "name": "cloud_base_altitude_atm",
+            "format": "image/png",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "total_precipitation_rate_hagl",
+            "id": "total_precipitation_rate_hagl",
+            "format": "image/png",
+            "enabled": true,
+            "style": "",
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": -450651.2255879827,
+            "bottom": 6490531.093143953,
+            "right": 1428345.8183648037,
+            "top": 7438773.776232235
+          },
+          "srs": "EPSG:3857"
+        }
+      }
+    }
+  },
+  {
+    "id": "ecEps",
+    "title": "EC Surface pressure and EPS",
+    "scope": "system",
+    "keywords": "Pressure,EC",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://eccharts.ecmwf.int/wms/?token=public",
+            "name": "msl_public",
+            "format": "image/png",
+            "enabled": true,
+            "style": "ct_blk_i5_t2",
+            "opacity": 1,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://eccharts.ecmwf.int/wms/?token=public",
+            "name": "msl_mean_public",
+            "format": "image/png",
+            "enabled": true,
+            "style": "ct_blue_i5_t2",
+            "opacity": 1,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://eccharts.ecmwf.int/wms/?token=public",
+            "name": "msl_spread_public",
+            "format": "image/png",
+            "enabled": true,
+            "style": "sh_range_f02t50",
+            "opacity": 0.2,
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        },
+        "toggleTimestepAuto": false,
+        "animationPayload": {
+          "interval": 180
+        },
+        "shouldShowLegend": false
+      }
+    }
+  },
+  {
+    "id": "Radar",
+    "title": "Radar",
+    "componentType": "Map",
+    "scope": "system",
+    "keywords": "Radar",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://openwms.fmi.fi/geoserver/wms?",
+            "name": "Radar:suomi_dbz_eureffin",
+            "format": "image/png",
+            "style": "Radar dbz Summer",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://public-wms.met.no/verportal/verportal.map?SERVICE=WMS&REQUEST=GetCapabilities",
+            "name": "radar_precipitation_intensity_nordic",
+            "format": "image/png",
+            "style": "",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/wms?dataset=RADAR",
+            "name": "RAD_NL25_PCP_CM",
+            "format": "image/png",
+            "style": "precip-blue-transparent/nearest",
+            "enabled": true,
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        }
+      },
+      "syncGroupsIds": ["Area_radarTemp", "Time_radarTemp"]
+    }
+  },
+  {
+    "id": "Temperature",
+    "title": "Temperature",
+    "scope": "system",
+    "keywords": "Temperature",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/ta",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://eccharts.ecmwf.int/wms/?token=public",
+            "name": "t850_public",
+            "opacity": 0.8,
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        }
+      },
+      "syncGroupsIds": ["Area_radarTemp", "Time_radarTemp"]
+    }
+  },
+  {
+    "id": "harmHourly",
+    "title": "Harmonie precipitation, pressure and wind hourly",
+    "componentType": "ModelRunInterval",
+    "scope": "system",
+    "keywords": "Harmonie,Precipitation,Pressure,Wind",
+    "initialProps": {
+      "layers": [
+        {
+          "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+          "name": "air_pressure_at_mean_sea_level_hagl",
+          "id": "layerid_20",
+          "layerType": "mapLayer",
+          "enabled": true
+        },
+        {
+          "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+          "name": "wind_speed_components_hagl",
+          "style": "windbarbs_kts/barb",
+          "enabled": true,
+          "id": "layerid_21",
+          "layerType": "mapLayer"
+        },
+        {
+          "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+          "name": "total_precipitation_rate_hagl",
+          "id": "layerid_19",
+          "layerType": "mapLayer",
+          "enabled": true
+        }
+      ],
+      "syncGroupsIds": ["areaLayerGroupA", "layerGroupA"],
+      "interval": 1
+    }
+  },
+  {
+    "id": "screenRefTimeAll",
+    "title": "Harmonie precipitation, pressure and wind all",
+    "scope": "system",
+    "keywords": "Harmonie,Precipitation,Pressure,Wind",
+    "componentType": "ModelRunInterval",
+    "initialProps": {
+      "layers": [
+        {
+          "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+          "name": "air_pressure_at_mean_sea_level_hagl",
+          "id": "layerid_20",
+          "layerType": "mapLayer",
+          "enabled": true
+        },
+        {
+          "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+          "name": "wind_speed_components_hagl",
+          "style": "windbarbs_kts/barb",
+          "enabled": true,
+          "id": "layerid_21",
+          "layerType": "mapLayer"
+        },
+        {
+          "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+          "name": "total_precipitation_rate_hagl",
+          "id": "layerid_19",
+          "layerType": "mapLayer",
+          "enabled": true
+        }
+      ],
+      "syncGroupsIds": ["areaLayerGroupA", "layerGroupA"]
+    }
+  },
+  {
+    "id": "screenHarmAll",
+    "title": "Harmonie Temperature and Precipitation all",
+    "scope": "system",
+    "keywords": "Harmonie,Temperature,Precipitation",
+    "componentType": "HarmonieTempAndPrecipPreset",
+    "initialProps": {
+      "layers": {
+        "topRow": {
+          "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+          "name": "air_temperature_hagl",
+          "style": "temperature_wow/shaded",
+          "id": "layerid_18",
+          "layerType": "mapLayer",
+          "enabled": true
+        },
+        "bottomRow": {
+          "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+          "name": "total_precipitation_rate_hagl",
+          "id": "layerid_19",
+          "layerType": "mapLayer",
+          "enabled": true
+        },
+        "topRowSyncGroups": [
+          "timeLayerGroupA",
+          "areaLayerGroupA",
+          "layerGroupA"
+        ],
+        "bottomRowSyncGroups": [
+          "timeLayerGroupA",
+          "areaLayerGroupA",
+          "layerGroupB"
+        ]
+      }
+    }
+  },
+  {
+    "id": "Observations",
+    "title": "Observations",
+    "scope": "system",
+    "keywords": "Observations",
+    "componentType": "MultiMap",
+    "initialProps": {
+      "mapPreset": [
+        {
+          "layers": [
+            {
+              "service": "https://openwms.fmi.fi/geoserver/wms?",
+              "name": "Radar:suomi_dbz_eureffin",
+              "format": "image/png",
+              "style": "Radar dbz Summer",
+              "enabled": true,
+              "layerType": "mapLayer"
+            },
+            {
+              "service": "https://public-wms.met.no/verportal/verportal.map?SERVICE=WMS&REQUEST=GetCapabilities",
+              "name": "radar_precipitation_intensity_nordic",
+              "format": "image/png",
+              "style": "",
+              "enabled": true,
+              "layerType": "mapLayer"
+            },
+            {
+              "service": "https://geoservices.knmi.nl/wms?dataset=RADAR",
+              "name": "RAD_NL25_PCP_CM",
+              "format": "image/png",
+              "style": "precip-blue-transparent/nearest",
+              "enabled": true,
+              "layerType": "mapLayer"
+            }
+          ],
+          "proj": {
+            "bbox": {
+              "left": 58703.6377,
+              "bottom": 6408480.4514,
+              "right": 3967387.5161,
+              "top": 11520588.9031
+            },
+            "srs": "EPSG:3857"
+          }
+        },
+        {
+          "layers": [
+            {
+              "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+              "name": "10M/ta",
+              "layerType": "mapLayer"
+            },
+            {
+              "service": "https://eccharts.ecmwf.int/wms/?token=public",
+              "name": "t850_public",
+              "opacity": 0.8,
+              "layerType": "mapLayer"
+            }
+          ],
+          "proj": {
+            "bbox": {
+              "left": 58703.6377,
+              "bottom": 6408480.4514,
+              "right": 3967387.5161,
+              "top": 11520588.9031
+            },
+            "srs": "EPSG:3857"
+          }
+        },
+        {
+          "layers": [
+            {
+              "service": "https://eccharts.ecmwf.int/wms/?token=public",
+              "name": "msl_public",
+              "format": "image/png",
+              "style": "ct_blk_i5_t2",
+              "opacity": 1,
+              "enabled": true,
+              "layerType": "mapLayer"
+            },
+            {
+              "service": "https://eccharts.ecmwf.int/wms/?token=public",
+              "name": "msl_mean_public",
+              "format": "image/png",
+              "style": "ct_blue_i5_t2",
+              "opacity": 1,
+              "enabled": true,
+              "layerType": "mapLayer"
+            },
+            {
+              "service": "https://eccharts.ecmwf.int/wms/?token=public",
+              "name": "msl_spread_public",
+              "format": "image/png",
+              "style": "sh_range_f02t50",
+              "opacity": 0.2,
+              "enabled": true,
+              "layerType": "mapLayer"
+            }
+          ],
+          "proj": {
+            "bbox": {
+              "left": 58703.6377,
+              "bottom": 6408480.4514,
+              "right": 3967387.5161,
+              "top": 11520588.9031
+            },
+            "srs": "EPSG:3857"
+          }
+        },
+        {
+          "layers": [
+            {
+              "service": "https://public-wms.met.no/verportal/verportal.map?SERVICE=WMS&REQUEST=GetCapabilities",
+              "name": "wind_10m_regional",
+              "format": "image/png",
+              "style": "",
+              "enabled": true,
+              "layerType": "mapLayer"
+            }
+          ],
+          "proj": {
+            "bbox": {
+              "left": 58703.6377,
+              "bottom": 6408480.4514,
+              "right": 3967387.5161,
+              "top": 11520588.9031
+            },
+            "srs": "EPSG:3857"
+          }
+        }
+      ],
+      "syncGroupsIds": ["Area_Observations", "Time_Observations"]
+    }
+  },
+  {
+    "id": "TimeseriesMap",
+    "title": "TimeseriesMap",
+    "scope": "system",
+    "keywords": "Timeseries",
+    "x": 0,
+    "y": 0,
+    "w": 6,
+    "h": 18,
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [],
+        "displayMapPin": true,
+        "proj": {
+          "bbox": {
+            "left": -552428.4115195761,
+            "bottom": 5553993.8600448,
+            "right": 5180137.904979445,
+            "top": 11681909.577681683
+          },
+          "srs": "EPSG:3857"
+        }
+      }
+    }
+  },
+  {
+    "title": "KNMI WMS UWCW HA43 DINI forecast",
+    "id": "view_knmi_timeseries_ha43_dini_wms",
+    "scope": "system",
+    "keywords": "Harmonie,WMS,Timeseries",
+    "x": 0,
+    "y": 0,
+    "w": 6,
+    "h": 18,
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "air_pressure_at_mean_sea_level_hagl",
+            "layerType": "mapLayer",
+            "enabled": true
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "total_precipitation_rate_hagl",
+            "layerType": "mapLayer",
+            "enabled": true
+          },
+          {
+            "service": "https://geoservices.knmi.nl/adaguc-server?DATASET=uwcw_ha43_dini_5p5km",
+            "name": "air_temperature_hagl",
+            "style": "temperature_wow/shaded",
+            "layerType": "mapLayer",
+            "enabled": true
+          }
+        ],
+        "displayMapPin": true,
+        "proj": {
+          "bbox": {
+            "left": -450651.2255879827,
+            "bottom": 6490531.093143953,
+            "right": 1428345.8183648037,
+            "top": 7438773.776232235
+          },
+          "srs": "EPSG:3857"
+        }
+      }
+    }
+  },
+  {
+    "title": "KNMI EDR UWCW HA43 DINI forecast",
+    "id": "view_knmi_timeseries_ha43_dini_edr",
+    "scope": "system",
+    "keywords": "Harmonie,EDR,Timeseries",
+    "x": 6,
+    "y": 0,
+    "w": 6,
+    "h": 18,
+    "componentType": "TimeSeries",
+    "initialProps": {
+      "plotPreset": {
+        "mapId": "view_knmi_timeseries_ha43_dini_wms",
+        "plots": [
+          {
+            "title": "HA43 Air pressure",
+            "plotId": "Plot_1"
+          },
+          {
+            "title": "HA43 Air temperature",
+            "plotId": "Plot_2"
+          },
+          {
+            "title": "HA43 precipitation",
+            "plotId": "Plot_3"
+          },
+          {
+            "title": "HA43 Relative humidity",
+            "plotId": "Plot_4"
+          }
+        ],
+        "parameters": [
+          {
+            "plotId": "Plot_1",
+            "unit": "hPa",
+            "propertyName": "air_pressure_at_mean_sea_level_hagl",
+            "plotType": "line",
+            "serviceId": "knmi_geoservices_edr",
+            "collectionId": "uwcw_ha43_dini_5p5km.hagl"
+          },
+          {
+            "plotId": "Plot_2",
+            "unit": "C",
+            "propertyName": "air_temperature_hagl",
+            "plotType": "line",
+            "serviceId": "knmi_geoservices_edr",
+            "collectionId": "uwcw_ha43_dini_5p5km.hagl"
+          },
+          {
+            "plotId": "Plot_3",
+            "unit": "mm/hr",
+            "propertyName": "total_precipitation_rate_hagl",
+            "plotType": "bar",
+            "serviceId": "knmi_geoservices_edr",
+            "collectionId": "uwcw_ha43_dini_5p5km.hagl"
+          },
+          {
+            "plotId": "Plot_4",
+            "unit": "%",
+            "propertyName": "relative_humidity_hagl",
+            "plotType": "line",
+            "serviceId": "knmi_geoservices_edr",
+            "collectionId": "uwcw_ha43_dini_5p5km.hagl"
+          }
+        ]
+      },
+      "services": [
+        {
+          "id": "knmi_geoservices_edr",
+          "type": "EDR",
+          "url": "https://geoservices.knmi.nl/edr",
+          "description": "KNMI EDR on geoservices",
+          "scope": "system"
+        }
+      ]
+    }
+  },
+  {
+    "id": "Timeseries",
+    "scope": "system",
+    "keywords": "Timeseries",
+    "title": "FMI ECMWF",
+    "x": 6,
+    "y": 0,
+    "w": 6,
+    "h": 18,
+    "componentType": "TimeSeries",
+    "initialProps": {
+      "plotPreset": {
+        "mapId": "TimeseriesMap",
+        "plots": [
+          {
+            "title": "Plot 1",
+            "plotId": "Plot_1"
+          },
+          {
+            "title": "Plot 2",
+            "plotId": "Plot_2"
+          },
+          {
+            "title": "Plot 3",
+            "plotId": "Plot_3"
+          }
+        ],
+        "parameters": [
+          {
+            "plotId": "Plot_1",
+            "propertyName": "Pressure",
+            "plotType": "line",
+            "serviceId": "fmi_ecmwf",
+            "collectionId": "ecmwf"
+          },
+          {
+            "plotId": "Plot_1",
+            "propertyName": "Temperature",
+            "plotType": "line",
+            "serviceId": "fmi_ecmwf",
+            "collectionId": "ecmwf"
+          },
+          {
+            "plotId": "Plot_2",
+            "propertyName": "Precipitation1h",
+            "plotType": "bar",
+            "serviceId": "fmi_ecmwf",
+            "collectionId": "ecmwf"
+          },
+          {
+            "plotId": "Plot_3",
+            "propertyName": "Humidity",
+            "plotType": "line",
+            "serviceId": "fmi_ecmwf",
+            "collectionId": "ecmwf"
+          }
+        ]
+      },
+      "services": [
+        {
+          "id": "fmi_ecmwf",
+          "type": "EDR",
+          "url": "https://opendata.fmi.fi/edr",
+          "description": "FMI timeseries service",
+          "scope": "system"
+        }
+      ]
+    }
+  },
+  {
+    "id": "TimeseriesPlot",
+    "scope": "system",
+    "title": "Timeseries Met Norway",
+    "abstract": null,
+    "keywords": "mapPreset,viewPreset,layerManager",
+    "initialProps": {
+      "plotPreset": {
+        "mapId": "TimeseriesMap",
+        "plots": [
+          {
+            "title": "Plot 1",
+            "plotId": "Plot_1"
+          },
+          {
+            "title": "Plot 2",
+            "plotId": "Plot_2"
+          },
+          {
+            "title": "Plot 3",
+            "plotId": "Plot_3"
+          }
+        ],
+        "parameters": [
+          {
+            "propertyName": "air_temperature_2m",
+            "plotId": "Plot_1",
+            "unit": "C",
+            "plotType": "line",
+            "serviceId": "metno_edr",
+            "collectionId": "meps-det-vdiv",
+            "id": "timeseriesparamid_1"
+          },
+          {
+            "propertyName": "air_pressure_at_sea_level",
+            "plotId": "Plot_2",
+            "unit": "hPa",
+            "plotType": "line",
+            "serviceId": "metno_edr",
+            "collectionId": "meps-det-vdiv",
+            "id": "timeseriesparamid_1"
+          },
+          {
+            "propertyName": "precipitation_amount_acc",
+            "plotId": "Plot_3",
+            "unit": "mm/hr",
+            "plotType": "bar",
+            "serviceId": "metno_edr",
+            "collectionId": "meps-det-vdiv",
+            "id": "timeseriesparamid_1"
+          }
+        ]
+      },
+      "services": [
+        {
+          "id": "metno_edr",
+          "type": "EDR",
+          "url": "https://interpol.met.no",
+          "description": "METNO EDR",
+          "scope": "system"
+        }
+      ]
+    },
+    "componentType": "TimeSeries"
+  },
+  {
+    "id": "KNMINLEDRKDPViewPresetTimeseries",
+    "scope": "system",
+    "keywords": "Timeseries",
+    "title": "KNMI EDR Observations from KDP",
+    "x": 6,
+    "y": 0,
+    "w": 6,
+    "h": 18,
+    "componentType": "TimeSeries",
+    "initialProps": {
+      "plotPreset": {
+        "mapId": "TimeseriesMap",
+        "plots": [
+          {
+            "title": "Plot 1",
+            "plotId": "Plot_1"
+          },
+          {
+            "title": "Plot 2",
+            "plotId": "Plot_2"
+          }
+        ],
+        "parameters": [
+          {
+            "propertyName": "t_dryb_10",
+            "plotId": "Plot_1",
+            "color": "D",
+            "plotType": "line",
+            "serviceId": "netherlandsobs",
+            "collectionId": "observations",
+            "opacity": 70
+          },
+          {
+            "propertyName": "ri_regenm_10",
+            "plotId": "Plot_1",
+            "color": "K",
+            "plotType": "bar",
+            "serviceId": "netherlandsobs",
+            "collectionId": "observations",
+            "opacity": 70
+          },
+          {
+            "propertyName": "p_nap_msl_10",
+            "plotId": "Plot_2",
+            "color": "L",
+            "plotType": "line",
+            "serviceId": "netherlandsobs",
+            "collectionId": "observations",
+            "opacity": 0
+          }
+        ]
+      },
+      "services": [
+        {
+          "id": "netherlandsobs",
+          "type": "EDR",
+          "url": "https://gw-edr.pub.knmi.cloud/edr",
+          "description": "Netherlands EDR instance",
+          "scope": "system"
+        }
+      ]
+    }
+  },
+  {
+    "id": "CapWarningMap",
+    "title": "Cap Warning Map",
+    "scope": "system",
+    "keywords": "Cap,Warning",
+    "componentType": "CapWarningMap",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/wms?dataset=RADAR",
+            "name": "RAD_NL25_PCP_CM",
+            "format": "image/png",
+            "style": "radar/nearest",
+            "enabled": true,
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        },
+        "activeLayerId": "radar_precipitation_intensity_nordic_id",
+        "toggleTimestepAuto": false,
+        "animationPayload": {
+          "duration": 240,
+          "interval": 5,
+          "speed": 2,
+          "endTime": "NOW+PT2H00M"
+        },
+        "dockedLayerManagerSize": "sizeMedium",
+        "shouldAutoUpdate": true
+      }
+    }
+  },
+  {
+    "id": "CapWarningList",
+    "scope": "system",
+    "keywords": "Cap,Warning",
+    "title": "Cap Warning List",
+    "componentType": "CapWarningList",
+    "initialProps": {}
+  },
+  {
+    "id": "taf",
+    "title": "TAF",
+    "scope": "system",
+    "keywords": "taf",
+    "componentType": "TafModule",
+    "initialProps": {}
+  },
+  {
+    "id": "sigmet",
+    "title": "SIGMET",
+    "scope": "system",
+    "keywords": "sigmet,aviation",
+    "componentType": "SigmetModule",
+    "initialProps": {}
+  },
+  {
+    "id": "airmet",
+    "title": "AIRMET",
+    "scope": "system",
+    "keywords": "airmet,aviation",
+    "componentType": "AirmetModule",
+    "initialProps": {}
+  },
+  {
+    "title": "Warning list",
+    "id": "warninglist",
+    "componentType": "WarningList",
+    "initialProps": {},
+    "scope": "system",
+    "keywords": "warnings"
+  },
+  {
+    "title": "New sounding preset",
+    "abstract": "",
+    "id": "Soundings",
+    "componentType": "Soundings",
+    "initialProps": {},
+    "scope": "system",
+    "keywords": "soundings"
+  },
+  {
+    "id": "SoundingMap",
+    "title": "SoundingMap",
+    "scope": "system",
+    "keywords": "soundings",
+    "x": 0,
+    "y": 0,
+    "w": 6,
+    "h": 18,
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [],
+        "displayMapPin": true,
+        "proj": {
+          "bbox": {
+            "left": -552428.4115195761,
+            "bottom": 5553993.8600448,
+            "right": 5180137.904979445,
+            "top": 11681909.577681683
+          },
+          "srs": "EPSG:3857"
+        }
+      }
+    }
+  }
+]

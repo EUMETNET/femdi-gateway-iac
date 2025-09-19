@@ -6,7 +6,10 @@
 
 locals {
   ##############################################################
-  # Dev Portal
+  # SSM parameters
+  ##############################################################
+  ##############################################################
+  #   Dev Portal
   ##############################################################
 
   # dev-portal_registry_password:     Password for accessing the private container registry hosting the Dev Portal image.
@@ -30,7 +33,7 @@ locals {
   }
 
   ##############################################################
-  # Keycloak
+  #   Keycloak
   ##############################################################
   # keycloak_admin_password:       Admin password for Keycloak.
   # keycloak_replica_count:       Number of Keycloak replicas to deploy.
@@ -42,4 +45,9 @@ locals {
 
   google_idp_client_secret = data.aws_ssm_parameter.keycloak_google_idp_client_secret.value
   github_idp_client_secret = data.aws_ssm_parameter.keycloak_github_idp_client_secret.value
+
+  ##############################################################
+  # Other locals
+  ##############################################################
+  alternative_hosted_zone_names = [for name in var.hosted_zone_names : name if name != var.dns_zone]
 }

@@ -93,7 +93,7 @@ resource "kubectl_manifest" "apisix-global-redirect" {
     "apiVersion" = "networking.k8s.io/v1"
     "kind"       = "Ingress"
     "metadata" = {
-      "name"      = "apisix-permanent-redirect"
+      "name"      = "apisix-global-alt-domains-permanent-redirect"
       "namespace" = "${kubernetes_namespace.apisix.metadata.0.name}"
       "annotations" = {
         "cert-manager.io/cluster-issuer"                 = "${module.ewc-vault-init.cluster_issuer}"

@@ -68,87 +68,87 @@ resource "helm_release" "keycloak" {
 
   # Needed for tls termination at ingress
   # See: https://github.com/bitnami/charts/tree/main/bitnami/keycloak#use-with-ingress-offloading-ssl
-  set {
-    name  = "proxy"
-    value = "edge"
-  }
+  set = [
+    {
+      name  = "proxy"
+      value = "edge"
+    },
+    {
+      name  = "auth.adminUser"
+      value = "admin"
+    },
+    {
+      name  = "postgresql.auth.username"
+      value = local.postgres_db_user
+    },
+    {
+      name  = "postgresql.auth.database"
+      value = local.postgres_db_name
+    },
+    # Needed for configmap realm import
+    # See: https://github.com/bitnami/charts/issues/5178#issuecomment-765361901
+    {
+      name  = "extraStartupArgs"
+      value = "--import-realm"
 
-  set {
-    name  = "auth.adminUser"
-    value = "admin"
-  }
+    },
+    {
+      name  = "extraVolumeMounts[0].name"
+      value = "config"
+    },
+    {
+      name  = "extraVolumeMounts[0].mountPath"
+      value = "/opt/bitnami/keycloak/data/import"
+    },
+    {
+      name  = "extraVolumeMounts[0].readOnly"
+      value = true
+    },
+    {
+      name  = "extraVolumes[0].name"
+      value = "config"
+    },
+    {
+      name  = "extraVolumes[0].configMap.name"
+      value = kubernetes_config_map.realm-json.metadata[0].name
+    },
+    {
+      name  = "extraVolumes[0].configMap.items[0].key"
+      value = "realm.json"
+    },
+    {
+      name  = "extraVolumes[0].configMap.items[0].path"
+      value = "realm.json"
+    },
+    #Statefulset params
+    {
+      name  = "replicaCount"
+      value = local.keycloak_replica_count
+    }
+  ]
 
-  set_sensitive {
+  set_sensitive = [{
     name  = "auth.adminPassword"
     value = local.keycloak_admin_password
-  }
+  }]
 
-  set {
-    name  = "postgresql.auth.username"
-    value = local.postgres_db_user
-  }
+}
 
-  set {
-    name  = "postgresql.auth.database"
-    value = local.postgres_db_name
-  }
-
-  # Needed for configmap realm import
-  # See: https://github.com/bitnami/charts/issues/5178#issuecomment-765361901
-  set {
-    name  = "extraStartupArgs"
-    value = "--import-realm"
-
-  }
-
-  set {
-    name  = "extraVolumeMounts[0].name"
-    value = "config"
-
-  }
-
-  set {
-    name  = "extraVolumeMounts[0].mountPath"
-    value = "/opt/bitnami/keycloak/data/import"
-
-  }
-
-  set {
-    name  = "extraVolumeMounts[0].readOnly"
-    value = true
-
-  }
-
-  set {
-    name  = "extraVolumes[0].name"
-    value = "config"
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.name"
-    value = kubernetes_config_map.realm-json.metadata[0].name
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.items[0].key"
-    value = "realm.json"
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.items[0].path"
-    value = "realm.json"
-
-  }
-
-  # Statefulset params
-  set {
-    name  = "replicaCount"
-    value = local.keycloak_replica_count
-  }
-
+# Create ingress to redirect alternative domains to main domain
+resource "kubectl_manifest" "cluster-keycloak-redirect" {
+  yaml_body = templatefile(
+    "./templates/service-redirect-ingress.yaml",
+    {
+      namespace                     = kubernetes_namespace.keycloak.metadata.0.name
+      cluster_issuer                = var.cluster_issuer
+      external_dns_hostname         = join(",", [for name in local.alternative_hosted_zone_names : "${var.keycloak_subdomain}.${var.cluster_name}.${name}"])
+      target_address                = var.load_balancer_ip
+      permanent_redirect            = "https://${var.keycloak_subdomain}.${var.cluster_name}.${var.dns_zone}$request_uri"
+      alternative_hosted_zone_names = local.alternative_hosted_zone_names
+      subdomain                     = var.keycloak_subdomain
+      cluster_name                  = var.cluster_name
+    }
+  )
 }
 
 ################################################################################
@@ -241,39 +241,53 @@ resource "helm_release" "dev-portal" {
     })
   ]
 
-  set {
-    name  = "imageCredentials.username"
-    value = "USERNAME"
-  }
+  set = [
+    {
+      name  = "imageCredentials.username"
+      value = "USERNAME"
+    },
+    {
+      name  = "backend.image.tag"
+      value = "sha-023ade0"
+    },
+    {
+      name  = "backend.secrets.secretName"
+      value = kubernetes_secret.dev-portal-secret-for-backend.metadata.0.name
+    },
+    {
+      name  = "frontend.image.tag"
+      value = "sha-8c9cb84"
+    },
+    {
+      name  = "frontend.keycloak_logout_url"
+      value = "https://${var.dev_portal_subdomain}.${var.dns_zone}"
+    },
+    {
+      name  = "frontend.keycloak_url"
+      value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
+    }
+  ]
 
-  set_sensitive {
+  set_sensitive = [{
     name  = "imageCredentials.password"
     value = local.dev_portal_registry_password
-  }
+  }]
 
-  set {
-    name  = "backend.image.tag"
-    value = "sha-023ade0"
-  }
+}
 
-  set {
-    name  = "backend.secrets.secretName"
-    value = kubernetes_secret.dev-portal-secret-for-backend.metadata.0.name
-  }
-
-  set {
-    name  = "frontend.image.tag"
-    value = "sha-8c9cb84"
-  }
-
-  set {
-    name  = "frontend.keycloak_logout_url"
-    value = "https://${var.dev_portal_subdomain}.${var.dns_zone}"
-  }
-
-  set {
-    name  = "frontend.keycloak_url"
-    value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
-  }
-
+# Create ingress to redirect alternative domains to main domain
+resource "kubectl_manifest" "cluster-dev-portal-redirect" {
+  yaml_body = templatefile(
+    "./templates/service-redirect-ingress.yaml",
+    {
+      namespace                     = kubernetes_namespace.dev-portal.metadata.0.name
+      cluster_issuer                = var.cluster_issuer
+      external_dns_hostname         = join(",", [for name in local.alternative_hosted_zone_names : "${var.dev_portal_subdomain}.${var.cluster_name}.${name}"])
+      target_address                = var.load_balancer_ip
+      permanent_redirect            = "https://${var.dev_portal_subdomain}.${var.cluster_name}.${var.dns_zone}$request_uri"
+      alternative_hosted_zone_names = local.alternative_hosted_zone_names
+      subdomain                     = var.dev_portal_subdomain
+      cluster_name                  = var.cluster_name
+    }
+  )
 }

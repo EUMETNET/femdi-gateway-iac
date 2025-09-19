@@ -8,11 +8,6 @@ resource "kubernetes_namespace" "geoweb" {
   }
 }
 
-locals {
-  presets_backend_base_path  = "/presets"
-  location_backend_base_path = "/location-backend"
-}
-
 ################################################################################
 
 # Frontend application
@@ -33,81 +28,69 @@ resource "helm_release" "geoweb-frontend" {
     })
   ]
 
-  set {
-    name  = "versions.frontend"
-    value = "2025-08-20_09-06_51b2c096"
-  }
-
-  set {
-    name  = "frontend.url"
-    value = "${var.geoweb_subdomain}.${var.dns_zone}"
-  }
-
-  set {
-    name  = "frontend.env.GW_AUTH_LOGOUT_URL"
-    value = "https://${var.geoweb_subdomain}.${var.dns_zone}"
-  }
-
-  set {
-    name  = "frontend.env.GW_AUTH_TOKEN_URL"
-    value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}/protocol/openid-connect/token"
-  }
-
-  set {
-    name  = "frontend.env.GW_AUTH_LOGIN_URL"
-    value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}/protocol/openid-connect/auth?client_id={client_id}&response_type=code&scope=email+openid&redirect_uri={app_url}/code&state={state}&code_challenge={code_challenge}&code_challenge_method=S256"
-  }
-
-  set {
-    name  = "frontend.env.GW_APP_URL"
-    value = "https://${var.geoweb_subdomain}.${var.dns_zone}"
-  }
-
-  set {
-    name  = "frontend.env.GW_AUTH_ROLE_CLAIM_NAME"
-    value = "groups"
-  }
-
-  set {
-    name  = "frontend.env.GW_AUTH_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
-    value = "Admin"
-  }
-
-  set {
-    name  = "frontend.env.GW_FEATURE_APP_TITLE"
-    value = "MeteoGate Data Explorer"
-  }
-
-  set {
-    name  = "frontend.env.GW_AUTH_CLIENT_ID"
-    value = "frontend"
-  }
-
-  set {
-    name  = "frontend.env.GW_PRESET_BACKEND_URL"
-    value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.presets_backend_base_path}"
-  }
-
-  set {
-    name  = "frontend.env.GW_DATAEXPLORER_CONFIGURATION_FILENAME"
-    value = "dataexplorerPresets.json"
-  }
-
-  set {
-    name  = "frontend.env.GW_DATAEXPLORER_BUTTON_ON_MAP"
-    value = "true"
-    type  = "string"
-  }
-
-  set {
-    name  = "frontend.env.GW_LOCATION_BASE_URL"
-    value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.location_backend_base_path}"
-  }
-
-  set {
-    name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
-    value = "dcd0eb6a-78dc-11f0-84ba-7ebf8d5f94ed"
-  }
+  set = [
+    {
+      name  = "versions.frontend"
+      value = "2025-08-20_09-06_51b2c096"
+    },
+    {
+      name  = "frontend.url"
+      value = "${var.geoweb_subdomain}.${var.dns_zone}"
+    },
+    {
+      name  = "frontend.env.GW_AUTH_LOGOUT_URL"
+      value = "https://${var.geoweb_subdomain}.${var.dns_zone}"
+    },
+    {
+      name  = "frontend.env.GW_AUTH_TOKEN_URL"
+      value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}/protocol/openid-connect/token"
+    },
+    {
+      name  = "frontend.env.GW_AUTH_LOGIN_URL"
+      value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}/protocol/openid-connect/auth?client_id={client_id}&response_type=code&scope=email+openid&redirect_uri={app_url}/code&state={state}&code_challenge={code_challenge}&code_challenge_method=S256"
+    },
+    {
+      name  = "frontend.env.GW_APP_URL"
+      value = "https://${var.geoweb_subdomain}.${var.dns_zone}"
+    },
+    {
+      name  = "frontend.env.GW_AUTH_ROLE_CLAIM_NAME"
+      value = "groups"
+    },
+    {
+      name  = "frontend.env.GW_AUTH_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
+      value = "Admin"
+    },
+    {
+      name  = "frontend.env.GW_FEATURE_APP_TITLE"
+      value = "MeteoGate Data Explorer"
+    },
+    {
+      name  = "frontend.env.GW_AUTH_CLIENT_ID"
+      value = "frontend"
+    },
+    {
+      name  = "frontend.env.GW_PRESET_BACKEND_URL"
+      value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.presets_backend_base_path}"
+    },
+    {
+      name  = "frontend.env.GW_DATAEXPLORER_CONFIGURATION_FILENAME"
+      value = "dataexplorerPresets.json"
+    },
+    {
+      name  = "frontend.env.GW_DATAEXPLORER_BUTTON_ON_MAP"
+      value = "true"
+      type  = "string"
+    },
+    {
+      name  = "frontend.env.GW_LOCATION_BASE_URL"
+      value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.location_backend_base_path}"
+    },
+    {
+      name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
+      value = "dcd0eb6a-78dc-11f0-84ba-7ebf8d5f94ed"
+    }
+  ]
 }
 
 ################################################################################
@@ -130,66 +113,59 @@ resource "helm_release" "geoweb-presets-backend" {
     })
   ]
 
-  set {
-    name  = "presets.url"
-    value = "${var.geoweb_subdomain}.${var.dns_zone}"
-  }
-
-  set {
-    name  = "presets.path"
-    value = local.presets_backend_base_path
-  }
-
-  #set {
-  #  name  = "presets.useCustomWorkspacePresets"
-  #  value = true
-  #}
-  #
-  #set {
-  #  name  = "presets.customConfigurationFolderPath"
-  #  value = "local"
-  #}
-  #
-  #set {
-  #  name  = "presets.customPresetsS3bucketName"
-  #  value = "explorer-custom-presets"
-  #}
-
-  set {
-    name  = "presets.nginx.ALLOW_ANONYMOUS_ACCESS"
-    value = "TRUE"
-    type  = "string" # Ensure the value is treated as a string
-  }
-
-  set {
-    name  = "presets.nginx.JWKS_URI"
-    value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}/protocol/openid-connect/certs"
-  }
-
-  set {
-    name  = "presets.nginx.AUD_CLAIM_VALUE"
-    value = "account"
-  }
-
-  set {
-    name  = "presets.nginx.ISS_CLAIM"
-    value = "iss"
-  }
-
-  set {
-    name  = "presets.nginx.ISS_CLAIM_VALUE"
-    value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}"
-  }
-
-  set {
-    name  = "presets.nginx.GEOWEB_ROLE_CLAIM_NAME"
-    value = "groups"
-  }
-
-  set {
-    name  = "presets.nginx.GEOWEB_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
-    value = "Admin"
-  }
+  set = [
+    {
+      name  = "presets.url"
+      value = "${var.geoweb_subdomain}.${var.dns_zone}"
+    },
+    {
+      name  = "presets.path"
+      value = local.presets_backend_base_path
+    },
+    #set {
+    #  name  = "presets.useCustomWorkspacePresets"
+    #  value = true
+    #}
+    #
+    #set {
+    #  name  = "presets.customConfigurationFolderPath"
+    #  value = "local"
+    #}
+    #
+    #set {
+    #  name  = "presets.customPresetsS3bucketName"
+    #  value = "explorer-custom-presets"
+    #}
+    {
+      name  = "presets.nginx.ALLOW_ANONYMOUS_ACCESS"
+      value = "TRUE"
+      type  = "string" # Ensure the value is treated as a string
+    },
+    {
+      name  = "presets.nginx.JWKS_URI"
+      value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}/protocol/openid-connect/certs"
+    },
+    {
+      name  = "presets.nginx.AUD_CLAIM_VALUE"
+      value = "account"
+    },
+    {
+      name  = "presets.nginx.ISS_CLAIM"
+      value = "iss"
+    },
+    {
+      name  = "presets.nginx.ISS_CLAIM_VALUE"
+      value = "https://${var.keycloak_subdomain}.${var.dns_zone}/realms/${var.keycloak_realm_name}"
+    },
+    {
+      name  = "presets.nginx.GEOWEB_ROLE_CLAIM_NAME"
+      value = "groups"
+    },
+    {
+      name  = "presets.nginx.GEOWEB_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
+      value = "Admin"
+    }
+  ]
 }
 
 ################################################################################
@@ -212,13 +188,31 @@ resource "helm_release" "geoweb-location-backend" {
     })
   ]
 
-  set {
-    name  = "location.url"
-    value = "${var.geoweb_subdomain}.${var.dns_zone}"
-  }
+  set = [
+    {
+      name  = "location.url"
+      value = "${var.geoweb_subdomain}.${var.dns_zone}"
+    },
+    {
+      name  = "location.path"
+      value = local.location_backend_base_path
+    }
+  ]
+}
 
-  set {
-    name  = "location.path"
-    value = local.location_backend_base_path
-  }
+# Create ingress to redirect alternative domains to main domain
+resource "kubectl_manifest" "cluster-geoweb-redirect" {
+  yaml_body = templatefile(
+    "./templates/service-redirect-ingress.yaml",
+    {
+      namespace                     = kubernetes_namespace.geoweb.metadata.0.name
+      cluster_issuer                = var.cluster_issuer
+      external_dns_hostname         = join(",", [for name in local.alternative_hosted_zone_names : "${var.keycloak_subdomain}.${var.cluster_name}.${name}"])
+      target_address                = var.load_balancer_ip
+      permanent_redirect            = "https://${var.geoweb_subdomain}.${var.cluster_name}.${var.dns_zone}$request_uri"
+      alternative_hosted_zone_names = local.alternative_hosted_zone_names
+      subdomain                     = var.geoweb_subdomain
+      cluster_name                  = var.cluster_name
+    }
+  )
 }

@@ -6,14 +6,16 @@
 
 locals {
   ##############################################################
-  # Cert-manager
+  # SSM Parameters
+  ##############################################################
+  #   Cert-manager
   ##############################################################
   # cert_manager_email:       Email address used for cert-manager registrations and recovery contact.
 
   cert_manager_email = data.aws_ssm_parameter.cert_manager_email.value
 
   ##############################################################
-  # Vault
+  #   Vault
   ##############################################################
   # vault_replica_count:      Number of Vault replicas to deploy.
   # vault_anti_affinity:      Whether to enable anti-affinity for Vault pods to spread them across nodes.
@@ -21,4 +23,10 @@ locals {
   vault_replica_count = tonumber(data.aws_ssm_parameter.vault_replica_count.value)
 
   vault_anti_affinity = lower(data.aws_ssm_parameter.vault_anti_affinity.value) == "true" ? true : false
+  ###############################################################
+
+  ##############################################################
+  # Other locals
+  ##############################################################
+  alternative_hosted_zone_names = [for name in var.hosted_zone_names : name if name != var.dns_zone]
 }

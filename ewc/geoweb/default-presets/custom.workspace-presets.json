@@ -1,0 +1,379 @@
+[
+  {
+    "id": "defaultDataExplorerWorkspacePreset",
+    "title": "Data Explorer",
+    "scope": "system",
+    "abstract": "",
+    "viewType": "singleWindow",
+    "views": [
+      {
+        "mosaicNodeId": "1_screen",
+        "viewPresetId": "defaultDataExplorerViewPreset"
+      }
+    ],
+    "syncGroups": [
+      {
+        "id": "SYNCGROUPS_TYPE_SETBBOX",
+        "type": "SYNCGROUPS_TYPE_SETBBOX"
+      },
+      {
+        "id": "SYNCGROUPS_TYPE_SETTIME",
+        "type": "SYNCGROUPS_TYPE_SETTIME"
+      }
+    ],
+    "mosaicNode": "1_screen",
+    "isTimeScrollingEnabled": false,
+    "linking": {
+
+    }
+  },
+  {
+    "id": "emptyMap",
+    "title": "Empty Map",
+    "scope": "system",
+    "keywords": "Emtpy",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "emptyMap" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "radarSingleMapScreenConfig",
+    "title": "Radar view",
+    "keywords": "Radar",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "radarView" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "satelliteSingleMapScreenConfig",
+    "title": "Satellite (png)",
+    "keywords": "Satellite",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "satellite" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "satelliteSingleMapScreenConfigJpeg",
+    "title": "Satellite (jpeg)",
+    "keywords": "Satellite",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "satelliteJpeg" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "sfcObsSingleMapScreenConfig",
+    "title": "SFC Obs",
+    "keywords": "Observations",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "sfcObs" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "harmSingleMapScreenConfig",
+    "title": "HARM",
+    "keywords": "Harmonie",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "harm" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "harmSfcObsSingleMapScreenConfig",
+    "title": "HARM vs SFC Obs",
+    "keywords": "Harmonie,Observations",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "harmSfcObs" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "harmEcWmsSingleMapScreenConfig",
+    "title": "HARM vs EC (via WMS)",
+    "keywords": "Harmonie,EC",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "harmEcWms" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "ecEpsSingleMapScreenConfig",
+    "title": "EC Surface pressure and EPS",
+    "keywords": "EC,Pressure",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "ecEps" }],
+    "mosaicNode": "viewA",
+    "viewType": "singleWindow"
+  },
+  {
+    "id": "screenConfigRadarTemperature",
+    "title": "Radar and temperature",
+    "keywords": "Radar,Temperature",
+    "scope": "system",
+    "views": [
+      { "mosaicNodeId": "viewA", "viewPresetId": "Radar" },
+      { "mosaicNodeId": "viewB", "viewPresetId": "Temperature" }
+    ],
+    "syncGroups": [
+      {
+        "id": "Area_radarTemp",
+        "type": "SYNCGROUPS_TYPE_SETBBOX"
+      },
+      {
+        "id": "Time_radarTemp",
+        "type": "SYNCGROUPS_TYPE_SETTIME"
+      }
+    ],
+    "viewType": "multiWindow",
+    "mosaicNode": {
+      "direction": "row",
+      "first": "viewA",
+      "second": "viewB"
+    }
+  },
+  {
+    "id": "screenConfigHarmoniePrecipMSLRefTimePresetHourly",
+    "title": "Precipitation, pressure and wind 1:all hourly",
+    "keywords": "Harmonie,Precipitation,Pressure,Wind",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "harmHourly" }],
+    "viewType": "tiledWindow",
+    "syncGroups": [
+      { "id": "areaLayerGroupA", "type": "SYNCGROUPS_TYPE_SETBBOX" },
+      { "id": "timeLayerGroupA", "type": "SYNCGROUPS_TYPE_SETTIME" },
+      { "id": "layerGroupA", "type": "SYNCGROUPS_TYPE_SETLAYERACTIONS" }
+    ],
+    "mosaicNode": "viewA"
+  },
+  {
+    "id": "screenConfigHarmoniePrecipMSLRefTimePresetWithMultiMapLayerManager",
+    "title": "Precipitation, pressure and wind 1:all",
+    "keywords": "Harmonie,Precipitation,Pressure,Wind",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "screenRefTimeAll" }],
+    "syncGroups": [
+      {
+        "id": "areaLayerGroupA",
+        "type": "SYNCGROUPS_TYPE_SETBBOX"
+      },
+      {
+        "id": "timeLayerGroupA",
+        "type": "SYNCGROUPS_TYPE_SETTIME"
+      },
+      {
+        "id": "layerGroupA",
+        "type": "SYNCGROUPS_TYPE_SETLAYERACTIONS"
+      }
+    ],
+    "viewType": "tiledWindow",
+    "mosaicNode": "viewA"
+  },
+  {
+    "id": "screenConfigHarmoniePresetWithMultiMapLayerManager",
+    "title": "Harmonie Temperature and Precipitation 1:all",
+    "keywords": "Harmonie,Precipitation,Pressure,Wind",
+    "scope": "system",
+    "views": [
+      { "mosaicNodeId": "viewAscreenHarmAll", "viewPresetId": "screenHarmAll" }
+    ],
+    "syncGroups": [
+      {
+        "id": "areaLayerGroupA",
+        "type": "SYNCGROUPS_TYPE_SETBBOX"
+      },
+      {
+        "id": "timeLayerGroupA",
+        "type": "SYNCGROUPS_TYPE_SETTIME"
+      },
+      {
+        "id": "layerGroupA",
+        "type": "SYNCGROUPS_TYPE_SETLAYERACTIONS"
+      },
+      {
+        "id": "layerGroupB",
+        "type": "SYNCGROUPS_TYPE_SETLAYERACTIONS"
+      }
+    ],
+    "viewType": "tiledWindow",
+    "mosaicNode": "viewAscreenHarmAll"
+  },
+  {
+    "id": "screenConfigObservations",
+    "title": "Observations",
+    "keywords": "Observations",
+    "scope": "system",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "Observations" }],
+    "syncGroups": [
+      {
+        "id": "Area_Observations",
+        "type": "SYNCGROUPS_TYPE_SETBBOX"
+      },
+      {
+        "id": "Time_Observations",
+        "type": "SYNCGROUPS_TYPE_SETTIME"
+      }
+    ],
+    "viewType": "tiledWindow",
+    "mosaicNode": "viewA"
+  },
+  {
+    "id": "defaultTimeseriesPreset",
+    "title": "Timeseries FMI",
+    "keywords": "Timeseries",
+    "scope": "system",
+    "views": [
+      { "mosaicNodeId": "viewA", "viewPresetId": "TimeseriesMap" },
+      { "mosaicNodeId": "viewB", "viewPresetId": "Timeseries" }
+    ],
+    "viewType": "multiWindow",
+    "mosaicNode": {
+      "direction": "row",
+      "first": "viewA",
+      "second": "viewB"
+    },
+    "linking": {
+      "viewB": ["viewA"]
+    }
+  },
+  {
+    "id": "METNorwayTimeseriesPreset",
+    "title": "Timeseries Met Norway",
+    "keywords": "Timeseries",
+    "scope": "system",
+    "views": [
+      { "mosaicNodeId": "viewA", "viewPresetId": "TimeseriesMap" },
+      { "mosaicNodeId": "viewB", "viewPresetId": "TimeseriesPlot" }
+    ],
+    "viewType": "multiWindow",
+    "mosaicNode": {
+      "direction": "row",
+      "first": "viewA",
+      "second": "viewB"
+    },
+    "linking": {
+      "viewB": ["viewA"]
+    }
+  },
+  {
+    "id": "KNMINLEDRKDPTimeseries",
+    "title": "Timeseries EDR collection KDP observations",
+    "keywords": "Timeseries",
+    "scope": "system",
+    "views": [
+      { "mosaicNodeId": "viewA", "viewPresetId": "TimeseriesMap" },
+      {
+        "mosaicNodeId": "viewB",
+        "viewPresetId": "KNMINLEDRKDPViewPresetTimeseries"
+      }
+    ],
+    "viewType": "multiWindow",
+    "mosaicNode": {
+      "direction": "row",
+      "first": "viewA",
+      "second": "viewB"
+    },
+    "linking": {
+      "viewB": ["viewA"]
+    }
+  },
+  {
+    "id": "screenConfigTimeSeries_knmi_timeseries_ha43_dini",
+    "title": "TimeSeries EDR KNMI HA43 DINI",
+    "scope": "system",
+    "viewType": "multiWindow",
+    "views": [
+      {
+        "mosaicNodeId": "view-1",
+        "viewPresetId": "view_knmi_timeseries_ha43_dini_wms"
+      },
+      {
+        "mosaicNodeId": "view-2",
+        "viewPresetId": "view_knmi_timeseries_ha43_dini_edr"
+      }
+    ],
+    "syncGroups": [],
+    "mosaicNode": {
+      "direction": "row",
+      "first": "view-1",
+      "second": "view-2"
+    },
+    "linking": {
+      "view-2": ["view-1"]
+    }
+  },
+  {
+    "id": "defaultCapWarningPreset",
+    "title": "Cap Warnings",
+    "keywords": "Cap,Warnings",
+    "scope": "system",
+    "views": [
+      { "mosaicNodeId": "viewA", "viewPresetId": "CapWarningMap" },
+      { "mosaicNodeId": "viewB", "viewPresetId": "CapWarningList" }
+    ],
+    "viewType": "multiWindow",
+    "mosaicNode": {
+      "direction": "row",
+      "first": "viewA",
+      "second": "viewB"
+    }
+  },
+  {
+    "id": "screenConfigTaf",
+    "title": "Taf Example",
+    "scope": "system",
+    "keywords": "taf",
+    "viewType": "singleWindow",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "taf" }],
+    "syncGroups": [],
+    "mosaicNode": "viewA"
+  },
+  {
+    "id": "screenConfigSigmet",
+    "title": "Sigmet",
+    "scope": "system",
+    "keywords": "sigmet,aviation",
+    "viewType": "singleWindow",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "sigmet" }],
+    "syncGroups": [],
+    "mosaicNode": "viewA"
+  },
+  {
+    "id": "screenConfigAirmet",
+    "title": "Airmet",
+    "scope": "system",
+    "keywords": "airmet,aviation",
+    "viewType": "singleWindow",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "airmet" }],
+    "syncGroups": [],
+    "mosaicNode": "viewA"
+  },
+  {
+    "id": "screenConfigWarnings",
+    "title": "Warnings",
+    "scope": "system",
+    "keywords": "warnings",
+    "viewType": "singleWindow",
+    "views": [{ "mosaicNodeId": "viewA", "viewPresetId": "warninglist" }],
+    "syncGroups": [],
+    "mosaicNode": "viewA"
+  },
+  {
+    "id": "defaultSoundingPreset",
+    "title": "Soundings",
+    "keywords": "soundings",
+    "scope": "system",
+    "views": [
+      { "mosaicNodeId": "viewA", "viewPresetId": "SoundingMap" },
+      { "mosaicNodeId": "viewB", "viewPresetId": "Soundings" }
+    ],
+    "viewType": "multiWindow",
+    "mosaicNode": {
+      "direction": "row",
+      "first": "viewA",
+      "second": "viewB"
+    }
+  }
+]
