@@ -369,7 +369,7 @@ resource "helm_release" "apisix" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/apisix-values-template.yaml", {
+    templatefile("./templates/helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
       hostname       = "${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}",
       ip             = module.ewc-vault-init.load_balancer_ip

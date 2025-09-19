@@ -21,7 +21,7 @@ resource "helm_release" "geoweb-frontend" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/geoweb-values-template.yaml", {
+    templatefile("./templates/helm-values/geoweb-values-template.yaml", {
       cluster_issuer = var.cluster_issuer,
       hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
@@ -106,7 +106,7 @@ resource "helm_release" "geoweb-presets-backend" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/geoweb-values-template.yaml", {
+    templatefile("./templates/helm-values/geoweb-values-template.yaml", {
       cluster_issuer = var.cluster_issuer,
       hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
@@ -181,7 +181,7 @@ resource "helm_release" "geoweb-location-backend" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/geoweb-values-template.yaml", {
+    templatefile("./templates/helm-values/geoweb-values-template.yaml", {
       cluster_issuer = var.cluster_issuer,
       hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip

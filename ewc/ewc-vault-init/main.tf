@@ -274,7 +274,7 @@ resource "helm_release" "vault" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/vault-values-template.yaml", {
+    templatefile("./templates/helm-values/vault-values-template.yaml", {
       cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
       hostname                 = "${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}",
       ip                       = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),

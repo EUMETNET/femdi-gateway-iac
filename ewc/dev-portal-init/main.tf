@@ -59,7 +59,7 @@ resource "helm_release" "keycloak" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/keycloak-values-template.yaml", {
+    templatefile("./templates/helm-values/keycloak-values-template.yaml", {
       cluster_issuer = var.cluster_issuer
       hostname       = "${var.keycloak_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
@@ -234,7 +234,7 @@ resource "helm_release" "dev-portal" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/dev-portal-values-template.yaml", {
+    templatefile("./templates/helm-values/dev-portal-values-template.yaml", {
       cluster_issuer = var.cluster_issuer
       hostname       = "${var.dev_portal_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip

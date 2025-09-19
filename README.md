@@ -19,8 +19,6 @@ femdi-gateway-iac
 │   ├── terraform.tf
 │   └── variables.tf
 ├── ewc # Deploy Apisix on EWC Rancher Cluster
-│   ├── alertmanager_configs.tf
-│   ├── apisix_global_routing.tf 
 │   ├── dev-portal-init # Deploys dev-portal and its dependencies
 │   │   ├── jobs.tf
 │   │   ├── locals.tf
@@ -47,11 +45,6 @@ femdi-gateway-iac
 │   │   ├── ingress-nginx-dashboard.json
 │   │   ├── reguest-handling-performance-dashboard.json
 │   │   └── vault-dashboard.json
-│   ├── helm-values
-│   │   ├── apisix-values-template.yaml
-│   │   ├── dev-portal-values-template.yaml
-│   │   ├── keycloak-values-template.yaml
-│   │   └── vault-values-template.yaml
 │   ├── jobs # Kubernetes jobs as bash script
 │   │   ├── apisix-restore.sh
 │   │   ├── apisix-snapshot.sh
@@ -62,9 +55,20 @@ femdi-gateway-iac
 │   │   ├── vault-restore.sh
 │   │   ├── vault-snapshot.sh
 │   │   └── vault-token-renewal.sh
-│   ├── jobs.tf
 │   ├── keycloak-realm # Keycloak Realm default settings
 │   │   └── realm-export.json
+│   ├── templates
+│   │   ├── helm-values
+│   │   │    ├── apisix-values-template.yaml
+│   │   │    ├── dev-portal-values-template.yaml
+│   │   │    ├── keycloak-values-template.yaml
+│   │   │    └── vault-values-template.yaml
+│   │   └── service-redirect-ingress.yaml
+│   ├── .terraform.lock.hcl
+│   ├── alertmanager_configs.tf
+│   ├── apisix_global_routing.tf
+│   ├── backend.tf
+│   ├── jobss.tf
 │   ├── locals.tf
 │   ├── main.tf
 │   ├── monitoring.tf
