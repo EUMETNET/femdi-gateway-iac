@@ -31,7 +31,7 @@ resource "helm_release" "geoweb-frontend" {
   set = [
     {
       name  = "versions.frontend"
-      value = "2025-08-20_09-06_51b2c096"
+      value = "2025-09-24_12-03_7e3c2bd0"
     },
     {
       name  = "frontend.url"
@@ -74,13 +74,22 @@ resource "helm_release" "geoweb-frontend" {
       value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.presets_backend_base_path}"
     },
     {
-      name  = "frontend.env.GW_DATAEXPLORER_CONFIGURATION_FILENAME"
+      name  = "frontend.env.GW_DATA_EXPLORER_CONFIGURATION_FILENAME"
       value = "dataexplorerPresets.json"
     },
     {
-      name  = "frontend.env.GW_DATAEXPLORER_BUTTON_ON_MAP"
+      name  = "frontend.env.GW_DATA_EXPLORER_BUTTON_ON_MAP"
       value = "true"
       type  = "string"
+    },
+    {
+      name  = "frontend.env.GW_FEATURE_ENABLE_SPECIAL_THEMES"
+      value = "true"
+      type  = "string"
+    },
+    {
+      name  = "frontend.env.GW_DEFAULT_THEME"
+      value = "eumetnetTheme"
     },
     {
       name  = "frontend.env.GW_LOCATION_BASE_URL"
