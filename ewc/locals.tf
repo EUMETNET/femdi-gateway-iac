@@ -117,7 +117,7 @@ locals {
 
   alert_manager_email_sender       = data.aws_ssm_parameter.alert_email_sender.value
   alert_manager_email_recipients   = data.aws_ssm_parameter.alert_email_recipients.value
-  alert_manager_smtp_auth_password = data.aws_ssm_parameter.alert_smtp_auth_password.value
-  alert_manager_smtp_auth_username = data.aws_ssm_parameter.alert_smtp_auth_username.value
+  alert_manager_smtp_auth_password = data.aws_ssm_parameter.alert_smtp_auth_password.value != "false" ? data.aws_ssm_parameter.alert_smtp_auth_password.value : ""
+  alert_manager_smtp_auth_username = data.aws_ssm_parameter.alert_smtp_auth_username.value != "false" ? data.aws_ssm_parameter.alert_smtp_auth_username.value : ""
   alert_manager_smtp_host          = data.aws_ssm_parameter.alert_smtp_host.value
 }

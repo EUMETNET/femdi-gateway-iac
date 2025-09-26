@@ -18,6 +18,7 @@ locals {
   # external_apisix_admin_api_keys:   Map of APISIX admin API keys for other clusters in the multi-cluster setup.
   # external_vault_tokens:            Map of Vault root tokens for other clusters in the multi-cluster setup.
 
+  dev_portal_keycloak_secret   = data.aws_ssm_parameter.dev_portal_keycloak_secret.value
   dev_portal_registry_password = data.aws_ssm_parameter.dev_portal_registry_password.value
   external_cluster_names = toset([
     for name in split(",", nonsensitive(data.aws_ssm_parameter.cluster_names.value)) :

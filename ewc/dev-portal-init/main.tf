@@ -18,10 +18,10 @@ locals {
   keycloak_helm_release_name = "keycloak"
 }
 
-resource "random_password" "keycloak-dev-portal-secret" {
-  length  = 32
-  special = false
-}
+#resource "random_password" "keycloak-dev-portal-secret" {
+#  length  = 32
+#  special = false
+#}
 
 # Create configmap for realm json
 resource "kubernetes_config_map" "realm-json" {
@@ -31,7 +31,7 @@ resource "kubernetes_config_map" "realm-json" {
   }
   data = {
     "realm.json" = templatefile("./keycloak-realm/realm-export.json", {
-      dev_portal_api_secret    = jsonencode(random_password.keycloak-dev-portal-secret.result)
+      dev_portal_api_secret    = jsonencode(local.dev_portal_keycloak_secret)
       google_idp_client_secret = local.google_idp_client_secret
       github_idp_client_secret = local.github_idp_client_secret
       redirect_uris = [
@@ -217,7 +217,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         "url"           = "http://${local.keycloak_helm_release_name}.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
         "realm"         = "${var.keycloak_realm_name}"
         "client_id"     = "dev-portal-api"
-        "client_secret" = random_password.keycloak-dev-portal-secret.result
+        "client_secret" = local.dev_portal_keycloak_secret
       }
     })
   }
