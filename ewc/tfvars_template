@@ -1,0 +1,9 @@
+# The authentication token required for Rancher API access. Can be queried from the Rancher UI.
+rancher_token = ""
+
+# The local file path to the Kubernetes configuration file. Can be retrieved from Rancher UI.
+kubeconfig_path = ""
+
+# The logical name assigned to the cluster. Used in e.g. service-specific domain names and cluster specific params.
+# Need to match the cluster_name value in .env.params file.
+cluster_name = ""

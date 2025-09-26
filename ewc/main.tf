@@ -1,5 +1,5 @@
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     config_path = var.kubeconfig_path
   }
 
@@ -23,7 +23,7 @@ provider "rancher2" {
 
 
 provider "vault" {
-  address = "https://${local.vault_subdomain}.${var.cluster_name}.${var.dns_zone}"
+  address = "https://${local.vault_subdomain}.${var.cluster_name}.${local.dns_zone}"
   token   = local.vault_token
 }
 
@@ -32,7 +32,7 @@ provider "random" {
 
 # Use restapi provider as http does not supprot PUT and Apisix needs PUT
 provider "restapi" {
-  uri                  = "https://admin-${local.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}/"
+  uri                  = "https://admin-${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}/"
   write_returns_object = true
 
   headers = {
@@ -65,11 +65,12 @@ module "ewc-vault-init" {
   kubeconfig_path    = var.kubeconfig_path
   cluster_name       = var.cluster_name
 
-  apisix_subdomain       = local.apisix_subdomain
-  route53_access_key     = local.route53_aws_access_key
-  route53_secret_key     = local.route53_aws_secret_access_key
-  route53_zone_id_filter = local.route53_hosted_zone_id
-  dns_zone               = var.dns_zone
+  apisix_subdomain        = local.apisix_subdomain
+  route53_access_key      = local.route53_aws_access_key
+  route53_secret_key      = local.route53_aws_secret_access_key
+  route53_hosted_zone_ids = local.route53_hosted_zone_ids
+  hosted_zone_names       = local.hosted_zone_names
+  dns_zone                = local.dns_zone
 
   vault_project_id   = rancher2_project.gateway.id
   vault_subdomain    = local.vault_subdomain
@@ -253,7 +254,8 @@ module "dev-portal-init" {
 
   kubeconfig_path = var.kubeconfig_path
 
-  dns_zone = var.dns_zone
+  dns_zone          = local.dns_zone
+  hosted_zone_names = local.hosted_zone_names
 
   cluster_issuer   = module.ewc-vault-init.cluster_issuer
   load_balancer_ip = module.ewc-vault-init.load_balancer_ip
@@ -296,9 +298,12 @@ module "geoweb" {
   count  = local.install_geoweb ? 1 : 0
   source = "./geoweb/"
 
-  dns_zone = var.dns_zone
+  dns_zone          = local.dns_zone
+  hosted_zone_names = local.hosted_zone_names
 
-  cluster_issuer   = module.ewc-vault-init.cluster_issuer
+  cluster_name   = var.cluster_name
+  cluster_issuer = module.ewc-vault-init.cluster_issuer
+
   load_balancer_ip = module.ewc-vault-init.load_balancer_ip
 
   rancher_project_id = rancher2_project.gateway.id
@@ -330,10 +335,10 @@ resource "kubernetes_config_map" "custom_error_pages" {
   }
   data = {
     "apisix_error_429.html" = templatefile("../apisix/error_pages/apisix_error_429.html", {
-      devportal_address = "${local.dev_portal_subdomain}.${var.dns_zone}"
+      devportal_address = "${local.dev_portal_subdomain}.${local.dns_zone}"
     })
     "apisix_error_403.html" = templatefile("../apisix/error_pages/apisix_error_403.html", {
-      devportal_address = "${local.dev_portal_subdomain}.${var.dns_zone}"
+      devportal_address = "${local.dev_portal_subdomain}.${local.dns_zone}"
     })
   }
 }
@@ -364,189 +369,160 @@ resource "helm_release" "apisix" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/apisix-values-template.yaml", {
+    templatefile("./templates/helm-values/apisix-values-template.yaml", {
       cluster_issuer = module.ewc-vault-init.cluster_issuer,
-      hostname       = "${local.apisix_subdomain}.${var.cluster_name}.${var.dns_zone}",
+      hostname       = "${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}",
       ip             = module.ewc-vault-init.load_balancer_ip
     })
   ]
 
-  set_sensitive {
-    name  = "apisix.admin.credentials.admin"
-    value = local.apisix_admin_api_key
-  }
+  set_sensitive = [
+    {
+      name  = "apisix.admin.credentials.admin"
+      value = local.apisix_admin_api_key
+    },
+    {
+      name  = "apisix.admin.credentials.viewer"
+      value = local.apisix_admin_reader_api_key
+    }
+  ]
 
-  set_sensitive {
-    name  = "apisix.admin.credentials.viewer"
-    value = local.apisix_admin_reader_api_key
-  }
+  set_list = [
+    {
+      name  = "apisix.admin.allow.ipList"
+      value = split(",", local.apisix_admin_api_ip_list)
+    },
+    # Custom plugins
+    {
+      name  = "apisix.plugins"
+      value = ["prometheus", "real-ip", "key-auth", "cors", "proxy-rewrite", "consumer-restriction", "response-rewrite", "limit-req", "limit-count", "serverless-pre-function"]
+    }
+  ]
 
-  set_list {
-    name  = "apisix.admin.allow.ipList"
-    value = split(",", local.apisix_admin_api_ip_list)
-  }
+  set = [
+    # Autoscaling
+    {
+      name  = "autoscaling.enabled"
+      value = true
+    },
+    {
+      name  = "autoscaling.minReplicas"
+      value = local.apisix_replica_count
+    },
+    # Enable Prometheus
+    {
+      name  = "apisix.prometheus.enabled"
+      value = true
+    },
+    {
+      name  = "metrics.serviceMonitor.enabled"
+      value = true
+    },
 
-  # Autoscaling
-  set {
-    name  = "autoscaling.enabled"
-    value = true
+    # Apisix vault integration
+    # Does not work. See https://github.com/apache/apisix-helm-chart/issues/795
+    # Replaced by data.http request after this
+    #set {
+    #  name  = "apisix.vault.enabled"
+    #  value = true
+    #}
 
-  }
+    #set {
+    #  name  = "apisix.vault.host"
+    #  value = local.vault_host
+    #}
 
-  set {
-    name  = "autoscaling.minReplicas"
-    value = local.apisix_replica_count
+    #set {
+    #  name  = "apisix.vault.prefix"
+    #  value = "${local.vault_mount_kv_base_path}/consumers"
+    #}
 
-  }
+    #set_sensitive {
+    #  name  = "apisix.vault.token"
+    #  value = vault_token.apisix-global.client_token
+    #}
 
-  # Enable Prometheus
-  set {
-    name  = "apisix.prometheus.enabled"
-    value = true
-  }
-
-  set {
-    name  = "metrics.serviceMonitor.enabled"
-    value = true
-  }
-
-  # Apisix vault integration
-  # Does not work. See https://github.com/apache/apisix-helm-chart/issues/795
-  # Replaced by data.http request after this
-  #set {
-  #  name  = "apisix.vault.enabled"
-  #  value = true
-  #}
-
-  #set {
-  #  name  = "apisix.vault.host"
-  #  value = local.vault_host
-  #}
-
-  #set {
-  #  name  = "apisix.vault.prefix"
-  #  value = "${local.vault_mount_kv_base_path}/consumers"
-  #}
-
-  #set_sensitive {
-  #  name  = "apisix.vault.token"
-  #  value = vault_token.apisix-global.client_token
-  #}
-
-  # Custom error pages mount
-  set {
-    name  = "extraVolumeMounts[0].name"
-    value = "custom-error-pages"
-
-  }
-
-  set {
-    name  = "extraVolumeMounts[0].mountPath"
-    value = "/custom/error-pages"
-
-  }
-
-  set {
-    name  = "extraVolumeMounts[0].readOnly"
-    value = true
-
-  }
-
-  set {
-    name  = "extraVolumes[0].name"
-    value = "custom-error-pages"
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.name"
-    value = kubernetes_config_map.custom_error_pages.metadata[0].name
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.items[0].key"
-    value = "apisix_error_403.html"
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.items[0].path"
-    value = "apisix_error_403.html"
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.items[1].key"
-    value = "apisix_error_429.html"
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.items[1].path"
-    value = "apisix_error_429.html"
-
-  }
-
-  #Custom error page nginx.conf
-  set {
-    name  = "apisix.nginx.configurationSnippet.httpStart"
-    value = file("../apisix/error_values/httpStart")
-  }
-
-  set {
-    name  = "apisix.nginx.configurationSnippet.httpSrv"
-    value = file("../apisix/error_values/httpSrv")
-  }
-
-  # Trust container's CA for Vault and other outbound CA requests
-  set {
-    name  = "apisix.nginx.configurationSnippet.httpEnd"
-    value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
-
-  }
-
-  # Custom plugins
-  set_list {
-    name  = "apisix.plugins"
-    value = ["prometheus", "real-ip", "key-auth", "cors", "proxy-rewrite", "consumer-restriction", "response-rewrite", "limit-req", "limit-count", "serverless-pre-function"]
-  }
-
-  set {
-    name  = "apisix.customPlugins.enabled"
-    value = true
-  }
-
-  set {
-    name  = "apisix.customPlugins.luaPath"
-    value = "/opt/custom-plugins/?.lua;/opt/custom-plugins/apisix/plugins/?.lua"
-  }
-
-  set {
-    name  = "apisix.customPlugins.plugins[0].name"
-    value = "dynamic-response-rewrite"
-  }
-
-  set {
-    name  = "apisix.customPlugins.plugins[0].configMap.name"
-    value = kubernetes_config_map.apisix_custom_plugins.metadata[0].name
-  }
-
-  set {
-    name  = "apisix.customPlugins.plugins[0].configMap.mounts[0].key"
-    value = "dynamic-response-rewrite.lua"
-  }
-
-  set {
-    name  = "apisix.customPlugins.plugins[0].configMap.mounts[0].path"
-    value = "/opt/custom-plugins/apisix/plugins/dynamic-response-rewrite.lua"
-  }
-
-  # etcd config
-  set {
-    name  = "etcd.replicaCount"
-    value = local.apisix_etcd_replica_count
-  }
+    # Custom error pages mount
+    {
+      name  = "extraVolumeMounts[0].name"
+      value = "custom-error-pages"
+    },
+    {
+      name  = "extraVolumeMounts[0].mountPath"
+      value = "/custom/error-pages"
+    },
+    {
+      name  = "extraVolumeMounts[0].readOnly"
+      value = true
+    },
+    {
+      name  = "extraVolumes[0].name"
+      value = "custom-error-pages"
+    },
+    {
+      name  = "extraVolumes[0].configMap.name"
+      value = kubernetes_config_map.custom_error_pages.metadata[0].name
+    },
+    {
+      name  = "extraVolumes[0].configMap.items[0].key"
+      value = "apisix_error_403.html"
+    },
+    {
+      name  = "extraVolumes[0].configMap.items[0].path"
+      value = "apisix_error_403.html"
+    },
+    {
+      name  = "extraVolumes[0].configMap.items[1].key"
+      value = "apisix_error_429.html"
+    },
+    {
+      name  = "extraVolumes[0].configMap.items[1].path"
+      value = "apisix_error_429.html"
+    },
+    #Custom error page nginx.conf
+    {
+      name  = "apisix.nginx.configurationSnippet.httpStart"
+      value = file("../apisix/error_values/httpStart")
+    },
+    {
+      name  = "apisix.nginx.configurationSnippet.httpSrv"
+      value = file("../apisix/error_values/httpSrv")
+    },
+    # Trust container's CA for Vault and other outbound CA requests
+    {
+      name  = "apisix.nginx.configurationSnippet.httpEnd"
+      value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
+    },
+    {
+      name  = "apisix.customPlugins.enabled"
+      value = true
+    },
+    {
+      name  = "apisix.customPlugins.luaPath"
+      value = "/opt/custom-plugins/?.lua;/opt/custom-plugins/apisix/plugins/?.lua"
+    },
+    {
+      name  = "apisix.customPlugins.plugins[0].name"
+      value = "dynamic-response-rewrite"
+    },
+    {
+      name  = "apisix.customPlugins.plugins[0].configMap.name"
+      value = kubernetes_config_map.apisix_custom_plugins.metadata[0].name
+    },
+    {
+      name  = "apisix.customPlugins.plugins[0].configMap.mounts[0].key"
+      value = "dynamic-response-rewrite.lua"
+    },
+    {
+      name  = "apisix.customPlugins.plugins[0].configMap.mounts[0].path"
+      value = "/opt/custom-plugins/apisix/plugins/dynamic-response-rewrite.lua"
+    },
+    # etcd config
+    {
+      name  = "etcd.replicaCount"
+      value = local.apisix_etcd_replica_count
+    }
+  ]
 
   lifecycle {
     precondition {
@@ -561,6 +537,24 @@ resource "helm_release" "apisix" {
   # Need connection to vault and Installs ServiceMonitor for scraping metrics
   depends_on = [module.ewc-vault-init, rancher2_app_v2.rancher-monitoring]
 
+}
+
+# Create ingress to redirect alternative domains to main domain
+resource "kubectl_manifest" "cluster-apisix-redirect" {
+  yaml_body = templatefile(
+    "./templates/service-redirect-ingress.yaml",
+    {
+      namespace                     = kubernetes_namespace.apisix.metadata.0.name
+      cluster_issuer                = module.ewc-vault-init.cluster_issuer
+      external_dns_hostname         = join(",", [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${var.cluster_name}.${name}"])
+      target_address                = module.ewc-vault-init.load_balancer_ip
+      permanent_redirect            = "https://${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}$request_uri"
+      alternative_hosted_zone_names = local.alternative_hosted_zone_names
+      subdomain                     = local.apisix_subdomain
+      cluster_name                  = var.cluster_name
+    }
+  )
+  depends_on = [helm_release.apisix]
 }
 
 # Wait for Apisix before doing a PUT-request

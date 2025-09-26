@@ -2,6 +2,11 @@
 # Dev Portal
 ##############################################################
 
+data "aws_ssm_parameter" "dev_portal_keycloak_secret" {
+  name            = "/dev_portal/keycloak_secret"
+  with_decryption = true
+}
+
 data "aws_ssm_parameter" "dev_portal_registry_password" {
   name            = "/dev_portal/registry_password"
   with_decryption = true

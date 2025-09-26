@@ -11,8 +11,7 @@ resource "aws_iam_access_key" "certmgr_extdns" {
 data "aws_iam_policy_document" "certmgr_extdns" {
   statement {
     actions = [
-      "route53:ChangeResourceRecordSets",
-      "route53:GetChange"
+      "route53:ChangeResourceRecordSets"
     ]
     resources = [
       for zone in aws_route53_zone.hosted_zones : zone.arn
@@ -21,6 +20,7 @@ data "aws_iam_policy_document" "certmgr_extdns" {
 
   statement {
     actions = [
+      "route53:GetChange",
       "route53:ListHostedZones",
       "route53:ListHostedZonesByName",
       "route53:ListResourceRecordSets"

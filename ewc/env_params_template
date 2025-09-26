@@ -1,0 +1,21 @@
+# The logical name assigned to the cluster. Used in e.g. service-specific domain names and cluster specific params.
+# Need to match the cluster_name value in .tfvars file.
+cluster_name=
+# List of allowed IP ranges for accessing APISIX Admin API. Separate multiple CIDRs with commas.
+apisix/admin_api_ip_list=0.0.0.0/0
+# Specifies the private subnet(s) used by the cluster's ingress-nginx controller. Determines the trusted addresses for real-ip plugin.
+# For now queried with kubectl describe svc ingress-nginx-controller -n kube-system and determined from the Endpoints. Separate multiple CIDRs with commas.
+apisix/ingress_nginx_private_subnets=
+# Whether to install the optional components. Current setup supports now only one installation within EWC.
+install_dev_portal=false
+install_geoweb=false
+# The URL endpoint for accessing the Rancher API dashboard. Can be queried from the Rancher UI.
+rancher_api_url=
+# The ID of the Rancher cluster. Can be queried from the Rancher API or UI.
+rancher_cluster_id=
+# Whether to enable anti-affinity for Vault pods.
+vault/anti_affinity=true
+# Actual Vault root token and unseal keys are produced by the terraform after the first run.
+# Can be as is when bootstrapping a new cluster.
+vault/root_token=placeholder
+vault/unseal_keys=[]

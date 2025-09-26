@@ -1,17 +1,30 @@
 # EWC
 
+## TODO
+
+Will update the contents as part of the tickets: "Test the whole IaC setup process#124" and "Document the K8s prerequisities needed by femdi-gateway-iac#123".
 
 ## Dependencies
-The `EWC` module requires `Bash`, [jq](https://github.com/jqlang/jq) and [kubectl](https://kubernetes.io/docs/reference/kubectl/)
 
-#TODO: Add template for .tfvars and explain variables
+The `EWC` module requires `Bash`, [jq](https://github.com/jqlang/jq), [kubectl](https://kubernetes.io/docs/reference/kubectl/) and [AWS CLI](https://aws.amazon.com/cli/)
+
+## Bootstrap variables
+
+Copy and rename `tfvars_template` to something like `<cluster_name>.tfvars` and copy and rename `env_params_template` to `.env.params`
+
+Fill both files with appropriate variables. It is also possible to provide the .tfvars variables inline when running terraform. You can find more about those parameters from corresponding templates.
+
+Once you have filled both of the files bootstrap the .env.parameters to AWS SSM Parameter Store by running:
+```bash
+AWS_PROFILE=fmi_meteogate ./bootstrap_params.sh
+```
 
 ## Init
+
 Initialize the Terraform project:
 ```bash
 terraform init
 ```
-
 
 > [!IMPORTANT] 
 > The EWC part of Terraform code has to be run in two separate part for bootstrapping the Vault instances
@@ -21,9 +34,9 @@ terraform init
 
 Run the ewc-vault-init module:
 ```bash
-terraform apply -target module.ewc-vault-init
+terraform apply -target module.ewc-vault-init --var-file=<cluster_name>.tfvars
 ```
-Provide the needed variables. The varialbe `var.vault_token` can be anything for the first run.
+Provide the needed terraform variables if no `--var-file` file is used.
 
 The expected output should look something like this.
 All the vault pods should be ready after the initialization.
@@ -49,9 +62,10 @@ vault_unseal_keys = <sensitive>
 ```
 
 > [!IMPORTANT] 
-> Make sure to store `vault_root_token` and `vault_unseal_keys` are stored somewhere safe. 
+> Make sure to store `vault_root_token` as `/<cluster_name>/vault/root_token` and `vault_unseal_keys` as `/<cluster_name>/vault/unseal_keys` to AWS Parameter Store. You can save these manually to AWS or save the values to .env.params file and run again `AWS_PROFILE=fmi_meteogate ./bootstrap_params.sh`
+
 >
-> If the Vault is recreated for a data restore operation, do not delete the previous `vault_unseal_keys`. Continue using the old unseal keys and ignore the new ones. The new `vault_root_token` is needed. For more details, see the [Vault Restore](#vault-restore) section.
+> If the Vault is recreated for a data restore operation, do not delete the previous `vault_unseal_keys`. Continue using the old unseal keys and ignore the new ones. The new `vault_root_token` is needed and need to be updated to AWS Parameter Store. For more details, see the [Vault Restore](#vault-restore) section.
 
 You can access sensitive values using commands:
 ```bash
@@ -60,6 +74,7 @@ terraform output vault_unseal_keys
 ```
 
 ## Second
+
 Run the rest of the Terraform code:
 ```bash
 terraform apply
@@ -82,11 +97,10 @@ vault_pod_ready_statuses_before_init = [
 ]
 ```
 
-> [!IMPORTANT] 
-> This time make sure to store `dev-portal_keycloak_secret` somewhere safe. This the secret which dev-portal uses to authenticate to Keycloak and its generated dynamically.:
-```bash
-terraform output dev-portal_keycloak_secret
-```
+## Parameters
+
+Parameters stored in AWS SSM Parameter Store are interacted with in files ssm.tf and the actual values to terraform files are provided through locals.tf to make it single point of truth. Also other locals should be preferrably stored to locals.tf files.
+
 ## APISIX Auto Scaling
 
 TODO: the triggers for current auto scaling [there is a related ticket](https://app.zenhub.com/workspaces/rodeo-wp2---femdi-641aeac88a26d61ff17fc730/issues/gh/eumetnet/femdi-test/141).
@@ -108,17 +122,16 @@ The current default configuration sends all alerts gathered by the Prometheus Op
 
 By default, the configuration does not group alerts; they are fired as they are received. If you want to group alerts, change the repeat interval etc. or add additional notification methods (e.g., Slack), you can modify the configuration accordingly or create a separate configuration for that.
 
-To make the default Alertmanager configuration work, you need to provide the following variables:
-- `alert_smtp_auth_username`: The SMTP username.
-- `alert_smtp_auth_password`: The SMTP password.
-- `alert_smtp_host`: The SMTP server host.
-- `alert_email_sender`: The email address used to send alerts.
-- `alert_email_recipients`: A list of email addresses to receive alerts.
+The default Alertmanager configuration are stored AWS param store as:
+- `/alert_manager/smtp_auth_username`: The SMTP username.
+- `/alert_manager/smtp_auth_password`: The SMTP password.
+- `/alert_manager/smtp_host`: The SMTP server host.
+- `/alert_manager/email_sender`: The email address used to send alerts.
+- `/alert_manager/email_recipients`: A list of email addresses to receive alerts.
 
-If you want to skip the Alertmanager configuration for now, you can provide an empty string for the `alert_smtp_auth_username` and/or `alert_smtp_auth_password` variables.
+If you want to skip the Alertmanager configuration for now, you can change the `/alert_manager/smtp_auth_username` and/or `alert_manager/smtp_auth_password` variables values to "false" in parameter store.
 
 For more advanced configurations, such as adding Slack notifications or grouping alerts, you can update the `receivers` and `route` sections in the `alertmanager_configs.tf` file or create a new configuration for a dedicated Alertmanager setup.
-
 
 ## Disaster Recovery
 

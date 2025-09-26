@@ -24,14 +24,20 @@ locals {
   # backup_bucket_name            : Name of the S3 bucket used for storing/restoring backups.
   # route53_aws_access_key        : AWS access key ID for the Route 53
   # route53_aws_secret_access_key : AWS secret access key for the Route 53
-  # route53_hosted_zone_id        : The ID of the Route 53 hosted zone associated with the specified DNS zone.
+  # hosted_zone_names             : List of Route 53 hosted zone names.
+  # dns_zone                      : The primary Route 53 hosted zone name.
+  # alternative_hosted_zone_names : List of alternative Route 53 hosted zone names excluding the main dns zone.
+  # route53_hosted_zone_ids       : The IDs of the Route 53 hosted zones.
 
   backup_aws_access_key_id      = data.aws_ssm_parameter.backups_aws_access_key_id.value
   backup_aws_secret_access_key  = data.aws_ssm_parameter.backups_aws_secret_access_key.value
   backup_bucket_name            = data.aws_ssm_parameter.backups_bucket_name.value
   route53_aws_access_key        = data.aws_ssm_parameter.certmgr_extdns_aws_access_key.value
   route53_aws_secret_access_key = data.aws_ssm_parameter.certmgr_extdns_aws_secret_access_key.value
-  route53_hosted_zone_id        = data.aws_ssm_parameter.route53_hosted_zone_id.value
+  hosted_zone_names             = split(",", data.aws_ssm_parameter.hosted_zone_names.value)
+  dns_zone                      = data.aws_ssm_parameter.route53_main_hosted_zone.value
+  alternative_hosted_zone_names = [for name in local.hosted_zone_names : name if name != local.dns_zone]
+  route53_hosted_zone_ids       = toset([for v in data.aws_ssm_parameter.route53_hosted_zone_ids : v.value])
 
   ##############################################################
   # APISIX
@@ -111,7 +117,7 @@ locals {
 
   alert_manager_email_sender       = data.aws_ssm_parameter.alert_email_sender.value
   alert_manager_email_recipients   = data.aws_ssm_parameter.alert_email_recipients.value
-  alert_manager_smtp_auth_password = data.aws_ssm_parameter.alert_smtp_auth_password.value
-  alert_manager_smtp_auth_username = data.aws_ssm_parameter.alert_smtp_auth_username.value
+  alert_manager_smtp_auth_password = data.aws_ssm_parameter.alert_smtp_auth_password.value != "false" ? data.aws_ssm_parameter.alert_smtp_auth_password.value : ""
+  alert_manager_smtp_auth_username = data.aws_ssm_parameter.alert_smtp_auth_username.value != "false" ? data.aws_ssm_parameter.alert_smtp_auth_username.value : ""
   alert_manager_smtp_host          = data.aws_ssm_parameter.alert_smtp_host.value
 }

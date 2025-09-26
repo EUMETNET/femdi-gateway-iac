@@ -12,6 +12,11 @@ variable "dns_zone" {
   type        = string
 }
 
+variable "hosted_zone_names" {
+  description = "List of Route 53 hosted zone names"
+  type        = list(string)
+}
+
 variable "cluster_issuer" {
   description = "Certrificate issuer for the cluster"
 }

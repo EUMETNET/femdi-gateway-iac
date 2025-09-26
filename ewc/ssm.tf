@@ -38,8 +38,17 @@ data "aws_ssm_parameter" "certmgr_extdns_aws_secret_access_key" {
   with_decryption = true
 }
 
-data "aws_ssm_parameter" "route53_hosted_zone_id" {
-  name = "/route53/hosted_zone_id/${var.dns_zone}"
+data "aws_ssm_parameter" "hosted_zone_names" {
+  name = "/route53/hosted_zone_names"
+}
+
+data "aws_ssm_parameter" "route53_hosted_zone_ids" {
+  for_each = toset(nonsensitive(local.hosted_zone_names))
+  name     = "/route53/hosted_zone_id/${each.value}"
+}
+
+data "aws_ssm_parameter" "route53_main_hosted_zone" {
+  name = "/route53/main_hosted_zone"
 }
 
 

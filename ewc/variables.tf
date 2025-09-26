@@ -24,9 +24,3 @@ variable "cluster_name" {
   description = "Identifier for the cluster"
   type        = string
 }
-
-variable "dns_zone" {
-  description = "DNS zone for cert-manager"
-  type        = string
-  default     = "meteogate.eu"
-}
