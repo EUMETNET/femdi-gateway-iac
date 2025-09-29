@@ -97,7 +97,7 @@ resource "helm_release" "geoweb-frontend" {
     },
     {
       name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
-      value = "dcd0eb6a-78dc-11f0-84ba-7ebf8d5f94ed"
+      value = "46a7beec-9d22-11f0-a3fc-9e27ba5f6c02"
     }
   ]
 }

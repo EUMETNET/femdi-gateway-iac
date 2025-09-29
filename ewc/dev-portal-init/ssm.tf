@@ -3,7 +3,7 @@
 ##############################################################
 
 data "aws_ssm_parameter" "dev_portal_keycloak_secret" {
-  name            = "/dev_portal/keycloak_secret"
+  name            = "/${var.cluster_name}/dev_portal/keycloak_secret"
   with_decryption = true
 }
 
@@ -37,19 +37,19 @@ resource "random_password" "keycloak_admin_password" {
 }
 
 resource "aws_ssm_parameter" "keycloak_admin_password" {
-  name        = "/keycloak/admin_password"
+  name        = "/${var.cluster_name}/keycloak/admin_password"
   description = "Admin password for Keycloak"
   type        = "SecureString"
   value       = random_password.keycloak_admin_password.result
 }
 
 data "aws_ssm_parameter" "keycloak_github_idp_client_secret" {
-  name            = "/keycloak/github_idp_client_secret"
+  name            = "/${var.cluster_name}/keycloak/github_idp_client_secret"
   with_decryption = true
 }
 
 data "aws_ssm_parameter" "keycloak_google_idp_client_secret" {
-  name            = "/keycloak/google_idp_client_secret"
+  name            = "/${var.cluster_name}/keycloak/google_idp_client_secret"
   with_decryption = true
 }
 

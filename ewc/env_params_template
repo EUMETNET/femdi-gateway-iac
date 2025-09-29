@@ -6,9 +6,20 @@ apisix/admin_api_ip_list=0.0.0.0/0
 # Specifies the private subnet(s) used by the cluster's ingress-nginx controller. Determines the trusted addresses for real-ip plugin.
 # For now queried with kubectl describe svc ingress-nginx-controller -n kube-system and determined from the Endpoints. Separate multiple CIDRs with commas.
 apisix/ingress_nginx_private_subnets=
-# Whether to install the optional components. Current setup supports now only one installation within EWC.
-install_dev_portal=false
-install_geoweb=false
+# Dev Portal subdomain, can be placeholder if not installing Dev Portal.
+dev_portal/subdomain=placeholder
+# Whether to install Dev Portal
+dev_portal/install=false
+# Whether to install GeoWeb
+geoweb/install=false
+# Geoweb subdomain, can be placeholder if not installing GeoWeb.
+geoweb/subdomain=explorer
+# OAuth2 client secret for GitHub identity provider in Keycloak, can be removed if not installing Dev Portal.
+keycloak/github_idp_client_secret=placeholder
+# OAuth2 client secret for Google identity provider in Keycloak, can be removed if not installing Dev Portal.
+keycloak/google_idp_client_secret=placeholder
+# Keycloak subdomain, can be placeholder if not installing Dev Portal.
+keycloak/subdomain=placeholder
 # The URL endpoint for accessing the Rancher API dashboard. Can be queried from the Rancher UI.
 rancher_api_url=
 # The ID of the Rancher cluster. Can be queried from the Rancher API or UI.

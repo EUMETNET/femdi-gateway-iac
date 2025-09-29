@@ -109,11 +109,11 @@ data "aws_ssm_parameter" "apisix_etcd_replica_count" {
 ##############################################################
 
 data "aws_ssm_parameter" "dev_portal_subdomain" {
-  name = "/dev_portal/subdomain"
+  name = "/${var.cluster_name}/dev_portal/subdomain"
 }
 
 data "aws_ssm_parameter" "install_dev_portal" {
-  name = "/${var.cluster_name}/install_dev_portal"
+  name = "/${var.cluster_name}/dev_portal/install"
 }
 
 ##############################################################
@@ -121,7 +121,7 @@ data "aws_ssm_parameter" "install_dev_portal" {
 ##############################################################
 
 data "aws_ssm_parameter" "keycloak_subdomain" {
-  name = "/keycloak/subdomain"
+  name = "/${var.cluster_name}/keycloak/subdomain"
 }
 
 data "aws_ssm_parameter" "keycloak_realm_name" {
@@ -150,11 +150,11 @@ data "aws_ssm_parameter" "vault_key_treshold" {
 ##############################################################
 
 data "aws_ssm_parameter" "geoweb_subdomain" {
-  name = "/geoweb/subdomain"
+  name = "/${var.cluster_name}/geoweb/subdomain"
 }
 
 data "aws_ssm_parameter" "install_geoweb" {
-  name = "/${var.cluster_name}/install_geoweb"
+  name = "/${var.cluster_name}/geoweb/install"
 }
 
 ##############################################################
