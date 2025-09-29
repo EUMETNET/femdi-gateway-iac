@@ -2,7 +2,7 @@
 set -e
 
 # Edit these lists to match your secure and stringlist keys
-SECURE_KEYS=("vault/root_token" "vault/unseal_keys")
+SECURE_KEYS=("vault/root_token" "vault/unseal_keys" "keycloak/github_idp_client_secret" "keycloak/google_idp_client_secret")
 STRINGLIST_KEYS=("apisix/admin_api_ip_list" "apisix/ingress_nginx_private_subnets")
 
 # Extract cluster_name
