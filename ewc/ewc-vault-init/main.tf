@@ -356,14 +356,14 @@ resource "kubectl_manifest" "cluster-vault-redirect" {
   yaml_body = templatefile(
     "./templates/service-redirect-ingress.yaml",
     {
-      namespace                     = kubernetes_namespace.vault.metadata.0.name
-      cluster_issuer                = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
-      external_dns_hostname         = join(",", [for name in local.alternative_hosted_zone_names : "${var.vault_subdomain}.${var.cluster_name}.${name}"])
-      target_address                = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
-      permanent_redirect            = "https://${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}$request_uri"
-      alternative_hosted_zone_names = local.alternative_hosted_zone_names
-      subdomain                     = var.vault_subdomain
-      cluster_name                  = var.cluster_name
+      namespace             = kubernetes_namespace.vault.metadata.0.name
+      cluster_issuer        = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.vault_subdomain}.${var.cluster_name}.${name}"])
+      target_address        = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
+      permanent_redirect    = "https://${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}$request_uri"
+      redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.vault_subdomain}.${var.cluster_name}.${name}"]
+      subdomain             = var.vault_subdomain
+      cluster_name          = var.cluster_name
     }
   )
   depends_on = [helm_release.vault]

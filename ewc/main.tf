@@ -521,6 +521,18 @@ resource "helm_release" "apisix" {
     {
       name  = "etcd.replicaCount"
       value = local.apisix_etcd_replica_count
+    },
+    {
+      name  = "etcd.image.registry"
+      value = "public.ecr.aws"
+    },
+    {
+      name  = "etcd.image.repository"
+      value = "bitnami/etcd"
+    },
+    {
+      name  = "etcd.image.tag"
+      value = "3.5.10-debian-11-r2"
     }
   ]
 
@@ -544,14 +556,14 @@ resource "kubectl_manifest" "cluster-apisix-redirect" {
   yaml_body = templatefile(
     "./templates/service-redirect-ingress.yaml",
     {
-      namespace                     = kubernetes_namespace.apisix.metadata.0.name
-      cluster_issuer                = module.ewc-vault-init.cluster_issuer
-      external_dns_hostname         = join(",", [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${var.cluster_name}.${name}"])
-      target_address                = module.ewc-vault-init.load_balancer_ip
-      permanent_redirect            = "https://${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}$request_uri"
-      alternative_hosted_zone_names = local.alternative_hosted_zone_names
-      subdomain                     = local.apisix_subdomain
-      cluster_name                  = var.cluster_name
+      namespace             = kubernetes_namespace.apisix.metadata.0.name
+      cluster_issuer        = module.ewc-vault-init.cluster_issuer
+      external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${var.cluster_name}.${name}"])
+      target_address        = module.ewc-vault-init.load_balancer_ip
+      permanent_redirect    = "https://${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}$request_uri"
+      redirect_domains      = [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${var.cluster_name}.${name}"]
+      subdomain             = local.apisix_subdomain
+      cluster_name          = var.cluster_name
     }
   )
   depends_on = [helm_release.apisix]

@@ -9,11 +9,14 @@ metadata:
     external-dns.alpha.kubernetes.io/target: ${target_address}
     kubernetes.io/tls-acme: "true"
     nginx.ingress.kubernetes.io/permanent-redirect: ${permanent_redirect}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect-code: "301"
 spec:
   rules:
   # dummy backend, never actually used because redirect handles requests
-%{ for domain in alternative_hosted_zone_names ~}
-    - host: ${subdomain}.${cluster_name}.${domain}
+%{ for domain in redirect_domains ~}
+    - host: ${domain}
       http:
         paths:
           - path: /
@@ -26,7 +29,7 @@ spec:
 %{ endfor ~}
   tls:
     - hosts:
-%{ for name in alternative_hosted_zone_names ~}
-        - ${subdomain}.${cluster_name}.${name}
+%{ for domain in redirect_domains ~}
+        - ${domain}
 %{ endfor ~}
       secretName: redirect-${subdomain}-${cluster_name}-certificate

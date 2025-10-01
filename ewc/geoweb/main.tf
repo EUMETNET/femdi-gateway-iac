@@ -214,14 +214,14 @@ resource "kubectl_manifest" "cluster-geoweb-redirect" {
   yaml_body = templatefile(
     "./templates/service-redirect-ingress.yaml",
     {
-      namespace                     = kubernetes_namespace.geoweb.metadata.0.name
-      cluster_issuer                = var.cluster_issuer
-      external_dns_hostname         = join(",", [for name in local.alternative_hosted_zone_names : "${var.keycloak_subdomain}.${var.cluster_name}.${name}"])
-      target_address                = var.load_balancer_ip
-      permanent_redirect            = "https://${var.geoweb_subdomain}.${var.cluster_name}.${var.dns_zone}$request_uri"
-      alternative_hosted_zone_names = local.alternative_hosted_zone_names
-      subdomain                     = var.geoweb_subdomain
-      cluster_name                  = var.cluster_name
+      namespace             = kubernetes_namespace.geoweb.metadata.0.name
+      cluster_issuer        = var.cluster_issuer
+      external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.geoweb_subdomain}.${name}"])
+      target_address        = var.load_balancer_ip
+      permanent_redirect    = "https://${var.geoweb_subdomain}.${var.dns_zone}$request_uri"
+      redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.geoweb_subdomain}.${name}"]
+      subdomain             = var.geoweb_subdomain
+      cluster_name          = var.cluster_name
     }
   )
 }
