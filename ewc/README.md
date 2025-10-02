@@ -4,6 +4,14 @@
 
 Will update the contents as part of the tickets: "Test the whole IaC setup process#124" and "Document the K8s prerequisities needed by femdi-gateway-iac#123".
 
+## Prerequisites
+
+There should be Rancher Manager and RKE2 Kubernetes cluster deployment running. Instructions how to deploy one in ECMWF side https://confluence.ecmwf.int/display/EWCLOUDKB/EWC+Kubernetes+Self-service.
+
+TODO need to find out corresponding instructions from EUMETSAT side since at least the available options for Rancher Manager provisioning differs.
+
+in eumetsat side these differs so far: security group is ssh-http-https, networks is internal and floating IP is external. 
+
 ## Dependencies
 
 The `EWC` module requires `Bash`, [jq](https://github.com/jqlang/jq), [kubectl](https://kubernetes.io/docs/reference/kubectl/) and [AWS CLI](https://aws.amazon.com/cli/)
