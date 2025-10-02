@@ -239,3 +239,127 @@ resource "kubernetes_config_map" "dashboard-vault" {
 
   depends_on = [rancher2_app_v2.rancher-monitoring]
 }
+
+resource "kubernetes_namespace" "grafana" {
+  metadata {
+    annotations = {
+      "field.cattle.io/projectId" = rancher2_project.gateway.id
+    }
+    name = "grafana"
+  }
+}
+
+resource "kubernetes_secret" "auth_generic_oauth" {
+  metadata {
+    name      = "auth-generic-oauth-secret"
+    namespace = kubernetes_namespace.grafana.metadata[0].name
+  }
+  type = "Opaque"
+  data = {
+    client_secret = "n6IRuCO6P8fdYCdJCgpGyzxy0RxcA5RK"
+  }
+}
+
+resource "helm_release" "standalone_grafana" {
+  name       = "grafana"
+  namespace  = kubernetes_namespace.grafana.metadata[0].name
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "grafana"
+  version    = "9.4.5" # just to test out
+  values = [
+    <<EOF
+replicaCount: 1
+adminUser: admin
+adminPassword: yourpassword
+service:
+  type: ClusterIP
+  port: 80
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: ${module.ewc-vault-init.cluster_issuer}
+    external-dns.alpha.kubernetes.io/hostname: "grafana.${local.dns_zone}"
+    external-dns.alpha.kubernetes.io/target: ${module.ewc-vault-init.load_balancer_ip}
+    kubernetes.io/tls-acme: "true"
+  hosts:
+    - "grafana.${local.dns_zone}"
+  tls:
+    - hosts:
+        - "grafana.${local.dns_zone}"
+      secretName: grafana-tls
+extraSecretMounts:
+  - name: auth-generic-oauth-secret-mount
+    secretName: auth-generic-oauth-secret
+    defaultMode: 0440
+    mountPath: /etc/secrets/auth_generic_oauth
+    readOnly: true
+env:
+  GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET_FILE: /etc/secrets/auth_generic_oauth/client_secret
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        uid: prometheus
+        url: http://rancher-monitoring-prometheus.cattle-monitoring-system.svc.cluster.local:9090
+        access: proxy
+        isDefault: true
+sidecar:
+  dashboards:
+    enabled: true
+    label: grafana_dashboard
+    folder: /var/lib/grafana/dashboards
+
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards
+grafana.ini:
+  server:
+    root_url: https://grafana.${local.dns_zone}
+  security:
+    angular_support_enabled: true
+  auth.generic_oauth:
+    enabled: true
+    name: Keycloak
+    allow_sign_up: true
+    scopes: openid profile email
+    client_id: grafana-oauth
+    client_secret: $__file{/etc/secrets/auth_generic_oauth/client_secret}
+    auth_url: https://keycloak.meteogate.eu/realms/meteogate/protocol/openid-connect/auth
+    token_url: https://keycloak.meteogate.eu/realms/meteogate/protocol/openid-connect/token
+    api_url: https://keycloak.meteogate.eu/realms/meteogate/protocol/openid-connect/userinfo
+    role_attribute_path: "contains(groups[*], 'Admin') && 'Admin' || 'Viewer'"
+    login_attribute_path: preferred_username
+    email_attribute_path: email
+    name_attribute_path: name
+    allow_assign_grafana_admin: false
+EOF
+  ]
+
+}
+
+# Create configmap for Apisix grafana dashboard
+resource "kubernetes_config_map" "dashboard-apisix-standalone-grafana" {
+  metadata {
+    name      = "dashboard-apisix"
+    namespace = kubernetes_namespace.grafana.metadata[0].name
+    labels = {
+      grafana_dashboard = "1"
+    }
+  }
+  data = {
+    "dashboard-apisix.json" = file("./grafana-dashboards/apisix-dashboard.json")
+  }
+
+  depends_on = [helm_release.standalone_grafana]
+}
