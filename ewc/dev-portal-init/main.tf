@@ -124,6 +124,19 @@ resource "helm_release" "keycloak" {
     {
       name  = "replicaCount"
       value = local.keycloak_replica_count
+    },
+    # Enable built-in metrics
+    {
+      name  = "metrics.enabled"
+      value = "true"
+    },
+    {
+      name  = "metrics.serviceMonitor.enabled"
+      value = "true"
+    },
+    {
+      name  = "metrics.serviceMonitor.interval"
+      value = "30s"
     }
   ]
 
