@@ -70,12 +70,20 @@ resource "helm_release" "keycloak" {
   # See: https://github.com/bitnami/charts/tree/main/bitnami/keycloak#use-with-ingress-offloading-ssl
   set = [
     {
+      name  = "image.repository"
+      value = "bitnamilegacy/keycloak"
+    },
+    {
       name  = "proxy"
       value = "edge"
     },
     {
       name  = "auth.adminUser"
       value = "admin"
+    },
+    {
+      name  = "posthgresql.image.repository"
+      value = "bitnamilegacy/postgresql"
     },
     {
       name  = "postgresql.auth.username"

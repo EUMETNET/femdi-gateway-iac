@@ -523,16 +523,8 @@ resource "helm_release" "apisix" {
       value = local.apisix_etcd_replica_count
     },
     {
-      name  = "etcd.image.registry"
-      value = "public.ecr.aws"
-    },
-    {
       name  = "etcd.image.repository"
-      value = "bitnami/etcd"
-    },
-    {
-      name  = "etcd.image.tag"
-      value = "3.5.10-debian-11-r2"
+      value = "bitnamilegacy/etcd"
     }
   ]
 
