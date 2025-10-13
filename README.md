@@ -19,17 +19,19 @@ femdi-gateway-iac
 │   ├── terraform.tf
 │   └── variables.tf
 ├── ewc # Deploy Apisix on EWC Rancher Cluster
-│   ├── alertmanager_configs.tf
-│   ├── apisix_global_routing.tf 
 │   ├── dev-portal-init # Deploys dev-portal and its dependencies
 │   │   ├── jobs.tf
+│   │   ├── locals.tf
 │   │   ├── main.tf
 │   │   ├── outuputs.tf
+│   │   ├── ssm.tf
 │   │   ├── terraform.tf
 │   │   └── variables.tf
 │   ├── ewc-vault-init # Deploys and Initializes Hashicorps Vaults
+│   │   ├── locals.tf
 │   │   ├── main.tf
 │   │   ├── outuputs.tf
+│   │   ├── ssm.tf
 │   │   ├── terraform.tf
 │   │   ├── variables.tf
 │   │   └── vault-init
@@ -38,19 +40,11 @@ femdi-gateway-iac
 │   │   ├── main.tf
 │   │   ├── terraform.tf
 │   │   ├── variables.tf
-│   ├── global-dns-records # Deploys global DNS records that are related to domain but not gateway itself
-│   │   ├── main.tf
-│   │   ├── variables.tf
 │   ├── grafana-dashboards
 │   │   ├── apisix-dashboard.json
 │   │   ├── ingress-nginx-dashboard.json
 │   │   ├── reguest-handling-performance-dashboard.json
 │   │   └── vault-dashboard.json
-│   ├── helm-values
-│   │   ├── apisix-values-template.yaml
-│   │   ├── dev-portal-values-template.yaml
-│   │   ├── keycloak-values-template.yaml
-│   │   └── vault-values-template.yaml
 │   ├── jobs # Kubernetes jobs as bash script
 │   │   ├── apisix-restore.sh
 │   │   ├── apisix-snapshot.sh
@@ -61,14 +55,36 @@ femdi-gateway-iac
 │   │   ├── vault-restore.sh
 │   │   ├── vault-snapshot.sh
 │   │   └── vault-token-renewal.sh
-│   ├── jobs.tf
 │   ├── keycloak-realm # Keycloak Realm default settings
 │   │   └── realm-export.json
+│   ├── templates
+│   │   ├── helm-values
+│   │   │    ├── apisix-values-template.yaml
+│   │   │    ├── dev-portal-values-template.yaml
+│   │   │    ├── keycloak-values-template.yaml
+│   │   │    └── vault-values-template.yaml
+│   │   └── service-redirect-ingress.yaml
+│   ├── .terraform.lock.hcl
+│   ├── alertmanager_configs.tf
+│   ├── apisix_global_routing.tf
+│   ├── backend.tf
+│   ├── jobss.tf
+│   ├── locals.tf
 │   ├── main.tf
 │   ├── monitoring.tf
 │   ├── outuputs.tf
 │   ├── README.md
+│   ├── locals.tf
 │   ├── terraform.tf
+│   └── variables.tf
+├── global # Contains global AWS account related configurations
+│   ├── backend.tf
+│   ├── iam.tf
+│   ├── output.tf
+│   ├── provider.tf
+│   ├── route53.tf
+│   ├── s3.tf
+│   ├── ssm.tf
 │   └── variables.tf
 └── scripts # Misc scripts
 ```

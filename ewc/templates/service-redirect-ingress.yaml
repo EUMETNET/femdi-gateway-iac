@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ${subdomain}-${cluster_name}-alt-domains-permanent-redirect
+  namespace: ${namespace}
+  annotations:
+    cert-manager.io/cluster-issuer: ${cluster_issuer}
+    external-dns.alpha.kubernetes.io/hostname: ${external_dns_hostname}
+    external-dns.alpha.kubernetes.io/target: ${target_address}
+    kubernetes.io/tls-acme: "true"
+    nginx.ingress.kubernetes.io/permanent-redirect: ${permanent_redirect}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect-code: "301"
+spec:
+  rules:
+  # dummy backend, never actually used because redirect handles requests
+%{ for domain in redirect_domains ~}
+    - host: ${domain}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: default-http-backend
+                port:
+                  number: 80
+%{ endfor ~}
+  tls:
+    - hosts:
+%{ for domain in redirect_domains ~}
+        - ${domain}
+%{ endfor ~}
+      secretName: redirect-${subdomain}-${cluster_name}-certificate

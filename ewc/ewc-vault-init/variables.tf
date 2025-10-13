@@ -36,8 +36,8 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "apisix_global_subdomain" {
-  description = "Unified subdomain to access any APISIX gateway instance"
+variable "apisix_subdomain" {
+  description = "Subdomain for APISIX"
   type        = string
 }
 
@@ -53,21 +53,20 @@ variable "route53_secret_key" {
   sensitive   = true
 }
 
-variable "route53_zone_id_filter" {
-  description = "ZoneIdFilter for route53"
-  type        = string
+variable "route53_hosted_zone_ids" {
+  description = "List of Route 53 hosted zone IDs"
+  type        = list(string)
+}
+
+variable "hosted_zone_names" {
+  description = "List of Route 53 hosted zone names"
+  type        = list(string)
 }
 
 variable "dns_zone" {
   description = "DNS zone for cert-manager"
   type        = string
 }
-
-variable "email_cert_manager" {
-  description = "email for Let's encrypt cert-manager"
-  type        = string
-}
-
 
 variable "vault_project_id" {
   description = "Rancher project where vault namespace will be created"
@@ -80,17 +79,6 @@ variable "vault_subdomain" {
   default     = "vault"
 }
 
-variable "vault_replicas" {
-  description = "Amount of vault replicas"
-  type        = number
-  default     = 3
-}
-
-variable "vault_anti-affinity" {
-  description = "Do you want to use Vault anti-affinity"
-  type        = bool
-  default     = true
-}
 variable "vault_key_treshold" {
   description = "Treshold to unseal Vault"
   type        = number

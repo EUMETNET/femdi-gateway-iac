@@ -1,5 +1,5 @@
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     config_path = var.kubeconfig_path
   }
 
@@ -63,38 +63,36 @@ resource "helm_release" "external-dns" {
   namespace        = kubernetes_namespace.external-dns.metadata.0.name
   create_namespace = false
 
-  set {
-    name  = "policy"
-    value = "upsert-only"
-  }
+  set = [
+    {
+      name  = "policy"
+      value = "upsert-only"
+    },
+    {
+      name  = "controller.ingressClassResource.default"
+      value = true
+    },
+    {
+      name  = "aws.credentials.accessKey"
+      value = var.route53_access_key
+    },
+    {
+      name  = "aws.credentials.secretKey"
+      value = var.route53_secret_key
+    }
+  ]
 
-  set {
-    name  = "controller.ingressClassResource.default"
-    value = true
-  }
-
-  set {
-    name  = "aws.credentials.accessKey"
-    value = var.route53_access_key
-
-  }
-
-  set {
-    name  = "aws.credentials.secretKey"
-    value = var.route53_secret_key
-
-  }
-
-  set_list {
-    name  = "zoneIdFilters"
-    value = [var.route53_zone_id_filter]
-  }
-
-  # Global APISIX subdomain handled separately
-  set_list {
-    name  = "excludeDomains"
-    value = ["${var.apisix_global_subdomain}.${var.dns_zone}"]
-  }
+  set_list = [
+    {
+      name  = "zoneIdFilters"
+      value = var.route53_hosted_zone_ids
+    },
+    # Global APISIX subdomain handled separately
+    {
+      name  = "excludeDomains"
+      value = [for name in var.hosted_zone_names : "${var.apisix_subdomain}.${name}"]
+    }
+  ]
 }
 
 ################################################################################
@@ -117,30 +115,28 @@ resource "helm_release" "cert-manager" {
   namespace        = kubernetes_namespace.cert-manager.metadata.0.name
   create_namespace = false
 
-  set {
-    name  = "installCRDs"
-    value = true
-  }
-
-  set {
-    name  = "ingressShim.defaultACMEChallengeType"
-    value = "dns01"
-  }
-
-  set {
-    name  = "ingressShim.defaultACMEDNS01ChallengeProvider"
-    value = "route53"
-  }
-
-  set {
-    name  = "ingressShim.defaultIssuerKind"
-    value = "ClusterIssuer"
-  }
-
-  set {
-    name  = "ingressShim.letsencrypt-prod"
-    value = "route53"
-  }
+  set = [
+    {
+      name  = "installCRDs"
+      value = true
+    },
+    {
+      name  = "ingressShim.defaultACMEChallengeType"
+      value = "dns01"
+    },
+    {
+      name  = "ingressShim.defaultACMEDNS01ChallengeProvider"
+      value = "route53"
+    },
+    {
+      name  = "ingressShim.defaultIssuerKind"
+      value = "ClusterIssuer"
+    },
+    {
+      name  = "ingressShim.letsencrypt-prod"
+      value = "route53"
+    }
+  ]
 }
 
 resource "kubernetes_secret" "acme-route53-secret" {
@@ -166,7 +162,7 @@ locals {
     }
     "spec" = {
       "acme" = {
-        "email" = var.email_cert_manager
+        "email" = local.cert_manager_email
         "privateKeySecretRef" = {
           "name" = "letsencrypt-prod"
         }
@@ -184,7 +180,7 @@ locals {
               }
             }
             "selector" = {
-              "dnsZones" = [var.dns_zone]
+              "dnsZones" = var.hosted_zone_names
             }
           },
         ]
@@ -278,14 +274,14 @@ resource "helm_release" "vault" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/vault-values-template.yaml", {
+    templatefile("./templates/helm-values/vault-values-template.yaml", {
       cluster_issuer           = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
       hostname                 = "${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}",
       ip                       = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
       vault_certificate_secret = local.vault_certificate_secret
-      replicas                 = var.vault_replicas
-      replicas_iterator        = range(var.vault_replicas)
-      anti-affinity            = var.vault_anti-affinity
+      replicas                 = local.vault_replica_count
+      replicas_iterator        = range(local.vault_replica_count)
+      anti-affinity            = local.vault_anti_affinity
       release_name             = local.vault_helm_release_name
     })
   ]
@@ -302,7 +298,7 @@ resource "time_sleep" "wait_vault_before" {
 }
 
 data "kubernetes_resource" "vault-pods-before" {
-  count = var.vault_replicas
+  count = local.vault_replica_count
 
   api_version = "v1"
   kind        = "Pod"
@@ -342,7 +338,7 @@ resource "time_sleep" "wait_vault_after" {
 }
 
 data "kubernetes_resource" "vault-pods-after" {
-  count = var.vault_replicas
+  count = local.vault_replica_count
 
   api_version = "v1"
   kind        = "Pod"
@@ -353,4 +349,22 @@ data "kubernetes_resource" "vault-pods-after" {
   }
 
   depends_on = [helm_release.vault, time_sleep.wait_vault_before, data.kubernetes_resource.vault-pods-before, data.external.vault-init, time_sleep.wait_vault_after]
+}
+
+# Create ingress to redirect alternative domains to main domain
+resource "kubectl_manifest" "cluster-vault-redirect" {
+  yaml_body = templatefile(
+    "./templates/service-redirect-ingress.yaml",
+    {
+      namespace             = kubernetes_namespace.vault.metadata.0.name
+      cluster_issuer        = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
+      external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.vault_subdomain}.${var.cluster_name}.${name}"])
+      target_address        = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
+      permanent_redirect    = "https://${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}$request_uri"
+      redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.vault_subdomain}.${var.cluster_name}.${name}"]
+      subdomain             = var.vault_subdomain
+      cluster_name          = var.cluster_name
+    }
+  )
+  depends_on = [helm_release.vault]
 }

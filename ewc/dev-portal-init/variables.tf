@@ -12,6 +12,11 @@ variable "dns_zone" {
   type        = string
 }
 
+variable "hosted_zone_names" {
+  description = "List of Route 53 hosted zone names"
+  type        = list(string)
+}
+
 variable "cluster_issuer" {
   description = "Certrificate issuer for the cluster"
 }
@@ -26,10 +31,9 @@ variable "rancher_project_id" {
   type        = string
 }
 
-variable "keycloak_admin_password" {
-  description = "Password for keycloak admin"
+variable "cluster_name" {
+  description = "Identifier for the cluster"
   type        = string
-  sensitive   = true
 }
 
 variable "keycloak_subdomain" {
@@ -37,25 +41,14 @@ variable "keycloak_subdomain" {
   type        = string
 }
 
-variable "keycloak_replicas" {
-  description = "Amount of keycloak replicas"
-  type        = number
-}
-
 variable "keycloak_realm_name" {
   description = "Name of the keycloak realm"
   type        = string
 }
 
-variable "dev-portal_subdomain" {
+variable "dev_portal_subdomain" {
   description = "subdomain where devportal will be hosted"
   type        = string
-}
-
-variable "dev-portal_registry_password" {
-  description = "Container registry password for dev-portal"
-  type        = string
-  sensitive   = true
 }
 
 variable "dev-portal_vault_token" {
@@ -69,12 +62,7 @@ variable "apisix_subdomain" {
   type        = string
 }
 
-variable "apisix_global_subdomain" {
-  description = "Unified subdomain to access any APISIX gateway instance"
-  type        = string
-}
-
-variable "apisix_admin" {
+variable "apisix_admin_api_key" {
   description = "Admin credentials for Apisix"
   type        = string
   sensitive   = true
@@ -90,26 +78,6 @@ variable "apisix_namespace_name" {
   type        = string
 }
 
-variable "apisix_additional_instances" {
-  description = "Config for additional Apisix instances"
-  type = list(object({
-    name          = string
-    admin_url     = string
-    admin_api_key = string
-  }))
-  default = []
-}
-
-variable "vault_additional_instances" {
-  description = "Config for additional Apisix instances"
-  type = list(object({
-    name  = string
-    token = string
-    url   = string
-  }))
-  default = []
-}
-
 variable "vault_helm_release_name" {
   description = "Name of the Helm release for Vault"
   type        = string
@@ -120,37 +88,30 @@ variable "vault_namespace_name" {
   type        = string
 }
 
+variable "vault_subdomain" {
+  description = "subdomain where vault will be hosted"
+  type        = string
+}
+
 variable "vault_mount_kv_base_path" {
   description = "Base path for KV secrets engine in Vault"
   type        = string
 }
 
-variable "google_idp_client_secret" {
-  description = "Secret to use Google idp"
-  type        = string
-  sensitive   = true
-}
-
-variable "github_idp_client_secret" {
-  description = "Secret to use Github idp"
-  type        = string
-  sensitive   = true
-}
-
-variable "s3_bucket_access_key" {
+variable "backup_bucket_access_key" {
   description = "AWS access key for S3 bucket for backups"
   type        = string
   sensitive   = true
 }
 
-variable "s3_bucket_secret_key" {
+variable "backup_bucket_secret_key" {
   description = "AWS secret key for S3 bucket for backups"
   type        = string
   sensitive   = true
 }
 
-variable "backup_bucket_base_path" {
-  description = "AWS S3 bucket base path for Keycloak backup files"
+variable "backup_bucket_name" {
+  description = "AWS S3 bucket name for backups"
   type        = string
 }
 

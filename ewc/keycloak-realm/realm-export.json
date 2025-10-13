@@ -1,6 +1,6 @@
 {
   "id": "42f99bdf-9cf1-420b-ae74-594e4f96faad",
-  "realm": "test",
+  "realm": "meteogate",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,
@@ -66,7 +66,7 @@
       },
       {
         "id": "c8c93745-dbbd-49e8-af76-175bb2ca62a5",
-        "name": "default-roles-test",
+        "name": "default-roles-meteogate",
         "description": "$${role_default-roles}",
         "composite": true,
         "composites": {
@@ -441,7 +441,7 @@
   ],
   "defaultRole": {
     "id": "c8c93745-dbbd-49e8-af76-175bb2ca62a5",
-    "name": "default-roles-test",
+    "name": "default-roles-meteogate",
     "description": "$${role_default-roles}",
     "composite": true,
     "clientRole": false,
@@ -504,7 +504,7 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
-        "default-roles-test"
+        "default-roles-meteogate"
       ],
       "clientRoles": {
         "realm-management": [
@@ -540,13 +540,13 @@
       "clientId": "account",
       "name": "$${client_account}",
       "rootUrl": "$${authBaseUrl}",
-      "baseUrl": "/realms/test/account/",
+      "baseUrl": "/realms/meteogate/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/realms/test/account/*"
+        "/realms/meteogate/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -584,13 +584,13 @@
       "clientId": "account-console",
       "name": "$${client_account-console}",
       "rootUrl": "$${authBaseUrl}",
-      "baseUrl": "/realms/test/account/",
+      "baseUrl": "/realms/meteogate/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/realms/test/account/*"
+        "/realms/meteogate/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -818,8 +818,8 @@
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": "${jsonencode(redirect_uris)}",
-      "webOrigins": "${jsonencode(web_origins)}",
+      "redirectUris": ${jsonencode(redirect_uris)},
+      "webOrigins": ${jsonencode(web_origins)},
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
@@ -914,13 +914,13 @@
       "clientId": "security-admin-console",
       "name": "$${client_security-admin-console}",
       "rootUrl": "$${authAdminUrl}",
-      "baseUrl": "/admin/test/console/",
+      "baseUrl": "/admin/meteogate/console/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/admin/test/console/*"
+        "/admin/meteogate/console/*"
       ],
       "webOrigins": [
         "+"

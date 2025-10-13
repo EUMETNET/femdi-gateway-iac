@@ -25,10 +25,3 @@ output "vault_pod_ready_statuses_after_init" {
   description = "Vault cluster status ater running init. Should be true."
   value       = module.ewc-vault-init.vault_pod_ready_statuses_after_init
 }
-
-output "dev-portal_keycloak_secret" {
-  description = "Dev-portal's secret to authenticate with Keycloak"
-  value       = try(module.dev-portal-init.0.dev-portal_keycloak_secret, null)
-  sensitive   = true
-}
-

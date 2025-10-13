@@ -18,10 +18,10 @@ locals {
   keycloak_helm_release_name = "keycloak"
 }
 
-resource "random_password" "keycloak-dev-portal-secret" {
-  length  = 32
-  special = false
-}
+#resource "random_password" "keycloak-dev-portal-secret" {
+#  length  = 32
+#  special = false
+#}
 
 # Create configmap for realm json
 resource "kubernetes_config_map" "realm-json" {
@@ -31,18 +31,18 @@ resource "kubernetes_config_map" "realm-json" {
   }
   data = {
     "realm.json" = templatefile("./keycloak-realm/realm-export.json", {
-      dev_portal_api_secret    = jsonencode(random_password.keycloak-dev-portal-secret.result)
-      google_idp_client_secret = var.google_idp_client_secret
-      github_idp_client_secret = var.github_idp_client_secret
-      redirect_uris          = [
-        "https://${var.dev-portal_subdomain}.${var.dns_zone}",
+      dev_portal_api_secret    = jsonencode(local.dev_portal_keycloak_secret)
+      google_idp_client_secret = local.google_idp_client_secret
+      github_idp_client_secret = local.github_idp_client_secret
+      redirect_uris = [
+        "https://${var.dev_portal_subdomain}.${var.dns_zone}",
         "https://${var.geoweb_subdomain}.${var.dns_zone}/code"
       ]
       web_origins = [
-        "https://${var.dev-portal_subdomain}.${var.dns_zone}",
+        "https://${var.dev_portal_subdomain}.${var.dns_zone}",
         "https://${var.geoweb_subdomain}.${var.dns_zone}"
       ]
-      post_logout_redirect_uris = "https://${var.dev-portal_subdomain}.${var.dns_zone}##https://${var.geoweb_subdomain}.${var.dns_zone}"
+      post_logout_redirect_uris = "https://${var.dev_portal_subdomain}.${var.dns_zone}##https://${var.geoweb_subdomain}.${var.dns_zone}"
     })
   }
 }
@@ -59,7 +59,7 @@ resource "helm_release" "keycloak" {
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/keycloak-values-template.yaml", {
+    templatefile("./templates/helm-values/keycloak-values-template.yaml", {
       cluster_issuer = var.cluster_issuer
       hostname       = "${var.keycloak_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
@@ -68,87 +68,87 @@ resource "helm_release" "keycloak" {
 
   # Needed for tls termination at ingress
   # See: https://github.com/bitnami/charts/tree/main/bitnami/keycloak#use-with-ingress-offloading-ssl
-  set {
-    name  = "proxy"
-    value = "edge"
-  }
+  set = [
+    {
+      name  = "proxy"
+      value = "edge"
+    },
+    {
+      name  = "auth.adminUser"
+      value = "admin"
+    },
+    {
+      name  = "postgresql.auth.username"
+      value = local.postgres_db_user
+    },
+    {
+      name  = "postgresql.auth.database"
+      value = local.postgres_db_name
+    },
+    # Needed for configmap realm import
+    # See: https://github.com/bitnami/charts/issues/5178#issuecomment-765361901
+    {
+      name  = "extraStartupArgs"
+      value = "--import-realm"
 
-  set {
-    name  = "auth.adminUser"
-    value = "admin"
-  }
+    },
+    {
+      name  = "extraVolumeMounts[0].name"
+      value = "config"
+    },
+    {
+      name  = "extraVolumeMounts[0].mountPath"
+      value = "/opt/bitnami/keycloak/data/import"
+    },
+    {
+      name  = "extraVolumeMounts[0].readOnly"
+      value = true
+    },
+    {
+      name  = "extraVolumes[0].name"
+      value = "config"
+    },
+    {
+      name  = "extraVolumes[0].configMap.name"
+      value = kubernetes_config_map.realm-json.metadata[0].name
+    },
+    {
+      name  = "extraVolumes[0].configMap.items[0].key"
+      value = "realm.json"
+    },
+    {
+      name  = "extraVolumes[0].configMap.items[0].path"
+      value = "realm.json"
+    },
+    #Statefulset params
+    {
+      name  = "replicaCount"
+      value = local.keycloak_replica_count
+    }
+  ]
 
-  set_sensitive {
+  set_sensitive = [{
     name  = "auth.adminPassword"
-    value = var.keycloak_admin_password
-  }
+    value = local.keycloak_admin_password
+  }]
 
-  set {
-    name  = "postgresql.auth.username"
-    value = local.postgres_db_user
-  }
+}
 
-  set {
-    name  = "postgresql.auth.database"
-    value = local.postgres_db_name
-  }
-
-  # Needed for configmap realm import
-  # See: https://github.com/bitnami/charts/issues/5178#issuecomment-765361901
-  set {
-    name  = "extraStartupArgs"
-    value = "--import-realm"
-
-  }
-
-  set {
-    name  = "extraVolumeMounts[0].name"
-    value = "config"
-
-  }
-
-  set {
-    name  = "extraVolumeMounts[0].mountPath"
-    value = "/opt/bitnami/keycloak/data/import"
-
-  }
-
-  set {
-    name  = "extraVolumeMounts[0].readOnly"
-    value = true
-
-  }
-
-  set {
-    name  = "extraVolumes[0].name"
-    value = "config"
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.name"
-    value = kubernetes_config_map.realm-json.metadata[0].name
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.items[0].key"
-    value = "realm.json"
-
-  }
-
-  set {
-    name  = "extraVolumes[0].configMap.items[0].path"
-    value = "realm.json"
-
-  }
-
-  # Statefulset params
-  set {
-    name  = "replicaCount"
-    value = var.keycloak_replicas
-  }
-
+# Create ingress to redirect alternative domains to main domain
+resource "kubectl_manifest" "cluster-keycloak-redirect" {
+  yaml_body = templatefile(
+    "./templates/service-redirect-ingress.yaml",
+    {
+      namespace             = kubernetes_namespace.keycloak.metadata.0.name
+      cluster_issuer        = var.cluster_issuer
+      external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.keycloak_subdomain}.${name}"])
+      target_address        = var.load_balancer_ip
+      permanent_redirect    = "https://${var.keycloak_subdomain}.${var.dns_zone}$request_uri"
+      redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.keycloak_subdomain}.${name}"]
+      subdomain             = var.keycloak_subdomain
+      cluster_name          = var.cluster_name
+    }
+  )
 }
 
 ################################################################################
@@ -183,33 +183,41 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         "secret_phase" = random_password.dev-portal-password.result
         "instances" = concat([
           {
-            "name"  = "EUMETSAT"
+            "name"  = upper(var.cluster_name)
             "token" = var.dev-portal_vault_token
             "url"   = "http://${var.vault_helm_release_name}-active.${var.vault_namespace_name}.svc.cluster.local:8200"
           }
           ],
-          var.vault_additional_instances
+          [for cluster in local.external_cluster_names : {
+            "name"  = upper(cluster)
+            "token" = local.external_vault_tokens[cluster]
+            "url"   = "https://${var.vault_subdomain}.${cluster}.${var.dns_zone}"
+          }]
         )
       }
 
       "apisix" = {
         "key_path"           = "$secret://vault/1/"
-        "global_gateway_url" = "https://${var.apisix_global_subdomain}.${var.dns_zone}"
+        "global_gateway_url" = "https://${var.apisix_subdomain}.${var.dns_zone}"
         "instances" = concat([
           {
-            "name"          = "EUMETSAT"
+            "name"          = upper(var.cluster_name)
             "admin_url"     = "http://${var.apisix_helm_release_name}-admin.${var.apisix_namespace_name}.svc.cluster.local:9180"
-            "admin_api_key" = var.apisix_admin
+            "admin_api_key" = var.apisix_admin_api_key
           }
           ],
-          var.apisix_additional_instances
+          [for cluster in local.external_cluster_names : {
+            "name"          = upper(cluster)
+            "admin_url"     = "https://admin-${var.apisix_subdomain}.${cluster}.${var.dns_zone}"
+            "admin_api_key" = local.external_apisix_admin_api_keys[cluster]
+          }]
         )
       }
       "keycloak" = {
         "url"           = "http://${local.keycloak_helm_release_name}.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
         "realm"         = "${var.keycloak_realm_name}"
         "client_id"     = "dev-portal-api"
-        "client_secret" = random_password.keycloak-dev-portal-secret.result
+        "client_secret" = local.dev_portal_keycloak_secret
       }
     })
   }
@@ -221,51 +229,65 @@ resource "helm_release" "dev-portal" {
   name             = "dev-portal"
   repository       = "https://eumetnet.github.io/Dev-portal/"
   chart            = "dev-portal"
-  version          = "1.13.0"
+  version          = "1.14.3"
   namespace        = kubernetes_namespace.dev-portal.metadata.0.name
   create_namespace = false
 
   values = [
-    templatefile("./helm-values/dev-portal-values-template.yaml", {
+    templatefile("./templates/helm-values/dev-portal-values-template.yaml", {
       cluster_issuer = var.cluster_issuer
-      hostname       = "${var.dev-portal_subdomain}.${var.dns_zone}",
+      hostname       = "${var.dev_portal_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
     })
   ]
 
-  set {
-    name  = "imageCredentials.username"
-    value = "USERNAME"
-  }
+  set = [
+    {
+      name  = "imageCredentials.username"
+      value = "USERNAME"
+    },
+    {
+      name  = "backend.image.tag"
+      value = "sha-023ade0"
+    },
+    {
+      name  = "backend.secrets.secretName"
+      value = kubernetes_secret.dev-portal-secret-for-backend.metadata.0.name
+    },
+    {
+      name  = "frontend.image.tag"
+      value = "sha-be9fda5"
+    },
+    {
+      name  = "frontend.keycloak_logout_url"
+      value = "https://${var.dev_portal_subdomain}.${var.dns_zone}"
+    },
+    {
+      name  = "frontend.keycloak_url"
+      value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
+    }
+  ]
 
-  set_sensitive {
+  set_sensitive = [{
     name  = "imageCredentials.password"
-    value = var.dev-portal_registry_password
-  }
+    value = local.dev_portal_registry_password
+  }]
 
-  set {
-    name  = "backend.image.tag"
-    value = "sha-171e5fb"
-  }
+}
 
-  set {
-    name  = "backend.secrets.secretName"
-    value = kubernetes_secret.dev-portal-secret-for-backend.metadata.0.name
-  }
-
-  set {
-    name  = "frontend.image.tag"
-    value = "sha-5608cd2"
-  }
-
-  set {
-    name  = "frontend.keycloak_logout_url"
-    value = "https://${var.dev-portal_subdomain}.${var.dns_zone}"
-  }
-
-  set {
-    name  = "frontend.keycloak_url"
-    value = "https://${var.keycloak_subdomain}.${var.dns_zone}"
-  }
-
+# Create ingress to redirect alternative domains to main domain
+resource "kubectl_manifest" "cluster-dev-portal-redirect" {
+  yaml_body = templatefile(
+    "./templates/service-redirect-ingress.yaml",
+    {
+      namespace             = kubernetes_namespace.dev-portal.metadata.0.name
+      cluster_issuer        = var.cluster_issuer
+      external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.dev_portal_subdomain}.${name}"])
+      target_address        = var.load_balancer_ip
+      permanent_redirect    = "https://${var.dev_portal_subdomain}.${var.dns_zone}$request_uri"
+      redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.dev_portal_subdomain}.${name}"]
+      subdomain             = var.dev_portal_subdomain
+      cluster_name          = var.cluster_name
+    }
+  )
 }

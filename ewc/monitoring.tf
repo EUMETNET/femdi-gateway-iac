@@ -41,7 +41,7 @@ locals {
 }
 data "rancher2_project" "System" {
   provider   = rancher2
-  cluster_id = var.rancher_cluster_id
+  cluster_id = local.rancher_cluster_id
   name       = "System"
 }
 
@@ -52,7 +52,7 @@ data "rancher2_project" "System" {
 # https://github.com/rancher/rancher/issues/41585
 # https://github.com/prometheus-operator/prometheus-operator/issues/3737
 resource "rancher2_app_v2" "rancher-monitoring" {
-  cluster_id = var.rancher_cluster_id
+  cluster_id = local.rancher_cluster_id
   name       = "rancher-monitoring"
   namespace  = "cattle-monitoring-system"
   project_id = data.rancher2_project.System.id
