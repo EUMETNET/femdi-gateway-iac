@@ -77,3 +77,56 @@ resource "aws_iam_user_policy_attachment" "backups" {
   user       = aws_iam_user.backups.name
   policy_arn = aws_iam_policy.backups.arn
 }
+
+# Create Identity Provider, Role etc for Github OIDC
+resource "aws_iam_openid_connect_provider" "github" {
+  url            = "https://token.actions.githubusercontent.com"
+  client_id_list = ["sts.amazonaws.com"]
+}
+
+data "aws_iam_policy_document" "github_oidc_assume_role" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "sts:AssumeRoleWithWebIdentity"
+    ]
+    principals {
+      type        = "Federated"
+      identifiers = [aws_iam_openid_connect_provider.github.arn]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+    condition {
+      test     = "StringLike"
+      variable = "token.actions.githubusercontent.com:sub"
+      values   = ["repo:EUMETNET/api-management-tool-poc:*"]
+    }
+  }
+}
+resource "aws_iam_role" "github_oidc" {
+  name               = "api-mgmt-tool-gha-role"
+  assume_role_policy = data.aws_iam_policy_document.github_oidc_assume_role.json
+}
+
+resource "aws_iam_role_policy" "github_oidc_policy" {
+  name = "api-mgmt-tool-gha-role-policy"
+  role = aws_iam_role.github_oidc.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "ssm:Describe*",
+          "ssm:Get*",
+          "ssm:List*"
+        ],
+        Resource = "*"
+      }
+    ]
+  })
+}
