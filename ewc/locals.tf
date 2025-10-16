@@ -12,8 +12,12 @@ locals {
   # rancher_api_url      : The URL endpoint for accessing the Rancher API dashboard.
   # rancher_cluster_id   : The unique identifier for the Rancher-managed cluster.
 
+  # aws_region_dns       : AWS region where the cluster is located approx. Needed for latency based routing.   
+
   rancher_api_url    = data.aws_ssm_parameter.rancher_api_url.value
   rancher_cluster_id = data.aws_ssm_parameter.rancher_cluster_id.value
+
+  aws_region_dns = data.aws_ssm_parameter.aws_region_dns.value
 
   ##############################################################
   # Global AWS

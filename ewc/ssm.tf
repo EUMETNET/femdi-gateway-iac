@@ -10,6 +10,10 @@ data "aws_ssm_parameter" "rancher_cluster_id" {
   name = "/${var.cluster_name}/rancher_cluster_id"
 }
 
+data "aws_ssm_parameter" "aws_region_dns" {
+  name = "/${var.cluster_name}/aws_region_dns"
+}
+
 ##############################################################
 # Global AWS
 ##############################################################
@@ -85,7 +89,7 @@ resource "aws_ssm_parameter" "apisix_admin_reader_api_key" {
 # Fetch parameters
 
 data "aws_ssm_parameter" "apisix_subdomain" {
-  name = "/apisix/subdomain"
+  name = "/${var.cluster_name}/apisix/subdomain"
 }
 
 data "aws_ssm_parameter" "apisix_admin_api_ip_list" {

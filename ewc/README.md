@@ -18,13 +18,33 @@ The `EWC` module requires `Bash`, [jq](https://github.com/jqlang/jq), [kubectl](
 
 ## Bootstrap variables
 
-Copy and rename `tfvars_template` to something like `<cluster_name>.tfvars` and copy and rename `env_params_template` to `.env.params`
+Copy and rename `tfvars_template` to something like `<cluster_name>.tfvars` and copy and rename `env_params_template` to `.env.params` or something else if that describes better.
 
 Fill both files with appropriate variables. It is also possible to provide the .tfvars variables inline when running terraform. You can find more about those parameters from corresponding templates.
 
+Variables `keycloak/github_idp_client_secret` and `keycloak/google_idp_client_secret` requires running OAuth apps.
+
+### Setup Github OAuth App
+
+1. Navigate to your Github account Settings -> Developer Settings -> OAuth Apps and click "New OAauth App" or from URL https://github.com/settings/applications/new. 
+
+2. Fill in the required fields:
+
+  Application Name = Give a name for your app
+
+  Homepage URL = https://<dev_portal/subdomain>.meteogate.eu.
+
+  Authorization callback URL = https://<keycloak/subdomain>.meteogate.eu/realms/meteogate/broker/github/endpoint.
+
+3. Click register application.
+
+4. In next page you can generate client secret. Use that secret as value for `keycloak/github_idp_client_secret`.
+ 
+### Setup Google Auth App
+
 Once you have filled both of the files bootstrap the .env.parameters to AWS SSM Parameter Store by running:
 ```bash
-AWS_PROFILE=fmi_meteogate ./bootstrap_params.sh
+AWS_PROFILE=fmi_meteogate ./bootstrap_params.sh .env.params
 ```
 
 ## Init
@@ -32,6 +52,16 @@ AWS_PROFILE=fmi_meteogate ./bootstrap_params.sh
 Initialize the Terraform project:
 ```bash
 terraform init
+```
+
+Check existing workspaces
+```bash
+terraform workspace list
+```
+
+Create new workspace for the cluster
+```bash
+terraform workspace new <cluster_name>
 ```
 
 > [!IMPORTANT] 

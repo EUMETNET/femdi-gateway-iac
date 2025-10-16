@@ -522,6 +522,10 @@ resource "helm_release" "apisix" {
       name  = "etcd.replicaCount"
       value = local.apisix_etcd_replica_count
     },
+    #{
+    #  name = "etcd.image.registry"
+    #  value = "quay.io"
+    #},
     {
       name  = "etcd.image.repository"
       value = "bitnamilegacy/etcd"
@@ -544,6 +548,8 @@ resource "helm_release" "apisix" {
 }
 
 # Create ingress to redirect alternative domains to main domain
+# About issue of permanent redirects with $redirect_uri 
+# https://github.com/kubernetes/ingress-nginx/issues/11175
 resource "kubectl_manifest" "cluster-apisix-redirect" {
   yaml_body = templatefile(
     "./templates/service-redirect-ingress.yaml",
@@ -552,7 +558,7 @@ resource "kubectl_manifest" "cluster-apisix-redirect" {
       cluster_issuer        = module.ewc-vault-init.cluster_issuer
       external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${var.cluster_name}.${name}"])
       target_address        = module.ewc-vault-init.load_balancer_ip
-      permanent_redirect    = "https://${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}$request_uri"
+      permanent_redirect    = "https://${local.apisix_subdomain}.${var.cluster_name}.${local.dns_zone}"
       redirect_domains      = [for name in local.alternative_hosted_zone_names : "${local.apisix_subdomain}.${var.cluster_name}.${name}"]
       subdomain             = local.apisix_subdomain
       cluster_name          = var.cluster_name

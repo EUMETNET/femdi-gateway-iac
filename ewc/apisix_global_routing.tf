@@ -3,13 +3,7 @@
 # For clients we use a single DNS name and Route 53 handles the routing to correct cluster based on selected routing policy
 # APISIX has service specific DNS names for each cluster (related services need access to cluster specific instances)
 # The routing policy is set to latency based routing policy
-
-locals {
-  cluster_region_map = {
-    "eumetsat" = "eu-central-1" # Frankfurt
-    "ecmwf"    = "eu-south-1"   # Milan
-  }
-}
+# NOTE: There is limitation that same APISIX subdomain cannot be used in multiple clusters pointing to same AWS region.
 
 resource "aws_route53_health_check" "apisix_health" {
   fqdn              = "${local.apisix_subdomain}.${local.dns_zone}"
@@ -33,7 +27,7 @@ resource "aws_route53_record" "apisix" {
   set_identifier = var.cluster_name
 
   latency_routing_policy {
-    region = local.cluster_region_map[var.cluster_name]
+    region = local.aws_region_dns
   }
 
   health_check_id = aws_route53_health_check.apisix_health.id
@@ -88,6 +82,8 @@ resource "kubectl_manifest" "apisix_global_ingress" {
 }
 
 # For other domains than the "main" redirect to the main domain
+# About issue of permanent redirects with $redirect_uri 
+# https://github.com/kubernetes/ingress-nginx/issues/11175
 resource "kubectl_manifest" "apisix-global-redirect" {
   yaml_body = yamlencode({
     "apiVersion" = "networking.k8s.io/v1"
@@ -100,7 +96,7 @@ resource "kubectl_manifest" "apisix-global-redirect" {
         "app.kubernetes.io/instance"                     = "apisix"
         "app.kubernetes.io/name"                         = "apisix"
         "kubernetes.io/tls-acme"                         = "true"
-        "nginx.ingress.kubernetes.io/permanent-redirect" = "https://${local.apisix_subdomain}.${local.dns_zone}$request_uri"
+        "nginx.ingress.kubernetes.io/permanent-redirect" = "https://${local.apisix_subdomain}.${local.dns_zone}"
       }
     }
     "spec" = {

@@ -3,9 +3,21 @@
 cluster_name=
 # List of allowed IP ranges for accessing APISIX Admin API. Separate multiple CIDRs with commas.
 apisix/admin_api_ip_list=0.0.0.0/0
-# Specifies the private subnet(s) used by the cluster's ingress-nginx controller. Determines the trusted addresses for real-ip plugin.
-# For now queried with kubectl describe svc ingress-nginx-controller -n kube-system and determined from the Endpoints. Separate multiple CIDRs with commas.
+# Specifies the private subnet(s) used by the cluster's ingress-nginx controller. 
+# Determines the trusted addresses for real-ip plugin.
+# For now queried and determined from command: kubectl get nodes -o jsonpath='{.items[*].spec.podCIDR}'. Separate multiple CIDRs with commas.
 apisix/ingress_nginx_private_subnets=
+# APISIX subdomain
+# This is the subdomain that users will use to access the APISIX.
+# Cluster specific APISIX subdomain has the format: subdomain.cluster_name.domain.com
+apisix/subdomain=placeholder
+# AWS Region for DNS. Needed for Route53 to determine which region to use in latency based routing.
+# Latency based routing is in use for APISIX.
+# There is limitation that same APISIX subdomain cannot be used in multiple clusters pointing to same AWS region.
+aws_region_dns=placeholder
+# External clusters that Dev Portal needs to be aware of
+# If there is none then use given value (comma)
+dev_portal/external_cluster_names=,
 # Dev Portal subdomain, can be placeholder if not installing Dev Portal.
 dev_portal/subdomain=placeholder
 # Whether to install Dev Portal
@@ -14,13 +26,16 @@ dev_portal/install=false
 geoweb/install=false
 # Geoweb subdomain, can be placeholder if not installing GeoWeb.
 geoweb/subdomain=explorer
+keycloak/github_idp_client_id=placeholder
 # OAuth2 client secret for GitHub identity provider in Keycloak, can be removed if not installing Dev Portal.
 keycloak/github_idp_client_secret=placeholder
+keycloak/google_idp_client_id=placeholder
 # OAuth2 client secret for Google identity provider in Keycloak, can be removed if not installing Dev Portal.
 keycloak/google_idp_client_secret=placeholder
 # Keycloak subdomain, can be placeholder if not installing Dev Portal.
 keycloak/subdomain=placeholder
 # The URL endpoint for accessing the Rancher API dashboard. Can be queried from the Rancher UI.
+# The same URL as used to login to Rancher UI
 rancher_api_url=
 # The ID of the Rancher cluster. Can be queried from the Rancher API or UI.
 rancher_cluster_id=

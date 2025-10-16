@@ -95,10 +95,10 @@ resource "helm_release" "geoweb-frontend" {
       name  = "frontend.env.GW_LOCATION_BASE_URL"
       value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.location_backend_base_path}"
     },
-    {
-      name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
-      value = "46a7beec-9d22-11f0-a3fc-9e27ba5f6c02"
-    }
+    #{
+    #  name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
+    #  value = "defaultDataExplorerWorkspacePreset"
+    #}
   ]
 }
 
@@ -106,6 +106,33 @@ resource "helm_release" "geoweb-frontend" {
 
 # Presets backend service
 ################################################################################
+
+# S3 bucket for custom presets json files
+resource "aws_s3_bucket" "default_presets" {
+  bucket = "meteogate-${var.cluster_name}-custom-presets"
+}
+
+resource "aws_s3_bucket_public_access_block" "default_presets" {
+  bucket = aws_s3_bucket.default_presets.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+locals {
+  files_to_upload = fileset("${path.module}/files", "**") # Gets all files in the folder
+}
+
+resource "aws_s3_object" "files" {
+  for_each = { for f in fileset("${path.module}/default-presets", "**") : f => f }
+
+  bucket = aws_s3_bucket.default_presets.id
+  key    = "default-presets/${each.key}"
+  source = "${path.module}/default-presets/${each.value}"
+}
+
 resource "helm_release" "geoweb-presets-backend" {
   name             = "geoweb-presets-backend"
   repository       = "https://fmidev.github.io/helm-charts/"
@@ -131,20 +158,26 @@ resource "helm_release" "geoweb-presets-backend" {
       name  = "presets.path"
       value = local.presets_backend_base_path
     },
+    # Custom workspace presets
+    # S3 storage needs fixing in chart to work (need to export AWS_DEFAULT_REGION)
     #set {
     #  name  = "presets.useCustomWorkspacePresets"
     #  value = true
     #}
     #
     #set {
-    #  name  = "presets.customConfigurationFolderPath"
-    #  value = "local"
+    #  name  = "presets.customWorkspacePresetLocation"
+    #  value = "s3"
     #}
     #
     #set {
     #  name  = "presets.customPresetsS3bucketName"
-    #  value = "explorer-custom-presets"
+    #  value = "${aws_s3_bucket.default_presets.bucket}"
     #}
+    #set {
+    #  name  = "presets.customPresetsPath"
+    #  value = "custom-presets/"
+    #},
     {
       name  = "presets.nginx.ALLOW_ANONYMOUS_ACCESS"
       value = "TRUE"
@@ -210,6 +243,8 @@ resource "helm_release" "geoweb-location-backend" {
 }
 
 # Create ingress to redirect alternative domains to main domain
+# About issue of permanent redirects with $redirect_uri 
+# https://github.com/kubernetes/ingress-nginx/issues/11175
 resource "kubectl_manifest" "cluster-geoweb-redirect" {
   yaml_body = templatefile(
     "./templates/service-redirect-ingress.yaml",
@@ -218,7 +253,7 @@ resource "kubectl_manifest" "cluster-geoweb-redirect" {
       cluster_issuer        = var.cluster_issuer
       external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.geoweb_subdomain}.${name}"])
       target_address        = var.load_balancer_ip
-      permanent_redirect    = "https://${var.geoweb_subdomain}.${var.dns_zone}$request_uri"
+      permanent_redirect    = "https://${var.geoweb_subdomain}.${var.dns_zone}"
       redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.geoweb_subdomain}.${name}"]
       subdomain             = var.geoweb_subdomain
       cluster_name          = var.cluster_name

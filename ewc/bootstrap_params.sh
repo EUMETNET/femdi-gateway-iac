@@ -5,14 +5,17 @@ set -e
 SECURE_KEYS=("vault/root_token" "vault/unseal_keys" "keycloak/github_idp_client_secret" "keycloak/google_idp_client_secret")
 STRINGLIST_KEYS=("apisix/admin_api_ip_list" "apisix/ingress_nginx_private_subnets")
 
+# Parameter file: first argument or default
+PARAM_FILE="${1:-.env.params}"
+
 # Extract cluster_name
 CLUSTER_NAME=""
 while IFS='=' read -r key value; do
   [[ "$key" == "cluster_name" ]] && CLUSTER_NAME="$value"
-done < .env.params
+done < "$PARAM_FILE"
 
 if [[ -z "$CLUSTER_NAME" ]]; then
-  echo "cluster_name must be set in .env.params"
+  echo "cluster_name must be set in $PARAM_FILE"
   exit 1
 fi
 
@@ -43,6 +46,6 @@ while IFS='=' read -r key value || [[ -n "$key" ]]; do
 
   echo "Put $PARAM_NAME as $TYPE"
   aws ssm put-parameter --name "$PARAM_NAME" --value "$value" --type "$TYPE" --overwrite --region eu-north-1 --no-cli-pager
-done < .env.params
+done < "$PARAM_FILE"
 
 echo "Bootstrap completed."

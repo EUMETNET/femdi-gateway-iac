@@ -32,7 +32,9 @@ resource "kubernetes_config_map" "realm-json" {
   data = {
     "realm.json" = templatefile("./keycloak-realm/realm-export.json", {
       dev_portal_api_secret    = jsonencode(local.dev_portal_keycloak_secret)
+      google_idp_client_id     = local.google_idp_client_id
       google_idp_client_secret = local.google_idp_client_secret
+      github_idp_client_id     = local.github_idp_client_id
       github_idp_client_secret = local.github_idp_client_secret
       redirect_uris = [
         "https://${var.dev_portal_subdomain}.${var.dns_zone}",
@@ -82,7 +84,7 @@ resource "helm_release" "keycloak" {
       value = "admin"
     },
     {
-      name  = "posthgresql.image.repository"
+      name  = "postgresql.image.repository"
       value = "bitnamilegacy/postgresql"
     },
     {
@@ -143,6 +145,8 @@ resource "helm_release" "keycloak" {
 }
 
 # Create ingress to redirect alternative domains to main domain
+# About issue of permanent redirects with $redirect_uri 
+# https://github.com/kubernetes/ingress-nginx/issues/11175
 resource "kubectl_manifest" "cluster-keycloak-redirect" {
   yaml_body = templatefile(
     "./templates/service-redirect-ingress.yaml",
@@ -151,7 +155,7 @@ resource "kubectl_manifest" "cluster-keycloak-redirect" {
       cluster_issuer        = var.cluster_issuer
       external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.keycloak_subdomain}.${name}"])
       target_address        = var.load_balancer_ip
-      permanent_redirect    = "https://${var.keycloak_subdomain}.${var.dns_zone}$request_uri"
+      permanent_redirect    = "https://${var.keycloak_subdomain}.${var.dns_zone}"
       redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.keycloak_subdomain}.${name}"]
       subdomain             = var.keycloak_subdomain
       cluster_name          = var.cluster_name
@@ -284,6 +288,8 @@ resource "helm_release" "dev-portal" {
 }
 
 # Create ingress to redirect alternative domains to main domain
+# About issue of permanent redirects with $redirect_uri 
+# https://github.com/kubernetes/ingress-nginx/issues/11175
 resource "kubectl_manifest" "cluster-dev-portal-redirect" {
   yaml_body = templatefile(
     "./templates/service-redirect-ingress.yaml",
@@ -292,7 +298,7 @@ resource "kubectl_manifest" "cluster-dev-portal-redirect" {
       cluster_issuer        = var.cluster_issuer
       external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.dev_portal_subdomain}.${name}"])
       target_address        = var.load_balancer_ip
-      permanent_redirect    = "https://${var.dev_portal_subdomain}.${var.dns_zone}$request_uri"
+      permanent_redirect    = "https://${var.dev_portal_subdomain}.${var.dns_zone}"
       redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.dev_portal_subdomain}.${name}"]
       subdomain             = var.dev_portal_subdomain
       cluster_name          = var.cluster_name

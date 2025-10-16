@@ -65,6 +65,14 @@ resource "helm_release" "external-dns" {
 
   set = [
     {
+      name  = "image.repository"
+      value = "bitnamilegacy/external-dns"
+    },
+    {
+      name  = "image.tag"
+      value = "0.13.5-debian-11-r79"
+    },
+    {
       name  = "policy"
       value = "upsert-only"
     },
@@ -107,36 +115,37 @@ resource "kubernetes_namespace" "cert-manager" {
     name = "cert-manager"
   }
 }
+
+#https://cert-manager.io/v1.19-docs/installation/helm/#option-1-installing-crds-with-kubectl
+data "http" "cert_manager_crds" {
+  url = "https://github.com/cert-manager/cert-manager/releases/download/v1.19.1/cert-manager.crds.yaml"
+}
+
+data "kubectl_file_documents" "cert_manager_crds" {
+  content = data.http.cert_manager_crds.response_body
+}
+
+resource "kubectl_manifest" "cert_manager_crds" {
+  for_each   = data.kubectl_file_documents.cert_manager_crds.manifests
+  yaml_body  = each.value
+  depends_on = [kubernetes_namespace.cert-manager]
+}
+
 resource "helm_release" "cert-manager" {
   name             = "cert-manager"
   repository       = "https://charts.jetstack.io/"
   chart            = "cert-manager"
-  version          = "1.11.5"
+  version          = "1.19.1"
   namespace        = kubernetes_namespace.cert-manager.metadata.0.name
   create_namespace = false
 
   set = [
     {
       name  = "installCRDs"
-      value = true
+      value = false
     },
-    {
-      name  = "ingressShim.defaultACMEChallengeType"
-      value = "dns01"
-    },
-    {
-      name  = "ingressShim.defaultACMEDNS01ChallengeProvider"
-      value = "route53"
-    },
-    {
-      name  = "ingressShim.defaultIssuerKind"
-      value = "ClusterIssuer"
-    },
-    {
-      name  = "ingressShim.letsencrypt-prod"
-      value = "route53"
-    }
   ]
+  depends_on = [kubectl_manifest.cert_manager_crds]
 }
 
 resource "kubernetes_secret" "acme-route53-secret" {
@@ -352,6 +361,8 @@ data "kubernetes_resource" "vault-pods-after" {
 }
 
 # Create ingress to redirect alternative domains to main domain
+# About issue of permanent redirects with $redirect_uri 
+# https://github.com/kubernetes/ingress-nginx/issues/11175
 resource "kubectl_manifest" "cluster-vault-redirect" {
   yaml_body = templatefile(
     "./templates/service-redirect-ingress.yaml",
@@ -360,7 +371,7 @@ resource "kubectl_manifest" "cluster-vault-redirect" {
       cluster_issuer        = kubectl_manifest.clusterissuer_letsencrypt_prod.name,
       external_dns_hostname = join(",", [for name in local.alternative_hosted_zone_names : "${var.vault_subdomain}.${var.cluster_name}.${name}"])
       target_address        = join(".", slice(split(".", data.kubernetes_service.ingress-nginx-controller.status[0].load_balancer[0].ingress[0].hostname), 0, 4)),
-      permanent_redirect    = "https://${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}$request_uri"
+      permanent_redirect    = "https://${var.vault_subdomain}.${var.cluster_name}.${var.dns_zone}"
       redirect_domains      = [for name in local.alternative_hosted_zone_names : "${var.vault_subdomain}.${var.cluster_name}.${name}"]
       subdomain             = var.vault_subdomain
       cluster_name          = var.cluster_name

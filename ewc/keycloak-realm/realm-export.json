@@ -1531,7 +1531,7 @@
       "config": {
         "hideOnLoginPage": "false",
         "acceptsPromptNoneForwardFromClient": "false",
-        "clientId": "1054919297695-v480f46n6589cgo792193o9tdhrbu2hq.apps.googleusercontent.com",
+        "clientId": "${google_idp_client_id}",
         "disableUserInfo": "false",
         "filteredByClaim": "false",
         "syncMode": "IMPORT",
@@ -1552,7 +1552,7 @@
       "config": {
         "hideOnLoginPage": "false",
         "acceptsPromptNoneForwardFromClient": "false",
-        "clientId": "Ov23ctCB2Xbm9MVAr9FZ",
+        "clientId": "${github_idp_client_id}",
         "disableUserInfo": "false",
         "filteredByClaim": "false",
         "syncMode": "IMPORT",

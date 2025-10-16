@@ -18,11 +18,11 @@ locals {
   # external_apisix_admin_api_keys:   Map of APISIX admin API keys for other clusters in the multi-cluster setup.
   # external_vault_tokens:            Map of Vault root tokens for other clusters in the multi-cluster setup.
 
-  dev_portal_keycloak_secret   = data.aws_ssm_parameter.dev_portal_keycloak_secret.value
+  dev_portal_keycloak_secret   = aws_ssm_parameter.dev_portal_keycloak_secret.value
   dev_portal_registry_password = data.aws_ssm_parameter.dev_portal_registry_password.value
   external_cluster_names = toset([
     for name in split(",", nonsensitive(data.aws_ssm_parameter.cluster_names.value)) :
-    name if name != var.cluster_name
+    name if name != var.cluster_name && trim(name, " ") != ""
   ])
   external_apisix_admin_api_keys = {
     for cluster_name, param in data.aws_ssm_parameter.external_apisix_admin_api_keys :
@@ -44,7 +44,9 @@ locals {
   keycloak_admin_password = aws_ssm_parameter.keycloak_admin_password.value
   keycloak_replica_count  = tonumber(data.aws_ssm_parameter.keycloak_replica_count.value)
 
+  google_idp_client_id     = data.aws_ssm_parameter.keycloak_google_idp_client_id.value
   google_idp_client_secret = data.aws_ssm_parameter.keycloak_google_idp_client_secret.value
+  github_idp_client_id     = data.aws_ssm_parameter.keycloak_github_idp_client_id.value
   github_idp_client_secret = data.aws_ssm_parameter.keycloak_github_idp_client_secret.value
 
   ##############################################################
