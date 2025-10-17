@@ -28,7 +28,7 @@ resource "helm_release" "geoweb-frontend" {
     })
   ]
 
-  set = [
+  set = concat([
     {
       name  = "versions.frontend"
       value = "2025-09-24_12-03_7e3c2bd0"
@@ -99,7 +99,13 @@ resource "helm_release" "geoweb-frontend" {
     #  name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
     #  value = "defaultDataExplorerWorkspacePreset"
     #}
-  ]
+    ], local.default_workspace_preset_id != "placeholder" ? [
+    {
+      name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
+      value = local.default_workspace_preset_id
+    }
+    ] : []
+  )
 }
 
 ################################################################################

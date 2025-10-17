@@ -10,7 +10,7 @@ There should be Rancher Manager and RKE2 Kubernetes cluster deployment running. 
 
 TODO need to find out corresponding instructions from EUMETSAT side since at least the available options for Rancher Manager provisioning differs.
 
-in eumetsat side these differs so far: security group is ssh-http-https, networks is internal and floating IP is external. 
+in eumetsat side these differs so far: security group is ssh-http-https, networks is internal and floating IP is external.
 
 ## Dependencies
 
@@ -121,7 +121,6 @@ Expected output looks like this.
 ```txt
 Outputs:
 
-dev-portal_keycloak_secret = <sensitive>
 load_balancer_ip = "185.254.220.56"
 vault_pod_ready_statuses_after_init = [
   "True",
@@ -134,6 +133,42 @@ vault_pod_ready_statuses_before_init = [
   "True",
 ]
 ```
+
+## Manual Steps after Second run
+
+1. Register this platform to API management tool (There are instructions in apim repo):
+    * Append used cluster_name variable value in UPPERCASE to the repository variable **PLATFORMS** list
+    * (Add routes to this platform either by creating new one or adding existing one to this platform by adding cluster_name variable in UPPERCASE to the route yaml platforms list)
+      * if route requires upstream API key then add that to the Vault of this platform
+    * Run management tool
+3. Use Keycloak admin user to log in to the Keycloak.
+    * Create a new admin user (username, email and pw required) to the the meteogate realm and promote the user to Admin group.
+4. Create custom view-preset and workspace-preset to geoweb's preset backend to be used as default.
+    * Log in to explorer using the admin user created in previous step and get the used auth token
+    * run the curl commands to install
+    ``` bash
+    response=$(curl -s -D - -o /dev/null -X POST "https://ec-stack-test-explorer.meteogate.eu/presets/viewpreset" \
+    -H "Authorization: Bearer <TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d @"$HOME/repos/rodeo/femdi-gateway-iac/ewc/geoweb/default-presets/default_view_preset.json")
+
+    echo "$response"
+    # Take the ID from location header (example location: https://0.0.0.0:8080/presets/viewpreset/54d99c4a-ab4d-11f0-b71e-26788170d87b)
+    # Save the ID to the default-presets/default_workspace_preset.json file as the value for viewPresetId
+    ```
+    ``` bash
+    response=$(curl -s -D - -o /dev/null -X POST "https://ec-stack-test-explorer.meteogate.eu/presets/workspacepreset" \
+    -H "Authorization: Bearer <TOKEN>" \
+    -H "Content-Type: application/json" \
+    -d @"$HOME/repos/rodeo/femdi-gateway-iac/ewc/geoweb/default-presets/default_workspace_preset.json")
+
+    echo "$response"
+    # Take the ID from location header (example location: https://0.0.0.0:8080/presets/workspacepreset/54d99c4a-ab4d-11f0-b71e-26788170d87b)
+    # Save the ID to parameter store for param /<cluster_name>/geoweb/default_workspace_preset_id
+    ```
+    * run `terraform apply again` and then `kubectl rollout restart deployment geoweb -n geoweb` to make geoweb pick up the new env
+
+
 
 ## Parameters
 

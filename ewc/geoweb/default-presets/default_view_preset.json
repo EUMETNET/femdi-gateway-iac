@@ -1,0 +1,64 @@
+{
+	"id": "defaultDataExplorerViewPreset",
+	"title": "Data Explorer",
+	"scope": "system",
+	"abstract": "",
+	"keywords": "",
+	"initialProps": {
+		"mapPreset": {
+			"proj": {
+				"srs": "EPSG:3857",
+				"bbox": {
+					"top": 11520588.9031,
+					"left": 58703.6377,
+					"right": 3967387.5161,
+					"bottom": 6408480.4514
+				}
+			},
+			"layers": [
+				{
+					"id": "layerid_44",
+					"name": "WorldMap_Light_Grey_Canvas",
+					"type": "twms",
+					"status": "default",
+					"enabled": true,
+					"opacity": 1,
+					"layerType": "baseLayer",
+					"dimensions": [],
+					"useLatestReferenceTime": true,
+					"acceptanceTimeInMinutes": 60
+				},
+				{
+					"id": "layerid_43",
+					"name": "countryborders",
+					"format": "image/png",
+					"status": "default",
+					"enabled": true,
+					"opacity": 1,
+					"service": "https://geoservices.knmi.nl/wms?DATASET=baselayers&",
+					"layerType": "overLayer",
+					"dimensions": [],
+					"useLatestReferenceTime": true,
+					"acceptanceTimeInMinutes": 60
+				}
+			],
+			"displayMapPin": false,
+			"shouldAnimate": false,
+			"showTimeSlider": true,
+			"timeSliderSpan": 86400,
+			"animationPayload": {
+				"speed": 4,
+				"duration": 290,
+				"interval": 60
+			},
+			"shouldAutoUpdate": false,
+			"shouldShowLegend": false,
+			"toggleTimeSpanAuto": true,
+			"toggleTimestepAuto": true,
+			"shouldShowDataExplorer": true,
+			"shouldShowZoomControls": true
+		},
+		"syncGroupsIds": []
+	},
+	"componentType": "Map"
+}

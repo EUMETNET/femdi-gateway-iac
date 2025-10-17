@@ -24,6 +24,8 @@ dev_portal/subdomain=placeholder
 dev_portal/install=false
 # Whether to install GeoWeb
 geoweb/install=false
+# Default workspace preset id for Geoweb, can be created only after installing Geoweb. Use placeholder if not installing Geoweb or installing first time.
+geoweb/default_workspace_preset_id=placeholder
 # Geoweb subdomain, can be placeholder if not installing GeoWeb.
 geoweb/subdomain=explorer
 keycloak/github_idp_client_id=placeholder

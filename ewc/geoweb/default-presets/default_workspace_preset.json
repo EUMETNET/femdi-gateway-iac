@@ -1,0 +1,26 @@
+{
+	"id": "defaultDataExplorerWorkspacePreset",
+	"title": "Data Explorer",
+	"scope": "system",
+	"abstract": "",
+	"viewType": "singleWindow",
+	"views": [
+		{
+			"mosaicNodeId": "1_screen",
+			"viewPresetId": "4f2af990-ab4a-11f0-bc14-26788170d87b"
+		}
+	],
+	"syncGroups": [
+		{
+			"id": "SYNCGROUPS_TYPE_SETBBOX",
+			"type": "SYNCGROUPS_TYPE_SETBBOX"
+		},
+		{
+			"id": "SYNCGROUPS_TYPE_SETTIME",
+			"type": "SYNCGROUPS_TYPE_SETTIME"
+		}
+	],
+	"mosaicNode": "1_screen",
+	"isTimeScrollingEnabled": false,
+	"linking": {}
+}
