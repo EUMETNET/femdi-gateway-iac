@@ -1,20 +1,34 @@
 # EWC
 
-## TODO
+## Dependencies
 
-Will update the contents as part of the tickets: "Test the whole IaC setup process#124" and "Document the K8s prerequisities needed by femdi-gateway-iac#123".
+The `EWC` module requires `Bash`, [jq](https://github.com/jqlang/jq), [kubectl](https://kubernetes.io/docs/reference/kubectl/) and [AWS CLI](https://aws.amazon.com/cli/)
 
 ## Prerequisites
+
+### Rancher Manager and RKE2 cluster deployment
 
 There should be Rancher Manager and RKE2 Kubernetes cluster deployment running. Instructions how to deploy one in ECMWF side https://confluence.ecmwf.int/display/EWCLOUDKB/EWC+Kubernetes+Self-service.
 
 TODO need to find out corresponding instructions from EUMETSAT side since at least the available options for Rancher Manager provisioning differs.
 
-in eumetsat side these differs so far: security group is ssh-http-https, networks is internal and floating IP is external.
+In EUMETSAT side these differs so far: security group is ssh-http-https, networks is internal and floating IP is external. This will be updated if more is find out.
 
-## Dependencies
+### AWS Account
 
-The `EWC` module requires `Bash`, [jq](https://github.com/jqlang/jq), [kubectl](https://kubernetes.io/docs/reference/kubectl/) and [AWS CLI](https://aws.amazon.com/cli/)
+One should have access to correct AWS account. TODO how FMI people gain access to given AWS account?
+
+Once access to given account is granted then you need to configure AWS CLI and [SSO](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html). To configure AWS SSO you can run `aws configure sso` or do it manually by adding a correct profile to ~/.aws/config.
+Profile template:
+```bash
+[profile fmi_meteogate]
+sso_start_url =
+sso_region = eu-north-1
+sso_account_id =
+sso_role_name = 
+region = eu-north-1
+output = json
+```
 
 ## Bootstrap variables
 
@@ -30,17 +44,36 @@ Variables `keycloak/github_idp_client_secret` and `keycloak/google_idp_client_se
 
 2. Fill in the required fields:
 
-  Application Name = Give a name for your app
+    * Application Name = Give a name for your app
 
-  Homepage URL = https://<dev_portal/subdomain>.meteogate.eu.
+    * Homepage URL = https://<dev_portal/subdomain>.meteogate.eu
 
-  Authorization callback URL = https://<keycloak/subdomain>.meteogate.eu/realms/meteogate/broker/github/endpoint.
+    * Authorization callback URL = https://<keycloak/subdomain>.meteogate.eu/realms/meteogate/broker/github/endpoint
 
 3. Click register application.
 
-4. In next page you can generate client secret. Use that secret as value for `keycloak/github_idp_client_secret`.
+4. In next page you can fetch the client ID and generate client secret. Use these as values for `keycloak/github_idp_client_id` and `keycloak/github_idp_client_secret`.
  
 ### Setup Google Auth App
+
+1. Navigate to Google Cloud console 
+
+2. Choose existing project or create a new project for OAuth client
+
+3. Navigate to APIs & Services > OAuth consent screen then choose Clients and click "+ Create client":
+
+    * Application type = Web application
+
+    * Name = Give it a name
+
+    * Add new Authorized JavaScript origin(s)
+      * URI = https://<dev_portal/subdomain>.meteogate.eu
+
+    * Add Authorized redirect URI(s)
+      * URI = https://<keycloak/subdomain>.meteogate.eu/realms/meteogate/broker/google/endpoint
+
+4. Click Create and then copy the generated Client ID and Client secret. Use these as values for `keycloak/google_idp_client_id` and `keycloak/google_idp_client_secret`.
+
 
 Once you have filled both of the files bootstrap the .env.parameters to AWS SSM Parameter Store by running:
 ```bash
@@ -83,7 +116,6 @@ You might need to run pod unsealing manually using `kubectl -n vault exec -it po
 ```txt
 Outputs:
 
-dev-portal_keycloak_secret = <sensitive>
 load_balancer_ip = "192.168.1.1"
 vault_pod_ready_statuses_after_init = [
   "True",
@@ -141,33 +173,36 @@ vault_pod_ready_statuses_before_init = [
     * (Add routes to this platform either by creating new one or adding existing one to this platform by adding cluster_name variable in UPPERCASE to the route yaml platforms list)
       * if route requires upstream API key then add that to the Vault of this platform
     * Run management tool
-3. Use Keycloak admin user to log in to the Keycloak.
+3. Only needed if Dev portal and keycloak were installed. Use Keycloak admin user to log in to the Keycloak.
     * Create a new admin user (username, email and pw required) to the the meteogate realm and promote the user to Admin group.
-4. Create custom view-preset and workspace-preset to geoweb's preset backend to be used as default.
+4. Only needed if Geoweb was installed. This should not be needed anymore once the helm chart for preset has a fix. Create custom view-preset and workspace-preset to geoweb's preset backend to be used as default.
     * Log in to explorer using the admin user created in previous step and get the used auth token
     * run the curl commands to install
     ``` bash
-    response=$(curl -s -D - -o /dev/null -X POST "https://ec-stack-test-explorer.meteogate.eu/presets/viewpreset" \
+    response=$(curl -s -D - -o /dev/null -X POST "https://<geoweb/subdomain>/presets/viewpreset" \
     -H "Authorization: Bearer <TOKEN>" \
     -H "Content-Type: application/json" \
-    -d @"$HOME/repos/rodeo/femdi-gateway-iac/ewc/geoweb/default-presets/default_view_preset.json")
+    -d @"$HOME/path/to/repo/femdi-gateway-iac/ewc/geoweb/default-presets/default_view_preset.json")
 
     echo "$response"
     # Take the ID from location header (example location: https://0.0.0.0:8080/presets/viewpreset/54d99c4a-ab4d-11f0-b71e-26788170d87b)
     # Save the ID to the default-presets/default_workspace_preset.json file as the value for viewPresetId
     ```
     ``` bash
-    response=$(curl -s -D - -o /dev/null -X POST "https://ec-stack-test-explorer.meteogate.eu/presets/workspacepreset" \
+    response=$(curl -s -D - -o /dev/null -X POST "https://<geoweb/subdomain>/presets/workspacepreset" \
     -H "Authorization: Bearer <TOKEN>" \
     -H "Content-Type: application/json" \
-    -d @"$HOME/repos/rodeo/femdi-gateway-iac/ewc/geoweb/default-presets/default_workspace_preset.json")
+    -d @"$HOME/path/to/repo/femdi-gateway-iac/ewc/geoweb/default-presets/default_workspace_preset.json")
 
     echo "$response"
     # Take the ID from location header (example location: https://0.0.0.0:8080/presets/workspacepreset/54d99c4a-ab4d-11f0-b71e-26788170d87b)
     # Save the ID to parameter store for param /<cluster_name>/geoweb/default_workspace_preset_id
     ```
-    * run `terraform apply again` and then `kubectl rollout restart deployment geoweb -n geoweb` to make geoweb pick up the new env
+    * run `terraform apply` again and then `kubectl rollout restart deployment geoweb -n geoweb` to make geoweb pick up the new env
 
+5. In case there will be another cluster that is going to be attached to this cluster's Dev Portal then run previous steps to that one and after that cluster is set up then: 
+    * add that cluster's name to AWS Parameter store in variable `/<this-cluster-name>/dev_portal/external_cluster_names`.
+    * run `terraform apply` again and then `kubectl rollout restart deployment dev-portal-backend -n dev-portal` to make dev portal backend pick up the new env including the another cluster information.
 
 
 ## Parameters
