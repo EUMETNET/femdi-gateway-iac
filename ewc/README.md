@@ -147,7 +147,7 @@ terraform output vault_unseal_keys
 
 Run the rest of the Terraform code:
 ```bash
-terraform apply
+terraform apply --var-file=<cluster_name>.tfvars
 ```
 Expected output looks like this.
 ```txt
