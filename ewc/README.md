@@ -169,7 +169,7 @@ vault_pod_ready_statuses_before_init = [
 
 ## Manual Steps after Second run
 
-1. Register this platform to API management tool (There are instructions in apim repo):
+1. Register this platform to [API management tool](https://github.com/EUMETNET/api-management-tool-poc) repository (There are instructions in that repo too):
     * Append used cluster_name variable value in UPPERCASE to the repository variable **PLATFORMS** list
     * (Add routes to this platform either by creating new one or adding existing one to this platform by adding cluster_name variable in UPPERCASE to the route yaml platforms list)
       * if route requires upstream API key then add that to the Vault of this platform
