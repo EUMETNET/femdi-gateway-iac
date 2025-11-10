@@ -28,10 +28,10 @@ resource "helm_release" "geoweb-frontend" {
     })
   ]
 
-  set = concat([
+  set = [
     {
       name  = "versions.frontend"
-      value = "2025-09-24_12-03_7e3c2bd0"
+      value = "2025-10-20_07-01_ca25e69c"
     },
     {
       name  = "frontend.url"
@@ -95,55 +95,24 @@ resource "helm_release" "geoweb-frontend" {
       name  = "frontend.env.GW_LOCATION_BASE_URL"
       value = "https://${var.geoweb_subdomain}.${var.dns_zone}${local.location_backend_base_path}"
     },
-    #{
-    #  name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
-    #  value = "defaultDataExplorerWorkspacePreset"
-    #}
-    ], local.default_workspace_preset_id != "placeholder" ? [
+    # Initial workspace preset
+    # Definition in /default-presets/custom.workspace-presets.json
     {
       name  = "frontend.env.GW_INITIAL_WORKSPACE_PRESET"
-      value = local.default_workspace_preset_id
+      value = "defaultDataExplorerWorkspacePreset"
     }
-    ] : []
-  )
+  ]
 }
 
 ################################################################################
 
 # Presets backend service
 ################################################################################
-
-# S3 bucket for custom presets json files
-resource "aws_s3_bucket" "default_presets" {
-  bucket = "meteogate-${var.cluster_name}-custom-presets"
-}
-
-resource "aws_s3_bucket_public_access_block" "default_presets" {
-  bucket = aws_s3_bucket.default_presets.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-locals {
-  files_to_upload = fileset("${path.module}/files", "**") # Gets all files in the folder
-}
-
-resource "aws_s3_object" "files" {
-  for_each = { for f in fileset("${path.module}/default-presets", "**") : f => f }
-
-  bucket = aws_s3_bucket.default_presets.id
-  key    = "default-presets/${each.key}"
-  source = "${path.module}/default-presets/${each.value}"
-}
-
 resource "helm_release" "geoweb-presets-backend" {
   name             = "geoweb-presets-backend"
   repository       = "https://fmidev.github.io/helm-charts/"
   chart            = "geoweb-presets-backend"
-  version          = "2.15.0"
+  version          = "2.15.6"
   namespace        = kubernetes_namespace.geoweb.metadata.0.name
   create_namespace = false
 
@@ -164,26 +133,40 @@ resource "helm_release" "geoweb-presets-backend" {
       name  = "presets.path"
       value = local.presets_backend_base_path
     },
-    # Custom workspace presets
-    # S3 storage needs fixing in chart to work (need to export AWS_DEFAULT_REGION)
-    #set {
-    #  name  = "presets.useCustomWorkspacePresets"
-    #  value = true
-    #}
-    #
-    #set {
-    #  name  = "presets.customWorkspacePresetLocation"
-    #  value = "s3"
-    #}
-    #
-    #set {
-    #  name  = "presets.customPresetsS3bucketName"
-    #  value = "${aws_s3_bucket.default_presets.bucket}"
-    #}
-    #set {
-    #  name  = "presets.customPresetsPath"
-    #  value = "custom-presets/"
-    #},
+    # Custom presets
+    {
+      name  = "presets.DEPLOY_ENVIRONMENT"
+      value = "custom" # need to match the prefix part in /default-presets/custom.workspace-presets.json
+    },
+    {
+      name  = "presets.useCustomWorkspacePresets"
+      value = true
+    },
+    {
+      name  = "presets.customWorkspacePresetLocation"
+      value = "s3"
+    },
+    {
+      name  = "presets.customPresetsS3bucketName"
+      value = "${aws_s3_bucket.default_presets.bucket}"
+    },
+    {
+      name  = "presets.customPresetsPath"
+      value = "/default-presets/"
+    },
+    {
+      name  = "presets.awsAccessKeyId"
+      value = aws_iam_access_key.presets_reader.id
+    },
+    {
+      name  = "presets.awsAccessKeySecret"
+      value = aws_iam_access_key.presets_reader.secret
+    },
+    {
+      name  = "presets.awsDefaultRegion"
+      value = "eu-north-1"
+    },
+    # Nginx configs
     {
       name  = "presets.nginx.ALLOW_ANONYMOUS_ACCESS"
       value = "TRUE"

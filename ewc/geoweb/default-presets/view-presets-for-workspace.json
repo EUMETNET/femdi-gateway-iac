@@ -1,0 +1,104 @@
+[
+  {
+    "id": "emptyMapView",
+    "title": "Empty Map",
+    "scope": "system",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        },
+        "shouldShowLayerManager": true,
+        "dockedLayerManagerSize": "sizeSmall"
+      },
+      "syncGroupsIds": []
+    }
+  },
+  {
+    "id": "WorkspaceRadar",
+    "title": "Radar",
+    "scope": "system",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://openwms.fmi.fi/geoserver/wms?",
+            "name": "Radar:suomi_dbz_eureffin",
+            "format": "image/png",
+            "style": "Radar dbz Summer",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://halo-wms.met.no/halo/default.map?",
+            "name": "radar_precipitation_intensity",
+            "format": "image/png",
+            "style": "",
+            "enabled": true,
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://geoservices.knmi.nl/wms?dataset=RADAR",
+            "name": "RAD_NL25_PCP_CM",
+            "format": "image/png",
+            "style": "precip-blue-transparent/nearest",
+            "enabled": true,
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        }
+      },
+      "syncGroupsIds": ["Area_radarTemp", "Time_radarTemp"]
+    }
+  },
+  {
+    "id": "Temperature",
+    "title": "Temperature",
+    "scope": "system",
+    "componentType": "Map",
+    "initialProps": {
+      "mapPreset": {
+        "layers": [
+          {
+            "service": "https://geoservices.knmi.nl/adagucserver?dataset=OBS",
+            "name": "10M/ta",
+            "layerType": "mapLayer"
+          },
+          {
+            "service": "https://eccharts.ecmwf.int/wms/?token=public",
+            "name": "t850_public",
+            "opacity": 0.8,
+            "layerType": "mapLayer"
+          }
+        ],
+        "proj": {
+          "bbox": {
+            "left": 58703.6377,
+            "bottom": 6408480.4514,
+            "right": 3967387.5161,
+            "top": 11520588.9031
+          },
+          "srs": "EPSG:3857"
+        }
+      },
+      "syncGroupsIds": ["Area_radarTemp", "Time_radarTemp"]
+    }
+  }
+]

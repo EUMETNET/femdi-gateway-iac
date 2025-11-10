@@ -23,9 +23,7 @@
     ],
     "mosaicNode": "1_screen",
     "isTimeScrollingEnabled": false,
-    "linking": {
-
-    }
+    "linking": {}
   },
   {
     "id": "emptyMap",
