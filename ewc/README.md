@@ -133,7 +133,8 @@ vault_unseal_keys = <sensitive>
 
 > [!IMPORTANT] 
 > Make sure to store `vault_root_token` as `/<cluster_name>/vault/root_token` and `vault_unseal_keys` as `/<cluster_name>/vault/unseal_keys` to AWS Parameter Store. You can save these manually to AWS or save the values to .env.params file and run again `AWS_PROFILE=fmi_meteogate ./bootstrap_params.sh`
-
+>
+> Make sure you copy the `vault_root_token` and `vault_unseal_keys` before you run any other Terraform commands. These will be available only once!
 >
 > If the Vault is recreated for a data restore operation, do not delete the previous `vault_unseal_keys`. Continue using the old unseal keys and ignore the new ones. The new `vault_root_token` is needed and need to be updated to AWS Parameter Store. For more details, see the [Vault Restore](#vault-restore) section.
 
@@ -173,36 +174,10 @@ vault_pod_ready_statuses_before_init = [
     * (Add routes to this platform either by creating new one or adding existing one to this platform by adding cluster_name variable in UPPERCASE to the route yaml platforms list)
       * if route requires upstream API key then add that to the Vault of this platform
     * Run management tool
-3. Only needed if Dev portal and keycloak were installed. Use Keycloak admin user to log in to the Keycloak.
-    * Create a new admin user (username, email and pw required) to the the meteogate realm and promote the user to Admin group.
-4. Only needed if Geoweb was installed. This should not be needed anymore once the helm chart for preset has a fix. Create custom view-preset and workspace-preset to geoweb's preset backend to be used as default.
-    * Log in to explorer using the admin user created in previous step and get the used auth token
-    * run the curl commands to install
-    ``` bash
-    response=$(curl -s -D - -o /dev/null -X POST "https://<geoweb/subdomain>/presets/viewpreset" \
-    -H "Authorization: Bearer <TOKEN>" \
-    -H "Content-Type: application/json" \
-    -d @"$HOME/path/to/repo/femdi-gateway-iac/ewc/geoweb/default-presets/default_view_preset.json")
 
-    echo "$response"
-    # Take the ID from location header (example location: https://0.0.0.0:8080/presets/viewpreset/54d99c4a-ab4d-11f0-b71e-26788170d87b)
-    # Save the ID to the default-presets/default_workspace_preset.json file as the value for viewPresetId
-    ```
-    ``` bash
-    response=$(curl -s -D - -o /dev/null -X POST "https://<geoweb/subdomain>/presets/workspacepreset" \
-    -H "Authorization: Bearer <TOKEN>" \
-    -H "Content-Type: application/json" \
-    -d @"$HOME/path/to/repo/femdi-gateway-iac/ewc/geoweb/default-presets/default_workspace_preset.json")
-
-    echo "$response"
-    # Take the ID from location header (example location: https://0.0.0.0:8080/presets/workspacepreset/54d99c4a-ab4d-11f0-b71e-26788170d87b)
-    # Save the ID to parameter store for param /<cluster_name>/geoweb/default_workspace_preset_id
-    ```
-    * run `terraform apply` again and then `kubectl rollout restart deployment geoweb -n geoweb` to make geoweb pick up the new env
-
-5. In case there will be another cluster that is going to be attached to this cluster's Dev Portal then run previous steps to that one and after that cluster is set up then: 
+2. In case there will be another cluster that is going to be attached to this cluster's Dev Portal then run previous steps to that one and after that cluster is set up then: 
     * add that cluster's name to AWS Parameter store in variable `/<this-cluster-name>/dev_portal/external_cluster_names`.
-    * run `terraform apply` again and then `kubectl rollout restart deployment dev-portal-backend -n dev-portal` to make dev portal backend pick up the new env including the another cluster information.
+    * run `terraform apply --var-file=<cluster_name>.tfvars` again and then `kubectl rollout restart deployment dev-portal-backend -n dev-portal` to make dev portal backend pick up the new env including the another cluster information.
 
 
 ## Parameters
