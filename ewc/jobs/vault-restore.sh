@@ -79,7 +79,7 @@ tar cf - -C /tmp ${DECOMPRESSED_SNAPSHOT_NAME} | kubectl exec -i -n "$NAMESPACE"
 # Restore the Vault cluster from snapshot
 echo "Restoring the Vault cluster from snapshot..."
 kubectl -n "$NAMESPACE" exec "${VAULT_POD}" -- sh -c \
-  "VAULT_TOKEN=$VAULT_TOKEN vault operator raft snapshot restore -force /tmp/$DECOMPRESSED_SNAPSHOT_NAME &&
+  "VAULT_TOKEN=$VAULT_TOKEN VAULT_ADDR=http://vault-active.${NAMESPACE}.svc.cluster.local:8200 vault operator raft snapshot restore -force /tmp/$DECOMPRESSED_SNAPSHOT_NAME &&
   rm /tmp/$DECOMPRESSED_SNAPSHOT_NAME" || { echo "ERROR: Failed to restore the Vault cluster from snapshot"; exit 1; }
 
 # Unseal the Vault cluster

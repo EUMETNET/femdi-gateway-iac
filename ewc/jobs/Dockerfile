@@ -1,10 +1,10 @@
-FROM alpine:3.20
+FROM alpine:3.22
 
 # Set arguments for product and version
 ARG PRODUCT=vault
-ARG VAULT_VERSION=1.18.0
+ARG VAULT_VERSION=1.21.0
 ARG ETCD_VERSION=v3.5.17
-ARG KUBECTL_VERSION=v1.28.0
+ARG KUBECTL_VERSION=v1.34.1
 
 # Install dependencies and AWS CLI & PostgreSQL client
 # aws-cli is around ~100MB
