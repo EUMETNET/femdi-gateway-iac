@@ -44,4 +44,5 @@ vault/anti_affinity=true
 # Actual Vault root token and unseal keys are produced by the terraform after the first run.
 # Can be as is when bootstrapping a new cluster.
 vault/root_token=placeholder
+# Once you have the actual keys available the value must be in format key1,key2,key3,.. no quotes or brackets.
 vault/unseal_keys=[]

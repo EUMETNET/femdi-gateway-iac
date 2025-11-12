@@ -293,9 +293,9 @@ JOB_TEMPLATE=$(kubectl get configmap vault-restore-backup -n vault -o jsonpath='
 
 # Pass the unseal keys and vault token, place and logic to fetch these might need adjusting
 # Create the restore job and capture the job name
-JOB_NAME=$(
-    UNSEAL_KEYS=$(jq -r '. | join(",")' ~/path-to/unseal_keys.txt) \
-    VAULT_TOKEN=$(cat ~/path-to/vault_token.txt) \
+JOB_NAME=$(                       
+    UNSEAL_KEYS=$(AWS_PROFILE=fmi_meteogate aws ssm get-parameter --name "/cluster_name/vault/unseal_keys" --with-decryption --query "Parameter.Value" --region eu-north-1 --output text || { echo "Failed to fetch unseal keys"; exit 1; }) \
+    VAULT_TOKEN=$(AWS_PROFILE=fmi_meteogate aws ssm get-parameter --name "/cluster_name/vault/root_token" --with-decryption --query "Parameter.Value" --region eu-north-1 --output text || { echo "Failed to fetch root token"; exit 1; })\
     envsubst <<< "$JOB_TEMPLATE" | \
     kubectl create -f - -o name
 )
