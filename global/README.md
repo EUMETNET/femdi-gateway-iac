@@ -2,7 +2,7 @@
 
 ## Description
 
-Terraform project for managing global account level resources.
+Terraform project for managing global account level resources including Route53, S3 backup bucket and iam users (keys) for accessing backup bucket and route53.
 
 ## Variables
 
@@ -29,10 +29,10 @@ terraform init
 
 Plan the desired changes:
 ```bash
-terraform plan -var-file=<your_file>.tfvars
+terraform plan
 ```
 
 Apply the desired changes:
 ```bash
-terraform apply -var-file=<your_file>.tfvars
+terraform apply
 ```
