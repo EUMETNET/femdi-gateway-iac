@@ -464,7 +464,7 @@ locals {
           containers = [
             {
               name            = "pre-apisix-restore-backup"
-              image           = "bitnamilegacy/kubectl:1.28"
+              image           = "alpine/kubectl:1.34.1"
               imagePullPolicy = "IfNotPresent"
               command = [
                 "/bin/sh",
@@ -580,7 +580,7 @@ locals {
           containers = [
             {
               name            = "post-apisix-restore-backup"
-              image           = "bitnamilegacy/kubectl:1.28"
+              image           = "alpine/kubectl:1.34.1"
               imagePullPolicy = "IfNotPresent"
               command = [
                 "/bin/sh",
