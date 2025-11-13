@@ -220,6 +220,8 @@ For more advanced configurations, such as adding Slack notifications or grouping
 
 The disaster recovery plan includes backing up application databases and logical data, and restoring them from snapshot files. The backup and restore processes are performed using database-specific tools like `pg_dump` and `pg_restore`.
 
+Both backup and restore jobs uses custom Dockerfile to perform tasks. The Dockerfile and job scripts are located in `/jobs/` directory. There is Github Action in `.github/workflows/upload_jobs_image.yml` that uploads new image to Github Container Registry in case Dockerfile or scripts needs modfications.
+
 ### Backups
 
 Each application's database (Keycloak PostgreSQL, APISIX etcd, Vault raft) has a dedicated Cron job for backups. The backup schedule can be adjusted using Terraform if needed. Currently, backups are saved to an AWS S3 bucket. If there is no need to store files older than a certain number of days, bucket retention policies can be used to manage this.
