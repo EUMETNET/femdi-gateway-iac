@@ -45,4 +45,4 @@ vault/anti_affinity=true
 # Can be as is when bootstrapping a new cluster.
 vault/root_token=placeholder
 # Once you have the actual keys available the value must be in format key1,key2,key3,.. no quotes or brackets.
-vault/unseal_keys=[]
+vault/unseal_keys=placeholder1,placeholder2,placeholder3,placeholder4,placeholder5
