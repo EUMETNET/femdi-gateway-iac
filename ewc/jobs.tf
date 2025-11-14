@@ -420,6 +420,11 @@ resource "kubernetes_role" "apisix_restore_role" {
     resources  = ["statefulsets/scale"]
     verbs      = ["get", "update", "patch"]
   }
+  rule {
+    api_groups = ["apps"]
+    resources  = ["deployments"]
+    verbs      = ["get", "list", "watch", "patch"]
+  }
 
   rule {
     api_groups = [""]
@@ -591,9 +596,13 @@ locals {
                 kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=${local.apisix_etcd_replica_count} -n ${kubernetes_namespace.apisix.metadata.0.name};
 
                 echo "Waiting for StatefulSet pods to scale up...";
-                kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=${local.apisix_helm_release_name},app.kubernetes.io/name=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s
-
+                kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=${local.apisix_helm_release_name},app.kubernetes.io/name=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s;
                 echo "StatefulSet is scaled up.";
+
+                echo "Restarting APISIX deployment to pick up restored data...";
+                kubectl rollout restart deployment apisix -n ${kubernetes_namespace.apisix.metadata.0.name};
+                kubectl rollout status deployment apisix -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s;
+                echo "APISIX deployment restarted.";
                 EOF
               ]
             }
