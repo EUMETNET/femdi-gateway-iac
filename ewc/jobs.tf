@@ -32,7 +32,7 @@ resource "kubernetes_cron_job_v1" "vault_token_renewal" {
             service_account_name = kubernetes_service_account.vault_jobs_service_account.metadata.0.name
             container {
               name              = "vault-token-renewal"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-f9a51d0"
+              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/bash", "-c", "/usr/local/bin/vault-token-renewal.sh"]
 
@@ -169,7 +169,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
             service_account_name = kubernetes_service_account.vault_jobs_service_account.metadata.0.name
             container {
               name              = "vault-backup"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-f9a51d0"
+              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/sh", "-c", "/usr/local/bin/vault-snapshot.sh"]
 
@@ -236,7 +236,7 @@ locals {
           containers = [
             {
               name            = "vault-restore-backup"
-              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-f9a51d0"
+              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
               imagePullPolicy = "IfNotPresent"
               command         = ["/bin/sh", "-c", "/usr/local/bin/vault-restore.sh"]
               env = [
@@ -353,7 +353,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
             restart_policy = "OnFailure"
             container {
               name              = "apisix-backup"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-f9a51d0"
+              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:jani-test"
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/sh", "-c", "/usr/local/bin/apisix-snapshot.sh"]
 
@@ -477,10 +477,10 @@ locals {
                 <<-EOF
                 set -e
                 echo "Scaling down the etcd StatefulSet...";
-                kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=0 -n ${kubernetes_namespace.apisix.metadata.0.name};
+                kubectl scale statefulset etcd --replicas=0 -n ${kubernetes_namespace.apisix.metadata.0.name};
 
                 echo "Waiting for StatefulSet pods to terminate...";
-                kubectl wait --for=delete pod -l app.kubernetes.io/instance=${local.apisix_helm_release_name},app.kubernetes.io/name=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s
+                kubectl wait --for=delete pod -l app=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s
 
                 echo "StatefulSet is scaled down.";
                 EOF
@@ -506,7 +506,7 @@ locals {
           containers = [
             {
               name            = "apisix-restore-backup"
-              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-f9a51d0"
+              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
               imagePullPolicy = "IfNotPresent"
               command         = ["/bin/sh", "-c", "/usr/local/bin/apisix-restore.sh"]
               env = [
@@ -551,17 +551,17 @@ locals {
               ]
               volumeMounts = [
                 for i in range(local.apisix_etcd_replica_count) : {
-                  name      = "data-${local.apisix_helm_release_name}-etcd-${i}"
-                  mountPath = "/etcd-volumes/data-${local.apisix_helm_release_name}-etcd-${i}"
+                  name      = "etcd-data-etcd-${i}"
+                  mountPath = "/etcd-volumes/etcd-data-etcd-${i}"
                 }
               ]
             }
-          ],
+          ]
           volumes = [
             for i in range(local.apisix_etcd_replica_count) : {
-              name = "data-${local.apisix_helm_release_name}-etcd-${i}"
+              name = "etcd-data-etcd-${i}"
               persistentVolumeClaim = {
-                claimName = "data-${local.apisix_helm_release_name}-etcd-${i}"
+                claimName = "etcd-data-etcd-${i}"
               }
             }
           ]
@@ -593,10 +593,10 @@ locals {
                 <<-EOF
                 set -e
                 echo "Scaling up the etcd StatefulSet back to its original replica count..";
-                kubectl scale statefulset ${local.apisix_helm_release_name}-etcd --replicas=${local.apisix_etcd_replica_count} -n ${kubernetes_namespace.apisix.metadata.0.name};
+                kubectl scale statefulset etcd --replicas=${local.apisix_etcd_replica_count} -n ${kubernetes_namespace.apisix.metadata.0.name};
 
                 echo "Waiting for StatefulSet pods to scale up...";
-                kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=${local.apisix_helm_release_name},app.kubernetes.io/name=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s;
+                kubectl wait --for=condition=ready pod -l app=etcd -n ${kubernetes_namespace.apisix.metadata.0.name} --timeout=300s;
                 echo "StatefulSet is scaled up.";
 
                 echo "Restarting APISIX deployment to pick up restored data...";

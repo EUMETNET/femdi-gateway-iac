@@ -43,7 +43,7 @@ resource "kubernetes_cron_job_v1" "keycloak_backup" {
             restart_policy = "OnFailure"
             container {
               name              = "keycloak-backup"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-f9a51d0"
+              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/sh", "-c", "/usr/local/bin/keycloak-snapshot.sh"]
 
@@ -179,7 +179,7 @@ locals {
           containers = [
             {
               name            = "keycloak-restore-backup"
-              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-f9a51d0"
+              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
               imagePullPolicy = "IfNotPresent"
               command         = ["/bin/sh", "-c", "/usr/local/bin/keycloak-restore.sh"]
               env = [
