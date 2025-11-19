@@ -355,9 +355,33 @@ resource "kubernetes_config_map" "apisix_custom_plugins" {
 }
 
 locals {
+  etcd_service_name        = "etcd-client"
   apisix_helm_release_name = "apisix"
-  apisix_etcd_host         = "http://${local.apisix_helm_release_name}-etcd.${kubernetes_namespace.apisix.metadata.0.name}.svc.cluster.local:2379"
+  apisix_etcd_host         = "http://${local.etcd_service_name}.${kubernetes_namespace.apisix.metadata.0.name}.svc.cluster.local:2379"
   vault_host               = "http://${module.ewc-vault-init.vault_helm_release_name}-active.${module.ewc-vault-init.vault_namespace_name}.svc.cluster.local:8200"
+}
+
+# Install etcd for Apisix
+resource "kubectl_manifest" "apisix-etcd-headless-service" {
+  yaml_body = templatefile("./apisix-etcd/service-headless.yaml", {
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  })
+}
+
+resource "kubectl_manifest" "apisix-etcd-service" {
+  yaml_body = templatefile("./apisix-etcd/service.yaml", {
+    name      = local.etcd_service_name
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  })
+}
+
+resource "kubectl_manifest" "apisix-etcd-statefulset" {
+  yaml_body = templatefile("./apisix-etcd/statefulset.yaml", {
+    image         = "quay.io/coreos/etcd:v3.5.25"
+    namespace     = kubernetes_namespace.apisix.metadata.0.name
+    replica_count = local.apisix_etcd_replica_count
+    storage_size  = "8Gi"
+  })
 }
 
 resource "helm_release" "apisix" {
@@ -396,7 +420,11 @@ resource "helm_release" "apisix" {
     {
       name  = "apisix.plugins"
       value = ["prometheus", "real-ip", "key-auth", "cors", "proxy-rewrite", "consumer-restriction", "response-rewrite", "limit-req", "limit-count", "serverless-pre-function"]
-    }
+    },
+    {
+      name  = "externalEtcd.host"
+      value = [local.apisix_etcd_host]
+    },
   ]
 
   set = [
@@ -517,18 +545,18 @@ resource "helm_release" "apisix" {
       name  = "apisix.customPlugins.plugins[0].configMap.mounts[0].path"
       value = "/opt/custom-plugins/apisix/plugins/dynamic-response-rewrite.lua"
     },
-    # etcd config
+    # etcd managed as own resource
     {
-      name  = "etcd.replicaCount"
-      value = local.apisix_etcd_replica_count
+      name  = "etcd.enabled"
+      value = false
     },
-    #{
-    #  name = "etcd.image.registry"
-    #  value = "quay.io"
-    #},
     {
-      name  = "etcd.image.repository"
-      value = "bitnamilegacy/etcd"
+      name  = "externalEtcd.user"
+      value = ""
+    },
+    {
+      name  = "externalEtcd.password"
+      value = ""
     }
   ]
 
@@ -543,7 +571,7 @@ resource "helm_release" "apisix" {
   }
 
   # Need connection to vault and Installs ServiceMonitor for scraping metrics
-  depends_on = [module.ewc-vault-init, rancher2_app_v2.rancher-monitoring]
+  depends_on = [module.ewc-vault-init, rancher2_app_v2.rancher-monitoring, kubectl_manifest.apisix-etcd-statefulset]
 
 }
 

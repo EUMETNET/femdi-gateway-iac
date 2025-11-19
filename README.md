@@ -19,6 +19,10 @@ femdi-gateway-iac
 │   ├── terraform.tf
 │   └── variables.tf
 ├── ewc # Deploy Apisix on EWC Rancher Cluster
+│   ├── apisix-etcd # Contains needed files to deploy etcd for APISIX
+│   │   ├── service-headless.yaml
+│   │   ├── service.yaml
+│   │   └── statefulset.yaml
 │   ├── dev-portal-init # Deploys dev-portal and its dependencies
 │   │   ├── jobs.tf
 │   │   ├── locals.tf
