@@ -12,9 +12,9 @@ AWS_REGION=${AWS_REGION:-"eu-north-1"}
 SNAPSHOT_NAME=${SNAPSHOT_NAME:-"latest"}
 REPLICA_COUNT=${REPLICA_COUNT}
 NAMESPACE=${NAMESPACE}
-APISIX_HELM_RELEASE_NAME=${APISIX_HELM_RELEASE_NAME}
 # Local variables
-INITIAL_CLUSTER_TOKEN="etcd-cluster-k8s"
+STATEFULSET_NAME="etcd"
+INITIAL_CLUSTER_TOKEN="etcd-apisix"
 INITIAL_CLUSTER=""
 
 # Check required variables
@@ -23,7 +23,6 @@ check_var "AWS_ACCESS_KEY_ID" "$AWS_ACCESS_KEY_ID"
 check_var "AWS_SECRET_ACCESS_KEY" "$AWS_SECRET_ACCESS_KEY"
 check_var "REPLICA_COUNT" "$REPLICA_COUNT"
 check_var "NAMESPACE" "$NAMESPACE"
-check_var "APISIX_HELM_RELEASE_NAME" "$APISIX_HELM_RELEASE_NAME"
 
 # Find the latest snapshot if no specific snapshot is provided
 if [ "$SNAPSHOT_NAME" == "latest" ]; then
@@ -41,25 +40,27 @@ gzip -d /tmp/${SNAPSHOT_NAME} || { echo "ERROR: Failed to decompress snapshot $S
 # Create a new variable for the decompressed snapshot name
 DECOMPRESSED_SNAPSHOT_NAME="${SNAPSHOT_NAME%.gz}"
 
-# Construct the initial cluster configuration
+# Build cluster list
 for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
-  INITIAL_CLUSTER="${INITIAL_CLUSTER}${APISIX_HELM_RELEASE_NAME}-etcd-${i}=http://${APISIX_HELM_RELEASE_NAME}-etcd-${i}.${APISIX_HELM_RELEASE_NAME}-etcd-headless.${NAMESPACE}.svc.cluster.local:2380,"
+  INITIAL_CLUSTER="${INITIAL_CLUSTER}etcd-${i}=http://etcd-${i}.etcd.${NAMESPACE}.svc.cluster.local:2380,"
 done
 INITIAL_CLUSTER=${INITIAL_CLUSTER%,}
 
-# Restore the snapshot to each volume and form new logical cluster
-echo "Restoring the snapshot to each etcd volume and forming new logical cluster..."
+echo "Initial cluster: $INITIAL_CLUSTER"
+
+echo "Restoring snapshot into PVCs..."
+
 for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
-  volume="/etcd-volumes/data-${APISIX_HELM_RELEASE_NAME}-etcd-${i}"
-  if [ -d "$volume" ]; then
-    data_dir="$volume/data"  # Note: etcd statefulSet has env ETCD_DATA_DIR set to /bitnami/etcd/data hence just the /data
-    rm -rf "$data_dir"
-    mkdir -p "$data_dir"
-    etcdutl snapshot restore /tmp/${DECOMPRESSED_SNAPSHOT_NAME} --data-dir "$data_dir" \
-      --name "${APISIX_HELM_RELEASE_NAME}-etcd-${i}" \
-      --initial-cluster "${INITIAL_CLUSTER}" \
-      --initial-cluster-token "${INITIAL_CLUSTER_TOKEN}" \
-      --initial-advertise-peer-urls "http://${APISIX_HELM_RELEASE_NAME}-etcd-${i}.${APISIX_HELM_RELEASE_NAME}-etcd-headless.${NAMESPACE}.svc.cluster.local:2380" \
+  data_dir="/etcd-volumes/etcd-data-etcd-${i}"
+  if [ -d "$data_dir" ]; then
+    rm -rf "${data_dir:?}/"*
+
+    etcdutl snapshot restore "/tmp/${DECOMPRESSED_SNAPSHOT_NAME}" \
+      --data-dir "$data_dir" \
+      --name "etcd-${i}" \
+      --initial-cluster "$INITIAL_CLUSTER" \
+      --initial-cluster-token "$INITIAL_CLUSTER_TOKEN" \
+      --initial-advertise-peer-urls "http://etcd-${i}.etcd.${NAMESPACE}.svc.cluster.local:2380"
       > /dev/null
     if [ $? -ne 0 ]; then
       echo "ERROR: Failed to restore snapshot to $data_dir"
@@ -68,7 +69,5 @@ for i in $(seq 0 $(($REPLICA_COUNT - 1))); do
   fi
 done
 
-# Clean up
-rm /tmp/$DECOMPRESSED_SNAPSHOT_NAME
-
-echo "APISIX etcd successfully restored from snapshot $DECOMPRESSED_SNAPSHOT_NAME"
+rm "/tmp/${DECOMPRESSED_SNAPSHOT_NAME}"
+echo "Etcd cluster successfully restored."
