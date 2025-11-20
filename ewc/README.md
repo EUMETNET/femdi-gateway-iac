@@ -180,6 +180,17 @@ vault_pod_ready_statuses_before_init = [
     * run `terraform apply --var-file=<cluster_name>.tfvars` again and then `kubectl rollout restart deployment dev-portal-backend -n dev-portal` to make dev portal backend pick up the new env including the another cluster information.
 
 
+## In case Terraform state drifts from actual resources
+
+The following might help to solve out the drift issue. A safer alternative for this delete operation is to use `terraform import <resource> <id>`.
+
+1. Delete the drifted terraform.tfstate versions from s3 bucket. Backup or copy the versions you are about to delete somewhere safe to be able to restore if needed. Your workspace's terraform.tfstate file is located at s3://meteogate-iac-terraform-states/env:/<workspace_name>/clusters/terraform.tfstate
+2. Delete the /.terraform directory from your local machine.
+3. Reinitialize the backend by running `terraform init -reconfigure`
+4. Check the workspaces `terraform workspace list` and use your workspace `terraform workspace select <workspace_name>`
+5. Run terraform plan to see if that solved the problem `terraform plan -var-file=<cluster_name>.tfvars`
+
+
 ## Parameters
 
 Parameters stored in AWS SSM Parameter Store are interacted with in files ssm.tf and the actual values to terraform files are provided through locals.tf to make it single point of truth. Also other locals should be preferrably stored to locals.tf files.
