@@ -278,7 +278,7 @@ resource "helm_release" "vault" {
   name             = local.vault_helm_release_name
   repository       = "https://helm.releases.hashicorp.com"
   chart            = "vault"
-  version          = "0.28.0"
+  version          = "0.31.0"
   namespace        = kubernetes_namespace.vault.metadata.0.name
   create_namespace = false
 
@@ -292,6 +292,8 @@ resource "helm_release" "vault" {
       replicas_iterator        = range(local.vault_replica_count)
       anti-affinity            = local.vault_anti_affinity
       release_name             = local.vault_helm_release_name
+      image_repository         = "hashicorp/vault"
+      image_tag                = "1.21.1"
     })
   ]
 
