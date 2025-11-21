@@ -363,20 +363,20 @@ locals {
 
 # Install etcd for Apisix
 resource "kubectl_manifest" "apisix-etcd-headless-service" {
-  yaml_body = templatefile("./apisix-etcd/service-headless.yaml", {
+  yaml_body = templatefile("./templates/etcd/service-headless.yaml", {
     namespace = kubernetes_namespace.apisix.metadata.0.name
   })
 }
 
 resource "kubectl_manifest" "apisix-etcd-service" {
-  yaml_body = templatefile("./apisix-etcd/service.yaml", {
+  yaml_body = templatefile("./templates/etcd/service.yaml", {
     name      = local.etcd_service_name
     namespace = kubernetes_namespace.apisix.metadata.0.name
   })
 }
 
 resource "kubectl_manifest" "apisix-etcd-statefulset" {
-  yaml_body = templatefile("./apisix-etcd/statefulset.yaml", {
+  yaml_body = templatefile("./templates/etcd/statefulset.yaml", {
     image         = "quay.io/coreos/etcd:v3.5.25"
     namespace     = kubernetes_namespace.apisix.metadata.0.name
     replica_count = local.apisix_etcd_replica_count
@@ -388,7 +388,7 @@ resource "helm_release" "apisix" {
   name             = local.apisix_helm_release_name
   repository       = "https://charts.apiseven.com"
   chart            = "apisix"
-  version          = "2.10.0"
+  version          = "2.12.2"
   namespace        = kubernetes_namespace.apisix.metadata.0.name
   create_namespace = false
 
@@ -428,6 +428,16 @@ resource "helm_release" "apisix" {
   ]
 
   set = [
+    # Image settings
+    # Verbose default values
+    {
+      name  = "image.repository"
+      value = "apache/apisix"
+    },
+    {
+      name  = "image.tag"
+      value = "3.14.1-ubuntu"
+    },
     # Autoscaling
     {
       name  = "autoscaling.enabled"
@@ -517,10 +527,11 @@ resource "helm_release" "apisix" {
       value = file("../apisix/error_values/httpSrv")
     },
     # Trust container's CA for Vault and other outbound CA requests
-    {
-      name  = "apisix.nginx.configurationSnippet.httpEnd"
-      value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
-    },
+    # 
+    #{
+    #  name  = "apisix.nginx.configurationSnippet.httpEnd"
+    #  value = "lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;"
+    #},
     {
       name  = "apisix.customPlugins.enabled"
       value = true
