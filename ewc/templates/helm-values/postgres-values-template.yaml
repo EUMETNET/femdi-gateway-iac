@@ -1,0 +1,33 @@
+type: postgresql
+mode: standalone
+version:
+  postgresql: "${postgresql_version}"
+
+cluster:
+  instances: 1
+  initdb:
+    dataChecksums: true
+    database: keycloak
+    owner: keycloak
+    secret:
+      name: ${db_secret_name}
+
+backups:
+  enabled: ${backups_enabled}
+  destinationPath: ${backup_destination_path}
+  secret:
+    create: false
+    name: ${backup_secret_name}
+  s3:
+    region: eu-north-1
+    accessKey: AWS_ACCESS_KEY_ID
+    secretKey: AWS_ACCESS_SECRET_KEY
+  wal:
+    encryption: ""
+  data:
+    encryption: ""
+  retentionPolicy: "7d"
+  scheduledBackups:
+    - name: daily-backup
+      schedule: "0 0 0 * * *"  # Daily at midnight
+      backupOwnerReference: self

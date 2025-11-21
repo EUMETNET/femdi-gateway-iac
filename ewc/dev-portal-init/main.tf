@@ -1,5 +1,5 @@
 ################################################################################
-# Install Keycloak 
+# Install Keycloak & PostgreSQL
 ################################################################################
 resource "kubernetes_namespace" "keycloak" {
   metadata {
@@ -14,14 +14,90 @@ resource "kubernetes_namespace" "keycloak" {
 locals {
   postgres_host              = "${local.keycloak_helm_release_name}-postgresql.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
   postgres_db_name           = "bitnami_keycloak" # Default from Helm chart
-  postgres_db_user           = "bn_keycloak"      # default from Helm chart
+  postgres_db_user           = "keycloak"         # default from Helm chart
   keycloak_helm_release_name = "keycloak"
 }
 
-#resource "random_password" "keycloak-dev-portal-secret" {
-#  length  = 32
-#  special = false
-#}
+# --------------------------------------------------------
+# PostgreSQL
+# --------------------------------------------------------
+resource "random_password" "keycloak_postgresql_password" {
+  length  = 32
+  special = true
+}
+
+resource "kubernetes_secret" "keycloak_postgresql" {
+  metadata {
+    name      = "keycloak-postgresql-new"
+    namespace = kubernetes_namespace.keycloak.metadata.0.name
+  }
+  data = {
+    username = "keycloak"
+    password = random_password.keycloak_postgresql_password.result
+  }
+  type = "Opaque"
+}
+
+resource "kubernetes_secret" "keycloak_postgresql_jobs" {
+  metadata {
+    name      = "keycloak-postgresql-jobs"
+    namespace = kubernetes_namespace.keycloak.metadata.0.name
+  }
+  data = {
+    AWS_ACCESS_KEY_ID     = var.backup_bucket_access_key
+    AWS_ACCESS_SECRET_KEY = var.backup_bucket_secret_key
+  }
+  type = "Opaque"
+}
+
+resource "helm_release" "cnpg_operator" {
+  name       = "cnpg-operator"
+  namespace  = kubernetes_namespace.keycloak.metadata.0.name
+  repository = "https://cloudnative-pg.github.io/charts"
+  chart      = "cloudnative-pg"
+  version    = "0.26.1"
+
+  set = [
+    {
+      name  = "config.clusterWide"
+      value = "false"
+    }
+  ]
+
+  depends_on = [
+    kubernetes_namespace.keycloak
+  ]
+}
+
+# First initial installation WITH backups.enabled = false
+# Then backups.enabled = true in a separate apply
+resource "helm_release" "cnpg_cluster" {
+  name       = "cnpg"
+  namespace  = kubernetes_namespace.keycloak.metadata.0.name
+  repository = "https://cloudnative-pg.github.io/charts"
+  chart      = "cluster"
+  version    = "0.3.1"
+
+  values = [
+    templatefile("./templates/helm-values/postgres-values-template.yaml", {
+      db_secret_name          = kubernetes_secret.keycloak_postgresql.metadata[0].name
+      backup_destination_path = "s3://${var.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.keycloak.metadata.0.name}"
+      backup_secret_name      = kubernetes_secret.keycloak_postgresql_jobs.metadata[0].name
+      postgresql_version      = "16.4"
+      backups_enabled         = false # Change to true after initial installation
+    })
+  ]
+
+  depends_on = [
+    helm_release.cnpg_operator,
+    kubernetes_secret.keycloak_postgresql,
+    kubernetes_secret.keycloak_postgresql_jobs
+  ]
+}
+
+# --------------------------------------------------------
+# Keycloak
+# --------------------------------------------------------
 
 # Create configmap for realm json
 resource "kubernetes_config_map" "realm-json" {
@@ -49,99 +125,40 @@ resource "kubernetes_config_map" "realm-json" {
   }
 }
 
-#TODO: Add HPA
-#TODO: Consider managing the secrets in self managed kubernetes_secret instead of using Helm chart generated secret
-#      Could not make self managed secret work reliably. Possible cause of this https://github.com/bitnami/charts/issues/18014
-resource "helm_release" "keycloak" {
-  name             = local.keycloak_helm_release_name
-  repository       = "https://charts.bitnami.com/bitnami"
-  chart            = "keycloak"
-  version          = "21.1.2"
-  namespace        = kubernetes_namespace.keycloak.metadata.0.name
-  create_namespace = false
+resource "kubernetes_secret" "keycloak_admin_pw" {
+  metadata {
+    name      = "keycloak-admin-password"
+    namespace = kubernetes_namespace.keycloak.metadata.0.name
+  }
+  data = {
+    admin-password = local.keycloak_admin_password
+  }
+  type = "Opaque"
+}
+
+resource "helm_release" "keycloak2" {
+  name       = local.keycloak_helm_release_name
+  namespace  = "keycloak"
+  repository = "https://codecentric.github.io/helm-charts"
+  chart      = "keycloakx"
+  version    = "7.1.4"
 
   values = [
     templatefile("./templates/helm-values/keycloak-values-template.yaml", {
-      cluster_issuer = var.cluster_issuer
-      hostname       = "${var.keycloak_subdomain}.${var.dns_zone}",
-      ip             = var.load_balancer_ip
+      db_secret_name               = kubernetes_secret.keycloak_postgresql.metadata[0].name
+      db_secret_username_key       = "username"
+      db_secret_password_key       = "password"
+      kc_admin_username            = "admin"
+      kc_admin_secret_name         = kubernetes_secret.keycloak_admin_pw.metadata[0].name
+      kc_admin_secret_password_key = "admin-password"
+      kc_realm_configmap_name      = kubernetes_config_map.realm-json.metadata[0].name
+      cluster_issuer               = var.cluster_issuer
+      hostname                     = "${var.keycloak_subdomain}.${var.dns_zone}",
+      ip                           = var.load_balancer_ip
+      repository                   = "quay.io/keycloak/keycloak"
+      tag                          = "26.4.5"
     })
   ]
-
-  # Needed for tls termination at ingress
-  # See: https://github.com/bitnami/charts/tree/main/bitnami/keycloak#use-with-ingress-offloading-ssl
-  set = [
-    {
-      name  = "image.repository"
-      value = "bitnamilegacy/keycloak"
-    },
-    {
-      name  = "proxy"
-      value = "edge"
-    },
-    {
-      name  = "auth.adminUser"
-      value = "admin"
-    },
-    {
-      name  = "postgresql.image.repository"
-      value = "bitnamilegacy/postgresql"
-    },
-    {
-      name  = "postgresql.auth.username"
-      value = local.postgres_db_user
-    },
-    {
-      name  = "postgresql.auth.database"
-      value = local.postgres_db_name
-    },
-    # Needed for configmap realm import
-    # See: https://github.com/bitnami/charts/issues/5178#issuecomment-765361901
-    {
-      name  = "extraStartupArgs"
-      value = "--import-realm"
-
-    },
-    {
-      name  = "extraVolumeMounts[0].name"
-      value = "config"
-    },
-    {
-      name  = "extraVolumeMounts[0].mountPath"
-      value = "/opt/bitnami/keycloak/data/import"
-    },
-    {
-      name  = "extraVolumeMounts[0].readOnly"
-      value = true
-    },
-    {
-      name  = "extraVolumes[0].name"
-      value = "config"
-    },
-    {
-      name  = "extraVolumes[0].configMap.name"
-      value = kubernetes_config_map.realm-json.metadata[0].name
-    },
-    {
-      name  = "extraVolumes[0].configMap.items[0].key"
-      value = "realm.json"
-    },
-    {
-      name  = "extraVolumes[0].configMap.items[0].path"
-      value = "realm.json"
-    },
-    #Statefulset params
-    {
-      name  = "replicaCount"
-      value = local.keycloak_replica_count
-    }
-  ]
-
-  set_sensitive = [{
-    name  = "auth.adminPassword"
-    value = local.keycloak_admin_password
-  }]
-
 }
 
 # Create ingress to redirect alternative domains to main domain
@@ -226,7 +243,7 @@ resource "kubernetes_secret" "dev-portal-secret-for-backend" {
         )
       }
       "keycloak" = {
-        "url"           = "http://${local.keycloak_helm_release_name}.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
+        "url"           = "http://${local.keycloak_helm_release_name}-keycloakx-http.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
         "realm"         = "${var.keycloak_realm_name}"
         "client_id"     = "dev-portal-api"
         "client_secret" = local.dev_portal_keycloak_secret

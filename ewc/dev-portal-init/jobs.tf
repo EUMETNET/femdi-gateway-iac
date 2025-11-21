@@ -19,93 +19,93 @@ resource "kubernetes_secret" "keycloak_jobs_secrets" {
 
 }
 
-resource "kubernetes_cron_job_v1" "keycloak_backup" {
-  metadata {
-    name      = "keycloak-backup"
-    namespace = kubernetes_namespace.keycloak.metadata.0.name
-  }
-
-  spec {
-    concurrency_policy            = "Replace"
-    failed_jobs_history_limit     = 3 # Keep the latest 3 failed jobs
-    schedule                      = "0 3 * * *"
-    timezone                      = "Etc/UTC"
-    starting_deadline_seconds     = 43200 # 12 hours
-    successful_jobs_history_limit = 1     # Keep the latest
-
-    job_template {
-      metadata {}
-      spec {
-        backoff_limit = 6 # This the default value
-        template {
-          metadata {}
-          spec {
-            restart_policy = "OnFailure"
-            container {
-              name              = "keycloak-backup"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
-              image_pull_policy = "IfNotPresent"
-              command           = ["/bin/sh", "-c", "/usr/local/bin/keycloak-snapshot.sh"]
-
-              env {
-                name  = "POSTGRES_HOST"
-                value = local.postgres_host
-              }
-
-              env {
-                name  = "POSTGRES_DB"
-                value = local.postgres_db_name
-              }
-
-              env {
-                name  = "POSTGRES_USER"
-                value = local.postgres_db_user
-              }
-
-              # A bit magic here to get the password from Keycloak Helm chart generated secret
-              # Reference dev-portal-init/main.tf resource "helm_release" "keycloak" for more info
-              env {
-                name = "POSTGRES_PASSWORD"
-                value_from {
-                  secret_key_ref {
-                    name = "${local.keycloak_helm_release_name}-postgresql"
-                    key  = "password"
-                  }
-                }
-              }
-
-              env {
-                name  = "S3_BUCKET_BASE_PATH"
-                value = "${var.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.keycloak.metadata.0.name}/"
-              }
-
-              env {
-                name = "AWS_ACCESS_KEY_ID"
-                value_from {
-                  secret_key_ref {
-                    name = kubernetes_secret.keycloak_jobs_secrets.metadata.0.name
-                    key  = "AWS_ACCESS_KEY_ID"
-                  }
-                }
-              }
-
-              env {
-                name = "AWS_SECRET_ACCESS_KEY"
-                value_from {
-                  secret_key_ref {
-                    name = kubernetes_secret.keycloak_jobs_secrets.metadata.0.name
-                    key  = "AWS_SECRET_ACCESS_KEY"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-}
+#resource "kubernetes_cron_job_v1" "keycloak_backup" {
+#  metadata {
+#    name      = "keycloak-backup"
+#    namespace = kubernetes_namespace.keycloak.metadata.0.name
+#  }
+#
+#  spec {
+#    concurrency_policy            = "Replace"
+#    failed_jobs_history_limit     = 3 # Keep the latest 3 failed jobs
+#    schedule                      = "0 3 * * *"
+#    timezone                      = "Etc/UTC"
+#    starting_deadline_seconds     = 43200 # 12 hours
+#    successful_jobs_history_limit = 1     # Keep the latest
+#
+#    job_template {
+#      metadata {}
+#      spec {
+#        backoff_limit = 6 # This the default value
+#        template {
+#          metadata {}
+#          spec {
+#            restart_policy = "OnFailure"
+#            container {
+#              name              = "keycloak-backup"
+#              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
+#              image_pull_policy = "IfNotPresent"
+#              command           = ["/bin/sh", "-c", "/usr/local/bin/keycloak-snapshot.sh"]
+#
+#              env {
+#                name  = "POSTGRES_HOST"
+#                value = local.postgres_host
+#              }
+#
+#              env {
+#                name  = "POSTGRES_DB"
+#                value = local.postgres_db_name
+#              }
+#
+#              env {
+#                name  = "POSTGRES_USER"
+#                value = local.postgres_db_user
+#              }
+#
+#              # A bit magic here to get the password from Keycloak Helm chart generated secret
+#              # Reference dev-portal-init/main.tf resource "helm_release" "keycloak" for more info
+#              env {
+#                name = "POSTGRES_PASSWORD"
+#                value_from {
+#                  secret_key_ref {
+#                    name = "${local.keycloak_helm_release_name}-postgresql"
+#                    key  = "password"
+#                  }
+#                }
+#              }
+#
+#              env {
+#                name  = "S3_BUCKET_BASE_PATH"
+#                value = "${var.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.keycloak.metadata.0.name}/"
+#              }
+#
+#              env {
+#                name = "AWS_ACCESS_KEY_ID"
+#                value_from {
+#                  secret_key_ref {
+#                    name = kubernetes_secret.keycloak_jobs_secrets.metadata.0.name
+#                    key  = "AWS_ACCESS_KEY_ID"
+#                  }
+#                }
+#              }
+#
+#              env {
+#                name = "AWS_SECRET_ACCESS_KEY"
+#                value_from {
+#                  secret_key_ref {
+#                    name = kubernetes_secret.keycloak_jobs_secrets.metadata.0.name
+#                    key  = "AWS_SECRET_ACCESS_KEY"
+#                  }
+#                }
+#              }
+#            }
+#          }
+#        }
+#      }
+#    }
+#  }
+#
+#}
 
 resource "kubernetes_service_account" "keycloak_restore_sa" {
   metadata {
