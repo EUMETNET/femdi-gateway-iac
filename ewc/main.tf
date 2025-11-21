@@ -327,6 +327,18 @@ resource "kubernetes_namespace" "apisix" {
   }
 }
 
+resource "kubernetes_secret" "apisix_admin_api_keys" {
+  metadata {
+    name      = "apisix-admin-api-keys"
+    namespace = kubernetes_namespace.apisix.metadata.0.name
+  }
+  data = {
+    admin_key  = local.apisix_admin_api_key
+    viewer_key = local.apisix_admin_reader_api_key
+  }
+  type = "Opaque"
+}
+
 # ConfigMap for custom error pages
 resource "kubernetes_config_map" "custom_error_pages" {
   metadata {
@@ -400,17 +412,6 @@ resource "helm_release" "apisix" {
     })
   ]
 
-  set_sensitive = [
-    {
-      name  = "apisix.admin.credentials.admin"
-      value = local.apisix_admin_api_key
-    },
-    {
-      name  = "apisix.admin.credentials.viewer"
-      value = local.apisix_admin_reader_api_key
-    }
-  ]
-
   set_list = [
     {
       name  = "apisix.admin.allow.ipList"
@@ -437,6 +438,19 @@ resource "helm_release" "apisix" {
     {
       name  = "image.tag"
       value = "3.14.1-ubuntu"
+    },
+    # API keys via secret
+    {
+      name  = "apisix.admin.credentials.secretName"
+      value = "apisix-admin-api-keys"
+    },
+    {
+      name  = "apisix.admin.credentials.secretAdminKey"
+      value = "admin_key"
+    },
+    {
+      name  = "apisix.admin.credentials.secretViewerKey"
+      value = "viewer_key"
     },
     # Autoscaling
     {
@@ -582,7 +596,13 @@ resource "helm_release" "apisix" {
   }
 
   # Need connection to vault and Installs ServiceMonitor for scraping metrics
-  depends_on = [module.ewc-vault-init, rancher2_app_v2.rancher-monitoring, kubectl_manifest.apisix-etcd-statefulset]
+  depends_on = [
+    module.ewc-vault-init,
+    rancher2_app_v2.rancher-monitoring,
+    kubectl_manifest.apisix-etcd-statefulset,
+    kubectl_manifest.apisix-etcd-service,
+    kubectl_manifest.apisix-etcd-headless-service
+  ]
 
 }
 
