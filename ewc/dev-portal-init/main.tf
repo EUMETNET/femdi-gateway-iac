@@ -136,7 +136,7 @@ resource "kubernetes_secret" "keycloak_admin_pw" {
   type = "Opaque"
 }
 
-resource "helm_release" "keycloak2" {
+resource "helm_release" "keycloak" {
   name       = local.keycloak_helm_release_name
   namespace  = "keycloak"
   repository = "https://codecentric.github.io/helm-charts"
