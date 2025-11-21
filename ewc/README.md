@@ -170,10 +170,11 @@ vault_pod_ready_statuses_before_init = [
 ## Manual Steps after Second run
 
 1. Register this platform to [API management tool](https://github.com/EUMETNET/api-management-tool-poc) repository (There are instructions in that repo too):
-    * Append used cluster_name variable value in UPPERCASE to the repository variable **PLATFORMS** list
-    * (Add routes to this platform either by creating new one or adding existing one to this platform by adding cluster_name variable in UPPERCASE to the route yaml platforms list)
+    * Append used `cluster_name` variable value in UPPERCASE to the repository variable **PLATFORMS** list
+    * Add `cluster_name` variable value in UPPERCASE to [health route's](https://github.com/EUMETNET/api-management-tool-poc/blob/main/configs/routes/health.yaml#L3) platforms list.
+    * (Add additional routes to this platform either by creating new one or adding existing route to this platform by adding cluster_name variable in UPPERCASE to the route yaml platforms list)
       * if route requires upstream API key then add that to the Vault of this platform
-    * Run management tool
+    * Management tool should run action "Test and deploy new APISIX configurations" once the configuration changes are merged/pushed to main branch
 
 2. In case there will be another cluster that is going to be attached to this cluster's Dev Portal then run previous steps to that one and after that cluster is set up then: 
     * add that cluster's name to AWS Parameter store in variable `/<this-cluster-name>/dev_portal/external_cluster_names`.
