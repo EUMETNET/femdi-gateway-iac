@@ -105,9 +105,9 @@ terraform workspace new <cluster_name>
 
 Run the ewc-vault-init module:
 ```bash
-terraform apply -target module.ewc-vault-init --var-file=<cluster_name>.tfvars
+terraform apply -target module.ewc-vault-init -var-file=<cluster_name>.tfvars
 ```
-Provide the needed terraform variables if no `--var-file` file is used.
+Provide the needed terraform variables if no `-var-file` file is used.
 
 The expected output should look something like this.
 All the vault pods should be ready after the initialization.
@@ -148,7 +148,7 @@ terraform output vault_unseal_keys
 
 Run the rest of the Terraform code:
 ```bash
-terraform apply --var-file=<cluster_name>.tfvars
+terraform apply -var-file=<cluster_name>.tfvars
 ```
 Expected output looks like this.
 ```txt
@@ -169,16 +169,18 @@ vault_pod_ready_statuses_before_init = [
 
 ## Manual Steps after Second run
 
-1. Register this platform to [API management tool](https://github.com/EUMETNET/api-management-tool-poc) repository (There are instructions in that repo too):
+1. To enable Keycloak PostgreSQL backups you need to change `backups_enabled = true` in [ewc/dev-portal-init/main.tf](dev-portal-init/main.tf#L87) file and then run `terraform apply -var-file=<cluster_name>.tfvars`.
+
+2. Register this platform to [API management tool](https://github.com/EUMETNET/api-management-tool-poc) repository (There are instructions in that repo too):
     * Append used `cluster_name` variable value in UPPERCASE to the repository variable **PLATFORMS** list
     * Add `cluster_name` variable value in UPPERCASE to [health route's](https://github.com/EUMETNET/api-management-tool-poc/blob/main/configs/routes/health.yaml#L3) platforms list.
     * (Add additional routes to this platform either by creating new one or adding existing route to this platform by adding cluster_name variable in UPPERCASE to the route yaml platforms list)
       * if route requires upstream API key then add that to the Vault of this platform
     * Management tool should run action "Test and deploy new APISIX configurations" once the configuration changes are merged/pushed to main branch
 
-2. In case there will be another cluster that is going to be attached to this cluster's Dev Portal then run previous steps to that one and after that cluster is set up then: 
+3. In case there will be another cluster that is going to be attached to this cluster's Dev Portal then run previous steps to that one and after that cluster is set up then: 
     * add that cluster's name to AWS Parameter store in variable `/<this-cluster-name>/dev_portal/external_cluster_names`.
-    * run `terraform apply --var-file=<cluster_name>.tfvars` again and then `kubectl rollout restart deployment dev-portal-backend -n dev-portal` to make dev portal backend pick up the new env including the another cluster information.
+    * run `terraform apply -var-file=<cluster_name>.tfvars` again and then `kubectl rollout restart deployment dev-portal-backend -n dev-portal` to make dev portal backend pick up the new env including the another cluster information.
 
 
 ## In case Terraform state drifts from actual resources
