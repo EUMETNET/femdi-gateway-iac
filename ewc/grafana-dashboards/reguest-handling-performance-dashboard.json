@@ -11,31 +11,23 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
-        "target": {
-          "limit": 100,
-          "matchAny": false,
-          "tags": [],
-          "type": "dashboard"
-        },
         "type": "dashboard"
       }
     ]
   },
-  "description": "",
+  "description": "Nginx Ingress Controller Requests Handling Performance Dashboard\nhttps://github.com/kubernetes/ingress-nginx/blob/master/deploy/grafana/dashboards/request-handling-performance.json",
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "gnetId": 9614,
   "graphTooltip": 1,
-  "id": 41,
+  "id": 9,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
-      "description": "Total time for NGINX and upstream servers to process a request and send a response",
+      "description": "Total time taken for nginx and upstream servers to process a request and send a response",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -48,6 +40,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -73,14 +66,13 @@
               "mode": "off"
             }
           },
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -100,6 +92,7 @@
       },
       "id": 91,
       "options": {
+        "dataLinks": [],
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -107,18 +100,19 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(\n  0.5,\n  sum by (le)(\n    rate(\n      nginx_ingress_controller_request_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[5m]\n    )\n  )\n)",
+          "expr": "histogram_quantile(\n  0.5,\n  sum by (le)(\n    rate(\n      nginx_ingress_controller_request_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[1m]\n    )\n  )\n)",
           "interval": "",
           "legendFormat": ".5",
           "refId": "D"
@@ -128,7 +122,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(\n  0.95,\n  sum by (le)(\n    rate(\n    nginx_ingress_controller_request_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[5m]\n    )\n  )\n)",
+          "expr": "histogram_quantile(\n  0.95,\n  sum by (le)(\n    rate(\n    nginx_ingress_controller_request_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[1m]\n    )\n  )\n)",
           "interval": "",
           "legendFormat": ".95",
           "refId": "B"
@@ -138,13 +132,13 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(\n  0.99,\n  sum by (le)(\n    rate(\n      nginx_ingress_controller_request_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[5m]\n    )\n  )\n)",
+          "expr": "histogram_quantile(\n  0.99,\n  sum by (le)(\n    rate(\n      nginx_ingress_controller_request_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[1m]\n    )\n  )\n)",
           "interval": "",
           "legendFormat": ".99",
           "refId": "A"
         }
       ],
-      "title": "Request Latency Percentiles",
+      "title": "Total request handling time",
       "type": "timeseries"
     },
     {
@@ -165,6 +159,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -190,14 +185,13 @@
               "mode": "off"
             }
           },
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -217,6 +211,7 @@
       },
       "id": 94,
       "options": {
+        "dataLinks": [],
         "legend": {
           "calcs": [],
           "displayMode": "list",
@@ -224,18 +219,19 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(\n  0.5,\n  sum by (le)(\n    rate(\n      nginx_ingress_controller_response_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[5m]\n    )\n  )\n)",
+          "expr": "histogram_quantile(\n  0.5,\n  sum by (le)(\n    rate(\n      nginx_ingress_controller_response_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[1m]\n    )\n  )\n)",
           "instant": false,
           "interval": "",
           "intervalFactor": 1,
@@ -247,7 +243,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(\n  0.95,\n  sum by (le)(\n    rate(\n    nginx_ingress_controller_response_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[5m]\n    )\n  )\n)",
+          "expr": "histogram_quantile(\n  0.95,\n  sum by (le)(\n    rate(\n    nginx_ingress_controller_response_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[1m]\n    )\n  )\n)",
           "interval": "",
           "legendFormat": ".95",
           "refId": "B"
@@ -257,13 +253,13 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(\n  0.99,\n  sum by (le)(\n    rate(\n      nginx_ingress_controller_response_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[5m]\n    )\n  )\n)",
+          "expr": "histogram_quantile(\n  0.99,\n  sum by (le)(\n    rate(\n      nginx_ingress_controller_response_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[1m]\n    )\n  )\n)",
           "interval": "",
           "legendFormat": ".99",
           "refId": "A"
         }
       ],
-      "title": "Upstream Response Latency Percentiles",
+      "title": "Upstream response time",
       "type": "timeseries"
     },
     {
@@ -283,6 +279,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -308,14 +305,13 @@
               "mode": "off"
             }
           },
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -335,6 +331,7 @@
       },
       "id": 93,
       "options": {
+        "dataLinks": [],
         "legend": {
           "calcs": [],
           "displayMode": "table",
@@ -342,25 +339,26 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "  sum by (method, host, path)(\n    rate(\n      nginx_ingress_controller_request_duration_seconds_count{\n        ingress =~ \"$ingress\"\n      }[5m]\n    )\n  )\n",
+          "expr": "  sum by (path)(\n    rate(\n      nginx_ingress_controller_request_duration_seconds_count{\n        ingress =~ \"$ingress\"\n      }[1m]\n    )\n  )\n",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{ method }} {{ host }}{{path }}",
+          "legendFormat": "{{ path }}",
           "refId": "A"
         }
       ],
-      "title": "Request Rate by Method and Path",
+      "title": "Request volume by Path",
       "type": "timeseries"
     },
     {
@@ -381,6 +379,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -406,14 +405,13 @@
               "mode": "off"
             }
           },
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -433,6 +431,7 @@
       },
       "id": 98,
       "options": {
+        "dataLinks": [],
         "legend": {
           "calcs": [],
           "displayMode": "table",
@@ -440,25 +439,26 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "histogram_quantile(\n  .5,\n  sum by (le, method, host, path)(\n    rate(\n      nginx_ingress_controller_response_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[5m]\n    )\n  )\n)",
+          "expr": "histogram_quantile(\n  .5,\n  sum by (le, path)(\n    rate(\n      nginx_ingress_controller_response_duration_seconds_bucket{\n        ingress =~ \"$ingress\"\n      }[1m]\n    )\n  )\n)",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{ method }} {{ host }}{{path }}",
+          "legendFormat": "{{ path }}",
           "refId": "A"
         }
       ],
-      "title": "Median Upstream Response Time by Method and Path",
+      "title": "Median upstream response time by Path",
       "type": "timeseries"
     },
     {
@@ -479,6 +479,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -504,14 +505,13 @@
               "mode": "off"
             }
           },
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -531,6 +531,7 @@
       },
       "id": 100,
       "options": {
+        "dataLinks": [],
         "legend": {
           "calcs": [],
           "displayMode": "table",
@@ -538,25 +539,26 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (method, host, path) (rate(nginx_ingress_controller_request_duration_seconds_count{\n  ingress =~ \"$ingress\",\n  status =~ \"[4-5].*\"\n}[5m])) / sum by (method, host, path) (rate(nginx_ingress_controller_request_duration_seconds_count{\n  ingress =~ \"$ingress\",\n}[5m]))",
+          "expr": "sum by (path) (rate(nginx_ingress_controller_request_duration_seconds_count{\n  ingress = \"$ingress\",\n  status =~ \"[4-5].*\"\n}[1m])) / sum by (path) (rate(nginx_ingress_controller_request_duration_seconds_count{\n  ingress = \"$ingress\",\n}[1m]))",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{ method }} {{ host }}{{path }}",
+          "legendFormat": "{{ path }}",
           "refId": "A"
         }
       ],
-      "title": "Response Error Rate by Method and Path",
+      "title": "Response error rate by Path",
       "type": "timeseries"
     },
     {
@@ -577,6 +579,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -602,14 +605,13 @@
               "mode": "off"
             }
           },
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -629,6 +631,7 @@
       },
       "id": 102,
       "options": {
+        "dataLinks": [],
         "legend": {
           "calcs": [],
           "displayMode": "table",
@@ -636,25 +639,26 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum by (method, host, path) (rate(nginx_ingress_controller_response_duration_seconds_sum{ingress =~ \"$ingress\"}[5m]))",
+          "expr": "sum by (path) (rate(nginx_ingress_controller_response_duration_seconds_sum{ingress = \"$ingress\"}[1m]))",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{ method }} {{ host }}{{path }}",
+          "legendFormat": "{{ path }}",
           "refId": "A"
         }
       ],
-      "title": "Upstream Response Time by Method and Path",
+      "title": "Upstream time consumed by Path",
       "type": "timeseries"
     },
     {
@@ -674,6 +678,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -699,13 +704,13 @@
               "mode": "off"
             }
           },
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -725,6 +730,7 @@
       },
       "id": 101,
       "options": {
+        "dataLinks": [],
         "legend": {
           "calcs": [],
           "displayMode": "table",
@@ -732,25 +738,26 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "  sum (\n    rate(\n      nginx_ingress_controller_request_duration_seconds_count{\n        ingress =~ \"$ingress\",\n        status =~\"[4-5].*\",\n      }[5m]\n    )\n  ) by(method, host, path, status)\n",
+          "expr": "  sum (\n    rate(\n      nginx_ingress_controller_request_duration_seconds_count{\n        ingress =~ \"$ingress\",\n        status =~\"[4-5].*\",\n      }[1m]\n    )\n  ) by(path, status)\n",
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{ method }} {{ host }}{{path }} {{ status }}",
+          "legendFormat": "{{ path }} {{ status }}",
           "refId": "A"
         }
       ],
-      "title": "Response Error Rate by Method and Path",
+      "title": "Response error volume by Path",
       "type": "timeseries"
     },
     {
@@ -770,6 +777,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -795,13 +803,13 @@
               "mode": "off"
             }
           },
-          "links": [],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": 0
               },
               {
                 "color": "red",
@@ -821,6 +829,7 @@
       },
       "id": 99,
       "options": {
+        "dataLinks": [],
         "legend": {
           "calcs": [],
           "displayMode": "table",
@@ -828,23 +837,24 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "sum (\n  rate (\n      nginx_ingress_controller_response_size_sum {\n        ingress =~ \"$ingress\",\n      }[5m]\n  )\n)  by (method, host, path) / sum (\n  rate(\n      nginx_ingress_controller_response_size_count {\n        ingress =~ \"$ingress\",\n      }[5m]\n  )\n) by (method, host, path)\n",
+          "expr": "sum (\n  rate (\n      nginx_ingress_controller_response_size_sum {\n        ingress =~ \"$ingress\",\n      }[1m]\n  )\n)  by (path) / sum (\n  rate(\n      nginx_ingress_controller_response_size_count {\n        ingress =~ \"$ingress\",\n      }[1m]\n  )\n) by (path)\n",
           "hide": false,
           "instant": false,
           "interval": "",
           "intervalFactor": 1,
-          "legendFormat": "{{ method }} {{ host }}{{path }}",
+          "legendFormat": "{{ path }}",
           "refId": "D"
         },
         {
@@ -852,18 +862,120 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "    sum (rate(nginx_ingress_controller_response_size_bucket{\n        ingress =~ \"$ingress\",\n    }[5m])) by (le)\n",
+          "expr": "    sum (rate(nginx_ingress_controller_response_size_bucket{\n        namespace =~ \"$namespace\",\n        ingress =~ \"$ingress\",\n    }[1m])) by (le)\n",
           "hide": true,
           "legendFormat": "{{le}}",
           "refId": "A"
         }
       ],
-      "title": "Average Response Size by Method and Path",
+      "title": "Average response size by Path",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 96,
+      "options": {
+        "dataLinks": [],
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.1.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum (\n  rate(\n      nginx_ingress_controller_ingress_upstream_latency_seconds_sum {\n        ingress =~ \"$ingress\",\n      }[1m]\n)) / sum (\n  rate(\n      nginx_ingress_controller_ingress_upstream_latency_seconds_count {\n        ingress =~ \"$ingress\",\n      }[1m]\n  )\n)\n",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "intervalFactor": 1,
+          "legendFormat": "average",
+          "refId": "B"
+        }
+      ],
+      "title": "Upstream service latency",
       "type": "timeseries"
     }
   ],
+  "preload": false,
   "refresh": "30s",
-  "schemaVersion": 39,
+  "schemaVersion": 41,
   "tags": [
     "nginx"
   ],
@@ -871,52 +983,34 @@
     "list": [
       {
         "current": {
-          "selected": false,
           "text": "Prometheus",
           "value": "prometheus"
         },
-        "hide": 0,
-        "includeAll": false,
         "label": "datasource",
-        "multi": false,
         "name": "DS_PROMETHEUS",
         "options": [],
         "query": "prometheus",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "type": "datasource"
       },
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
           "text": "All",
           "value": "$__all"
         },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "prometheus"
-        },
+        "datasource": "prometheus",
         "definition": "label_values(nginx_ingress_controller_requests, ingress) ",
-        "hide": 0,
         "includeAll": true,
         "label": "Service Ingress",
-        "multi": false,
         "name": "ingress",
         "options": [],
-        "query": {
-          "query": "label_values(nginx_ingress_controller_requests, ingress) ",
-          "refId": "Prometheus-ingress-Variable-Query"
-        },
+        "query": "label_values(nginx_ingress_controller_requests, ingress) ",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 2,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
+        "type": "query"
       }
     ]
   },
@@ -936,22 +1030,10 @@
       "1h",
       "2h",
       "1d"
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
     ]
   },
   "timezone": "browser",
-  "title": "Request Handling Performance",
+  "title": "Request Handling Performance - readonly Terraform generated",
   "uid": "4GFbkOsZk",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }

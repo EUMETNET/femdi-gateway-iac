@@ -33,10 +33,11 @@
       }
     ]
   },
+  "description": "Ingress-nginx supports a rich collection of prometheus metrics. If you have prometheus and grafana installed on your cluster then prometheus will already be scraping this data due to the scrape annotation on the deployment.",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 40,
+  "id": 12,
   "links": [],
   "panels": [
     {
@@ -66,7 +67,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -78,6 +79,12 @@
         },
         "overrides": []
       },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
       "id": 20,
       "maxDataPoints": 100,
       "options": {
@@ -85,6 +92,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -96,7 +104,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.4.9",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -140,7 +148,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -165,6 +173,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -176,7 +185,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.4.9",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -221,7 +230,7 @@
             "steps": [
               {
                 "color": "rgba(245, 54, 54, 0.9)",
-                "value": null
+                "value": 0
               },
               {
                 "color": "rgba(237, 129, 40, 0.89)",
@@ -250,6 +259,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -261,7 +271,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.4.9",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -306,7 +316,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -331,6 +341,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "sum"
@@ -342,7 +353,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.4.9",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -388,7 +399,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -413,6 +424,7 @@
         "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "mean"
@@ -424,7 +436,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "10.4.9",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -459,6 +471,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -490,7 +503,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -540,12 +553,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
-      "repeatDirection": "h",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -584,6 +597,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -615,7 +629,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -710,11 +724,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "asc"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -752,6 +767,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
             "gradientMode": "none",
@@ -783,7 +799,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -814,11 +830,12 @@
           "width": 200
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -871,6 +888,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -902,7 +920,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -979,11 +997,12 @@
           "width": 200
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1021,6 +1040,7 @@
             "axisLabel": "cores",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -1052,7 +1072,7 @@
             "steps": [
               {
                 "color": "transparent",
-                "value": null
+                "value": 0
               }
             ]
           },
@@ -1078,11 +1098,12 @@
           "showLegend": false
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "desc"
         }
       },
-      "pluginVersion": "10.4.3",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1126,7 +1147,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -1244,7 +1265,7 @@
                   "steps": [
                     {
                       "color": "rgba(245, 54, 54, 0.9)",
-                      "value": null
+                      "value": 0
                     },
                     {
                       "color": "rgba(237, 129, 40, 0.89)"
@@ -1308,7 +1329,6 @@
         "x": 0,
         "y": 16
       },
-      "hideTimeOverride": false,
       "id": 75,
       "options": {
         "cellHeight": "sm",
@@ -1322,8 +1342,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "10.4.9",
-      "repeatDirection": "h",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1419,6 +1438,7 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -1450,7 +1470,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -1468,7 +1488,6 @@
         "x": 0,
         "y": 24
       },
-      "hideTimeOverride": false,
       "id": 91,
       "options": {
         "legend": {
@@ -1478,12 +1497,12 @@
           "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "multi",
           "sort": "none"
         }
       },
-      "pluginVersion": "8.3.4",
-      "repeatDirection": "h",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1536,15 +1555,6 @@
       "type": "timeseries"
     },
     {
-      "cards": {},
-      "color": {
-        "cardColor": "#b4ff00",
-        "colorScale": "sqrt",
-        "colorScheme": "interpolateWarm",
-        "exponent": 0.5,
-        "mode": "spectrum"
-      },
-      "dataFormat": "tsbuckets",
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
@@ -1571,13 +1581,7 @@
         "x": 12,
         "y": 24
       },
-      "heatmap": {},
-      "hideZeroBuckets": false,
-      "highlightCards": true,
       "id": 89,
-      "legend": {
-        "show": true
-      },
       "options": {
         "calculate": false,
         "calculation": {},
@@ -1616,8 +1620,7 @@
           "unit": "s"
         }
       },
-      "pluginVersion": "10.4.9",
-      "reverseYBuckets": false,
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1633,20 +1636,7 @@
         }
       ],
       "title": "Ingress Request Latency Heatmap (Ingress Namespaces)",
-      "tooltip": {
-        "show": true,
-        "showHistogram": true
-      },
-      "type": "heatmap",
-      "xAxis": {
-        "show": true
-      },
-      "yAxis": {
-        "format": "s",
-        "logBase": 1,
-        "show": true
-      },
-      "yBucketBound": "auto"
+      "type": "heatmap"
     },
     {
       "datasource": {
@@ -1673,7 +1663,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -1711,7 +1701,7 @@
                   "steps": [
                     {
                       "color": "rgba(245, 54, 54, 0.9)",
-                      "value": null
+                      "value": 0
                     },
                     {
                       "color": "rgba(237, 129, 40, 0.89)",
@@ -1760,7 +1750,7 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "10.4.9",
+      "pluginVersion": "12.1.1",
       "targets": [
         {
           "datasource": {
@@ -1792,8 +1782,9 @@
       "type": "table"
     }
   ],
+  "preload": false,
   "refresh": "5s",
-  "schemaVersion": 39,
+  "schemaVersion": 41,
   "tags": [
     "nginx"
   ],
@@ -1801,27 +1792,21 @@
     "list": [
       {
         "current": {
-          "selected": false,
           "text": "Prometheus",
           "value": "prometheus"
         },
-        "hide": 0,
         "includeAll": false,
         "label": "datasource",
-        "multi": false,
         "name": "DS_PROMETHEUS",
         "options": [],
         "query": "prometheus",
-        "queryValue": "",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "type": "datasource"
       },
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -1830,26 +1815,18 @@
           "uid": "prometheus"
         },
         "definition": "",
-        "hide": 0,
         "includeAll": true,
         "label": "Namespace",
-        "multi": false,
         "name": "namespace",
         "options": [],
         "query": "label_values(nginx_ingress_controller_config_hash, controller_namespace)",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
+        "type": "query"
       },
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -1858,26 +1835,18 @@
           "uid": "prometheus"
         },
         "definition": "",
-        "hide": 0,
         "includeAll": true,
         "label": "Controller Class",
-        "multi": false,
         "name": "controller_class",
         "options": [],
         "query": "label_values(nginx_ingress_controller_config_hash{namespace=~\"$namespace\"}, controller_class) ",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
+        "type": "query"
       },
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -1886,26 +1855,19 @@
           "uid": "prometheus"
         },
         "definition": "",
-        "hide": 0,
         "includeAll": true,
         "label": "Controller",
-        "multi": false,
         "name": "controller",
         "options": [],
         "query": "label_values(nginx_ingress_controller_config_hash{namespace=~\"$namespace\",controller_class=~\"$controller_class\"}, controller_pod) ",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
+        "type": "query"
       },
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -1914,26 +1876,19 @@
           "uid": "prometheus"
         },
         "definition": "",
-        "hide": 0,
         "includeAll": true,
         "label": "Ingress Namespace",
-        "multi": false,
         "name": "exported_namespace",
         "options": [],
         "query": "label_values(nginx_ingress_controller_requests{namespace=~\"$namespace\",controller_class=~\"$controller_class\",controller_pod=~\"$controller\"}, exported_namespace) ",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
+        "type": "query"
       },
       {
         "allValue": ".*",
         "current": {
-          "selected": false,
           "text": "All",
           "value": "$__all"
         },
@@ -1942,21 +1897,15 @@
           "uid": "prometheus"
         },
         "definition": "",
-        "hide": 0,
         "includeAll": true,
         "label": "Ingress",
-        "multi": false,
         "name": "ingress",
         "options": [],
         "query": "label_values(nginx_ingress_controller_requests{namespace=~\"$namespace\",controller_class=~\"$controller_class\",controller_pod=~\"$controller\",exported_namespace=~\"$exported_namespace\"}, ingress) ",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
         "sort": 1,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
+        "type": "query"
       }
     ]
   },
@@ -1976,22 +1925,10 @@
       "1h",
       "2h",
       "1d"
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
     ]
   },
   "timezone": "browser",
-  "title": "NGINX Ingress controller",
+  "title": "NGINX Ingress controller - readonly Terraform generated",
   "uid": "nginx",
-  "version": 1,
-  "weekStart": ""
+  "version": 1
 }
