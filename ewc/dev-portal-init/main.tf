@@ -44,8 +44,8 @@ resource "kubernetes_secret" "keycloak_postgresql_jobs" {
     namespace = kubernetes_namespace.keycloak.metadata.0.name
   }
   data = {
-    AWS_ACCESS_KEY_ID     = var.backup_bucket_access_key
-    AWS_ACCESS_SECRET_KEY = var.backup_bucket_secret_key
+    ACCESS_KEY_ID     = var.backup_bucket_access_key
+    ACCESS_SECRET_KEY = var.backup_bucket_secret_key
   }
   type = "Opaque"
 }

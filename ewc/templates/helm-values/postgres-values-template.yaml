@@ -20,8 +20,8 @@ backups:
     name: ${backup_secret_name}
   s3:
     region: eu-north-1
-    accessKey: AWS_ACCESS_KEY_ID
-    secretKey: AWS_ACCESS_SECRET_KEY
+    accessKey: ACCESS_KEY_ID
+    secretKey: ACCESS_SECRET_KEY
   wal:
     encryption: ""
   data:
