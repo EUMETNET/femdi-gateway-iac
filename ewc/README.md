@@ -146,6 +146,12 @@ terraform output vault_unseal_keys
 
 ## Second
 
+Bootstrap Vault root token and unseal keys to parameter store
+
+```bash
+AWS_PROFILE=fmi_meteogate ./bootstrap_params.sh .env.params
+```
+
 Run the rest of the Terraform code:
 ```bash
 terraform apply -var-file=<cluster_name>.tfvars
