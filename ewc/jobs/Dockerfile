@@ -5,12 +5,11 @@ ARG PRODUCT=vault
 ARG VAULT_VERSION=1.21.0
 ARG ETCD_VERSION=v3.5.17
 ARG KUBECTL_VERSION=v1.34.1
-ARG POSTGRESQL_CLIENT_VERSION=16
 
 # Install dependencies and AWS CLI & PostgreSQL client
 # aws-cli is around ~100MB
 RUN apk add --update --virtual .deps --no-cache gnupg wget unzip && \
-    apk add --no-cache aws-cli postgresql${POSTGRESQL_CLIENT_VERSION}-client bash && \
+    apk add --no-cache aws-cli bash && \
     cd /tmp && \
     # Install Vault
     # Vault installation snippet from https://www.hashicorp.com/blog/installing-hashicorp-tools-in-alpine-linux-containers
@@ -47,8 +46,6 @@ COPY common-functions.sh \
      vault-token-renewal.sh \
      apisix-snapshot.sh \
      apisix-restore.sh \
-     keycloak-snapshot.sh \
-     keycloak-restore.sh \
      /usr/local/bin/
 
 RUN chmod +x /usr/local/bin/common-functions.sh \
@@ -56,8 +53,6 @@ RUN chmod +x /usr/local/bin/common-functions.sh \
              /usr/local/bin/vault-restore.sh \
              /usr/local/bin/vault-token-renewal.sh \
              /usr/local/bin/apisix-snapshot.sh \
-             /usr/local/bin/apisix-restore.sh \
-             /usr/local/bin/keycloak-snapshot.sh \
-             /usr/local/bin/keycloak-restore.sh
+             /usr/local/bin/apisix-restore.sh
 
 CMD ["/usr/local/bin/vault-snapshot.sh"]

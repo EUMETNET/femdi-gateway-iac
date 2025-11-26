@@ -12,9 +12,6 @@ resource "kubernetes_namespace" "keycloak" {
 }
 
 locals {
-  postgres_host              = "${local.keycloak_helm_release_name}-postgresql.${kubernetes_namespace.keycloak.metadata.0.name}.svc.cluster.local"
-  postgres_db_name           = "bitnami_keycloak" # Default from Helm chart
-  postgres_db_user           = "keycloak"         # default from Helm chart
   keycloak_helm_release_name = "keycloak"
 }
 
