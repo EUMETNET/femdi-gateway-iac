@@ -37,7 +37,7 @@ RUN apk add --update --virtual .deps --no-cache gnupg wget unzip && \
     apk del .deps
 
 # Verify installations
-RUN etcdctl version && etcdutl version && vault version && aws --version && pg_dump --version && kubectl version --client
+RUN etcdctl version && etcdutl version && vault version && aws --version && kubectl version --client
 
 # Add scripts and make them executable
 COPY common-functions.sh \
