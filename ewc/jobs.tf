@@ -353,7 +353,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
             restart_policy = "OnFailure"
             container {
               name              = "apisix-backup"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:jani-test"
+              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/sh", "-c", "/usr/local/bin/apisix-snapshot.sh"]
 
