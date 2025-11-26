@@ -32,7 +32,7 @@ resource "kubernetes_cron_job_v1" "vault_token_renewal" {
             service_account_name = kubernetes_service_account.vault_jobs_service_account.metadata.0.name
             container {
               name              = "vault-token-renewal"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
+              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-014dc43"
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/bash", "-c", "/usr/local/bin/vault-token-renewal.sh"]
 
@@ -169,7 +169,7 @@ resource "kubernetes_cron_job_v1" "vault_backup" {
             service_account_name = kubernetes_service_account.vault_jobs_service_account.metadata.0.name
             container {
               name              = "vault-backup"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
+              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-014dc43"
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/sh", "-c", "/usr/local/bin/vault-snapshot.sh"]
 
@@ -236,7 +236,7 @@ locals {
           containers = [
             {
               name            = "vault-restore-backup"
-              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
+              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-014dc43"
               imagePullPolicy = "IfNotPresent"
               command         = ["/bin/sh", "-c", "/usr/local/bin/vault-restore.sh"]
               env = [
@@ -353,7 +353,7 @@ resource "kubernetes_cron_job_v1" "apisix_backup" {
             restart_policy = "OnFailure"
             container {
               name              = "apisix-backup"
-              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
+              image             = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-014dc43"
               image_pull_policy = "IfNotPresent"
               command           = ["/bin/sh", "-c", "/usr/local/bin/apisix-snapshot.sh"]
 
@@ -506,7 +506,7 @@ locals {
           containers = [
             {
               name            = "apisix-restore-backup"
-              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-cb52e32"
+              image           = "ghcr.io/eumetnet/femdi-gateway-iac/jobs:sha-014dc43"
               imagePullPolicy = "IfNotPresent"
               command         = ["/bin/sh", "-c", "/usr/local/bin/apisix-restore.sh"]
               env = [
