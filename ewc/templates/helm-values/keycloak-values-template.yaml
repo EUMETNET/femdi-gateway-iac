@@ -88,7 +88,7 @@ extraVolumeMounts: |
     mountPath: /opt/keycloak/data/import
     readOnly: true
   - name: themes
-    mountPath: /opt/keycloak/themes/
+    mountPath: /opt/keycloak/themes/gdpr-theme
 
 extraVolumes: |
   - name: config
