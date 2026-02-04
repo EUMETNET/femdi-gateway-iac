@@ -71,8 +71,7 @@ extraInitContainers: |
     args:
       - -c
       - |
-        cp -R /opt/keycloak/themes/* /themes/ 2>/dev/null || true
-        cp -R /theme/* /themes/
+        cp -R /theme/gdpr-theme /themes/
     volumeMounts:
       - name: themes
         mountPath: /themes
@@ -89,7 +88,8 @@ extraVolumeMounts: |
     mountPath: /opt/keycloak/data/import
     readOnly: true
   - name: themes
-    mountPath: /opt/keycloak/themes/
+    mountPath: /opt/keycloak/themes/gdpr-theme
+    subPath: gdpr-theme
 
 extraVolumes: |
   - name: config
