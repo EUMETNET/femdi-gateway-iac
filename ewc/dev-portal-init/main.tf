@@ -155,7 +155,7 @@ resource "helm_release" "keycloak" {
       repository                   = "quay.io/keycloak/keycloak"
       tag                          = "26.4.5"
       kc_custom_theme_image        = "ghcr.io/eumetnet/dev-portal/keycloak-theme"
-      kc_custom_theme_tag          = "sha-6ecf567"
+      kc_custom_theme_tag          = "sha-df9b0f4"
     })
   ]
 }
