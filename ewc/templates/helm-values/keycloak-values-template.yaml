@@ -62,11 +62,33 @@ proxy:
 #livenessProbe: '{"httpGet":{"path":"/health/live","port":"http-internal","scheme":"HTTP"},"initialDelaySeconds":40,"timeoutSeconds":5,"periodSeconds":10}'
 #readinessProbe: '{"httpGet":{"path":"/health/ready","port":"http-internal","scheme":"HTTP"},"initialDelaySeconds":40,"timeoutSeconds":2,"periodSeconds":10}'
 #startupProbe: '{"httpGet":{"path":"/health/ready","port":"http-internal","scheme":"HTTP"},"initialDelaySeconds":30,"timeoutSeconds":5,"failureThreshold":60,"periodSeconds":5}'
+extraInitContainers: |
+  - name: custom-keycloak-theme-provider
+    image: ${kc_custom_theme_image}:${kc_custom_theme_tag}
+    imagePullPolicy: IfNotPresent
+    command:
+      - sh
+    args:
+      - -c
+      - |
+        cp -R /theme/* /themes/
+    volumeMounts:
+      - name: themes
+        mountPath: /themes
+    resources:
+      requests:
+        cpu: "50m"
+        memory: "256Mi"
+      limits:
+        cpu: "50m"
+        memory: "256Mi"
 
 extraVolumeMounts: |
   - name: config
     mountPath: /opt/keycloak/data/import
     readOnly: true
+  - name: themes
+    mountPath: /opt/keycloak/themes/
 
 extraVolumes: |
   - name: config
@@ -75,6 +97,8 @@ extraVolumes: |
       items:
         - key: realm.json
           path: realm.json
+  - name: themes
+    emptyDir: {}
 
 ingress:
   enabled: true
