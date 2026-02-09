@@ -66,6 +66,9 @@ grafana:
   grafana.ini:
     security:
       angular_support_enabled: true
+prometheus:
+  prometheusSpec:
+    retention: 45d
 alertmanager:
   alertmanagerSpec:
     alertmanagerConfigMatcherStrategy:
