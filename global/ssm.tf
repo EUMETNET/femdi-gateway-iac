@@ -10,6 +10,14 @@ data "aws_ssm_parameter" "radar_ip" {
   name = "/route53/radar_ip"
 }
 
+data "aws_ssm_parameter" "radar_archive_ip" {
+  name = "/route53/radar_archive_ip"
+}
+
+data "aws_ssm_parameter" "radar_backup_ip" {
+  name = "/route53/radar_backup_ip"
+}
+
 data "aws_ssm_parameter" "root_ip" {
   name = "/route53/root_ip"
 }

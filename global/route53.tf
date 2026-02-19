@@ -24,6 +24,26 @@ resource "aws_route53_record" "radar" {
   records = [data.aws_ssm_parameter.radar_ip.value]
 }
 
+resource "aws_route53_record" "radar_archive" {
+  for_each = aws_route53_zone.hosted_zones
+  zone_id  = each.value.id
+  type     = "A"
+  ttl      = 1800
+  name     = "radar-archive"
+
+  records = [data.aws_ssm_parameter.radar_archive_ip.value]
+}
+
+resource "aws_route53_record" "radar_backup" {
+  for_each = aws_route53_zone.hosted_zones
+  zone_id  = each.value.id
+  type     = "A"
+  ttl      = 1800
+  name     = "radar-backup"
+
+  records = [data.aws_ssm_parameter.radar_backup_ip.value]
+}
+
 resource "aws_route53_record" "root" {
   for_each = aws_route53_zone.hosted_zones
   zone_id  = each.value.id
