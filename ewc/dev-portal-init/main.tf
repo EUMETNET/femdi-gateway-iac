@@ -276,7 +276,7 @@ resource "helm_release" "dev-portal" {
     },
     {
       name  = "backend.image.tag"
-      value = "sha-63fa1a4"
+      value = "sha-7693b67"
     },
     {
       name  = "backend.secrets.secretName"
@@ -284,7 +284,7 @@ resource "helm_release" "dev-portal" {
     },
     {
       name  = "frontend.image.tag"
-      value = "sha-7693b67"
+      value = "sha-63fa1a4"
     },
     {
       name  = "frontend.keycloak_logout_url"
