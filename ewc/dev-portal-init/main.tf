@@ -153,7 +153,7 @@ resource "helm_release" "keycloak" {
       hostname                     = "${var.keycloak_subdomain}.${var.dns_zone}",
       ip                           = var.load_balancer_ip
       repository                   = "quay.io/keycloak/keycloak"
-      tag                          = "26.4.5"
+      tag                          = "26.7.2"
       kc_custom_theme_image        = "ghcr.io/eumetnet/dev-portal/keycloak-theme"
       kc_custom_theme_tag          = "sha-df9b0f4"
     })
