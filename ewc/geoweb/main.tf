@@ -122,11 +122,16 @@ resource "helm_release" "geoweb-frontend" {
 
 # Presets backend service
 ################################################################################
+resource "random_password" "presets_db" {
+  length  = 32
+  special = false
+}
+
 resource "helm_release" "geoweb-presets-backend" {
   name             = "geoweb-presets-backend"
   repository       = "https://fmidev.github.io/helm-charts/"
   chart            = "geoweb-presets-backend"
-  version          = "2.15.6"
+  version          = "3.1.0"
   namespace        = kubernetes_namespace.geoweb.metadata.0.name
   create_namespace = false
 
@@ -146,6 +151,11 @@ resource "helm_release" "geoweb-presets-backend" {
     {
       name  = "presets.path"
       value = local.presets_backend_base_path
+    },
+    # Database
+    {
+      name  = "presets.db.mode"
+      value = "sidecar"
     },
     # Custom presets
     {
@@ -209,6 +219,13 @@ resource "helm_release" "geoweb-presets-backend" {
     {
       name  = "presets.nginx.GEOWEB_ROLE_CLAIM_VALUE_PRESETS_ADMIN"
       value = "Admin"
+    }
+  ]
+
+  set_sensitive = [
+    {
+      name  = "presets.db.sidecar.password"
+      value = random_password.presets_db.result
     }
   ]
 }
