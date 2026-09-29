@@ -1,0 +1,75 @@
+{
+  "preset": {
+    "presetType": "mapPreset",
+    "presetId": "mapPreset-1",
+    "presetName": "Layer manager preset",
+    "timeSeriesServices": [
+      {
+        "name": "MeteoGate Surface Observations",
+        "url": "https://api.meteogate.eu/eu-eumetnet-surface-observations/",
+        "id": "meteogate_surface",
+        "description": "MeteoGate Surface Observations API",
+        "type": "EDR",
+        "scope": "system"
+      },
+      {
+        "name": "MeteoGate Climate Data",
+        "url": "https://api.meteogate.eu/eu-eumetnet-climate-observations/v1",
+        "id": "meteogate_climate",
+        "description": "MeteoGate Climate Data API",
+        "type": "EDR",
+        "scope": "system"
+      },
+      {
+        "name": "FMI Opendata",
+        "url": "https://opendata.fmi.fi/edr",
+        "id": "fmi_opendata",
+        "description": "FMI Opendata EDR",
+        "type": "EDR",
+        "scope": "system"
+      }
+    ],
+    "soundingsCollections": [],
+    "services": [
+      {
+        "name": "FMI Open Data WMS",
+        "url": "https://openwms.fmi.fi/geoserver/wms?",
+        "id": "fmi_opendata_wms"
+      },
+      {
+        "name": "EUMETSAT",
+        "url": "https://view.eumetsat.int/geoserver/wms?",
+        "id": "eumetsat"
+      },
+      {
+        "name": "ECMWF",
+        "url": "https://eccharts.ecmwf.int/wms/?token=public",
+        "id": "ecmwf"
+      }
+    ],
+    "layers": [
+      {
+        "id": "base-layer-1",
+        "name": "WorldMap_Light_Grey_Canvas",
+        "type": "twms",
+        "layerType": "baseLayer"
+      },
+      {
+        "id": "base-layer-2",
+        "service": "https://services.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/",
+        "name": "arcGisCanvas",
+        "type": "twms",
+        "layerType": "baseLayer",
+        "enabled": true
+      },
+      {
+        "service": "https://geoservices.knmi.nl/wms?DATASET=baselayers",
+        "name": "countryborders",
+        "id": "countryborders",
+        "format": "image/png",
+        "enabled": true,
+        "layerType": "overLayer"
+      }
+    ]
+  }
+}

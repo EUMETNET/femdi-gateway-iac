@@ -25,6 +25,16 @@ resource "helm_release" "geoweb-frontend" {
       cluster_issuer = var.cluster_issuer,
       hostname       = "${var.geoweb_subdomain}.${var.dns_zone}",
       ip             = var.load_balancer_ip
+    }),
+    yamlencode({
+      frontend = {
+        runtimeConfiguration = {
+          source = "inline"
+          files = {
+            "initialPresets.json" = jsondecode(file("${path.module}/default-configs/geoweb-frontend-initial-presets.json"))
+          }
+        }
+      }
     })
   ]
 
@@ -32,6 +42,10 @@ resource "helm_release" "geoweb-frontend" {
     {
       name  = "versions.frontend"
       value = "v20.0.0"
+    },
+    {
+      name  = "frontend.env.GW_INITIAL_PRESETS_FILENAME"
+      value = "custom/initialPresets.json"
     },
     {
       name  = "frontend.url"
