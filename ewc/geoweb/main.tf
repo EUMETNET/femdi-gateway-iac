@@ -238,7 +238,7 @@ resource "helm_release" "geoweb-location-backend" {
   name             = "geoweb-location-backend"
   repository       = "https://fmidev.github.io/helm-charts/"
   chart            = "geoweb-location-backend"
-  version          = "1.1.0"
+  version          = "1.1.9"
   namespace        = kubernetes_namespace.geoweb.metadata.0.name
   create_namespace = false
 
