@@ -81,7 +81,7 @@ resource "helm_release" "cnpg_cluster" {
       backup_destination_path = "s3://${var.backup_bucket_name}/${var.cluster_name}/${kubernetes_namespace.keycloak.metadata.0.name}"
       backup_secret_name      = kubernetes_secret.keycloak_postgresql_jobs.metadata[0].name
       postgresql_version      = "16.4"
-      backups_enabled         = false # Change to true after initial installation
+      backups_enabled         = true # Change to false if creating a new instance
     })
   ]
 
@@ -153,9 +153,9 @@ resource "helm_release" "keycloak" {
       hostname                     = "${var.keycloak_subdomain}.${var.dns_zone}",
       ip                           = var.load_balancer_ip
       repository                   = "quay.io/keycloak/keycloak"
-      tag                          = "26.7.2"
+      tag                          = "26.8.0"
       kc_custom_theme_image        = "ghcr.io/eumetnet/dev-portal/keycloak-theme"
-      kc_custom_theme_tag          = "sha-df9b0f4"
+      kc_custom_theme_tag          = "sha-9f03e30"
     })
   ]
 }
