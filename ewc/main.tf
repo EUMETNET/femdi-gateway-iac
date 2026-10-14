@@ -8,6 +8,17 @@ provider "helm" {
 provider "kubernetes" {
   config_path = var.kubeconfig_path
 
+  ignore_annotations = [
+    "^field\\.cattle\\.io/projectId$",
+    "^lifecycle\\.cattle\\.io/create\\.namespace-auth$",
+    "^cattle\\.io/status$",
+  ]
+
+  ignore_labels = [
+    "^field\\.cattle\\.io/projectId$",
+  ]
+
+
 }
 
 #Workaround for https://github.com/hashicorp/terraform-provider-kubernetes/issues/1367
@@ -325,6 +336,16 @@ resource "kubernetes_namespace" "apisix" {
 
     name = "apisix"
   }
+
+  lifecycle {
+    ignore_changes = [
+      metadata[0].annotations["cattle.io/status"],
+      metadata[0].annotations["lifecycle.cattle.io/create.namespace-auth"],
+      metadata[0].annotations["management.cattle.io/no-default-sa-token"],
+      metadata[0].labels["field.cattle.io/projectId"],
+    ]
+  }
+
 }
 
 resource "kubernetes_secret" "apisix_admin_api_keys" {
