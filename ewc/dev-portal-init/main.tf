@@ -284,7 +284,7 @@ resource "helm_release" "dev-portal" {
     },
     {
       name  = "frontend.image.tag"
-      value = "sha-d3486a7"
+      value = "sha-187253f"
     },
     {
       name  = "frontend.keycloak_logout_url"
