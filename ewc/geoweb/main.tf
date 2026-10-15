@@ -31,7 +31,7 @@ resource "helm_release" "geoweb-frontend" {
   set = [
     {
       name  = "versions.frontend"
-      value = "2025-10-20_07-01_ca25e69c"
+      value = "v20.0.0"
     },
     {
       name  = "frontend.url"
@@ -207,7 +207,7 @@ resource "helm_release" "geoweb-location-backend" {
   name             = "geoweb-location-backend"
   repository       = "https://fmidev.github.io/helm-charts/"
   chart            = "geoweb-location-backend"
-  version          = "1.1.0"
+  version          = "1.1.9"
   namespace        = kubernetes_namespace.geoweb.metadata.0.name
   create_namespace = false
 
