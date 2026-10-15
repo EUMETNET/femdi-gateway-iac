@@ -31,7 +31,7 @@ resource "helm_release" "geoweb-frontend" {
   set = [
     {
       name  = "versions.frontend"
-      value = "v20.0.0"
+      value = "v20.1.0"
     },
     {
       name  = "frontend.url"
