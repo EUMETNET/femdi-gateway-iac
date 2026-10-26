@@ -421,7 +421,7 @@ resource "helm_release" "apisix" {
   name             = local.apisix_helm_release_name
   repository       = "https://charts.apiseven.com"
   chart            = "apisix"
-  version          = "2.12.2"
+  version          = "2.18.2"
   namespace        = kubernetes_namespace.apisix.metadata.0.name
   create_namespace = false
 
@@ -458,7 +458,7 @@ resource "helm_release" "apisix" {
     },
     {
       name  = "image.tag"
-      value = "3.14.1-ubuntu"
+      value = "3.19.0-ubuntu"
     },
     # API keys via secret
     {
