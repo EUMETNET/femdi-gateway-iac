@@ -44,6 +44,26 @@ resource "aws_route53_record" "radar_backup" {
   records = [data.aws_ssm_parameter.radar_backup_ip.value]
 }
 
+resource "aws_route53_record" "radar_mqtt" {
+  for_each = aws_route53_zone.hosted_zones
+  zone_id  = each.value.id
+  type     = "A"
+  ttl      = 1800
+  name     = "radar-mqtt"
+
+  records = [data.aws_ssm_parameter.radar_mqtt_ip.value]
+}
+
+resource "aws_route53_record" "radar_ingest" {
+  for_each = aws_route53_zone.hosted_zones
+  zone_id  = each.value.id
+  type     = "A"
+  ttl      = 1800
+  name     = "radar-ingest"
+
+  records = [data.aws_ssm_parameter.radar_ingest_ip.value]
+}
+
 resource "aws_route53_record" "root" {
   for_each = aws_route53_zone.hosted_zones
   zone_id  = each.value.id
