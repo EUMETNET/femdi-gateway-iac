@@ -64,6 +64,16 @@ resource "aws_route53_record" "radar_ingest" {
   records = [data.aws_ssm_parameter.radar_ingest_ip.value]
 }
 
+resource "aws_route53_record" "radar_stacapi" {
+  for_each = aws_route53_zone.hosted_zones
+  zone_id  = each.value.id
+  type     = "A"
+  ttl      = 1800
+  name     = "radar-stacapi"
+
+  records = [data.aws_ssm_parameter.radar_stacapi_ip.value]
+}
+
 resource "aws_route53_record" "root" {
   for_each = aws_route53_zone.hosted_zones
   zone_id  = each.value.id

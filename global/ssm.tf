@@ -26,6 +26,10 @@ data "aws_ssm_parameter" "radar_ingest_ip" {
   name = "/route53/radar_ingest_ip"
 }
 
+data "aws_ssm_parameter" "radar_stacapi_ip" {
+  name = "/route53/radar_stacapi_ip"
+}
+
 data "aws_ssm_parameter" "root_ip" {
   name = "/route53/root_ip"
 }
